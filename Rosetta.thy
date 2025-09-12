@@ -83,9 +83,18 @@ qed
 
 text \<open>Here's a concrete example of that kind of proof. In the middle it uses a sequence of
 inequalities to show one large inequality, using "chaining", in which "..." means "the right hand
-side of the previous inequality in the chain" and the "." at the end means "combine all these
-inequalities into LHS \<le> RHS, where LHS is the left-hand side of the FIRST fact in the chain, 
-and RHS is the right-hand side of the LAST fact in the chain." The statement itself is an exercise
+side of the previous inequality in the chain" and the "finally have" expresses that the first and last
+items in the chain are equal. This is such a simple conclusion that it can be proved with the 
+abbreviated proof "." The details of that proof-method (and "..") are a whole other story. 
+
+Note that just after the "next" is 
+
+have nneg_square: "0 \<le> (u::real)^2" for u by simp
+
+The "for u" means that the claim itself, rather than being about just some particular value "u", 
+is actually true when any expression is used in place of "u". You could read it as "for all u". 
+
+The statement itself is an exercise
 in Spivak's "Calculus", and while it can be proved by noting that the expression is a quadratic form
 with eigenvalues 1/2 and 3/2 that are both positive, I wanted to give an elementary proof.
 \<close>
