@@ -5,7 +5,8 @@ begin
 text\<open>A collection of examples of tiny theorems that use a particular structure, and then that structure
 implemented in Isabelle.\<close>
 
-text\<open>Case-based proof. To show $a \le abs(a)$, consider the two cases where $a \ge 0$ and $a < 0$. In the first case,
+section \<open>Case based proof\<close>
+text\<open>To show $a \le abs(a)$, consider the two cases where $a \ge 0$ and $a < 0$. In the first case,
 $abs(a)$ is just $a$, so we need prove that $a \le a$, which is obvious. In the second, $abs(a) = -a$, 
 and we need to show that $a \le -a$ ... which is true because $a < 0$, so $0 < -a$, hence $a < -a$. \<close>
 
@@ -39,10 +40,13 @@ next
   then show ?thesis using negative abs_def by simp
 qed
 
-text\<open>and 'using nonneg' reads better than 'using True'. This approach to writing cases also works 
+text\<open>and 'using nonneg' reads better than 'using True'. 
+This approach to writing cases also works 
 for lists, where the 
-two constructors are Nil and Cons (for which "#" is an infix notation). This small example doesn't 
-need to use the Case conditions, but if it did, you might write "show ?thesis using Nil by simp", for
+two constructors are Nil and Cons (for which "#" is an infix notation). 
+This small example doesn't 
+need to use the Case conditions, but if it did, you might write 
+"show ?thesis using Nil by simp", for
 example. Or, as before, you could assign new labels to the cases.  \<close>
 
 lemma case_example2:
@@ -57,7 +61,148 @@ next
   then show ?thesis by simp
 qed
 
-text \<open>Goal-reduction in the form "it suffices to prove". "It suffices to prove" is often used to 
+
+lemma case_example2a:
+  fixes x::"real list"
+  fixes b::"real"
+  shows "(hd (b # x)) = b"
+proof (cases "x")
+  case nil_list: Nil
+  then show ?thesis using nil_list by simp  
+next
+  case cons_list: (Cons a list)
+  then show ?thesis using cons_list by simp
+qed
+
+text\<open> In both "show" steps above I've used the label for the case, even 
+though it wasn't needed, just to show how it'd be done. \<close>
+text\<open>There's yet another approach to case-based proofs that I really like,
+and which matches my typical usage: you first define your own 
+  case-alternatives (each with a name that you choose!), and then work through them one by one. You say "here
+are several cases", and are instantly obliged to show that these cover all
+possibilities. Then you write a case-proof by starting with "proof cases" and 
+isabelle somehow determines that the splitting of cases is the one you just made,
+and lets you fill in proofs for each case. A typical proof of the absolute
+value theorem might start like this:
+
+\<close>
+lemma case_example:
+  fixes x
+  shows "x \<le> (abs x)"
+proof -
+  fix x::real
+  consider (nonneg) "x \<ge> 0" | (neg) "x < 0" by linarith
+  then show ?thesis
+  proof cases
+    oops
+    
+    text\<open> If you type that in (except for the oops) you'll see that Isabelle 
+provides you with a template for the rest of the proof. The list of cases 
+is used because of the "then", which says "use the preceding fact in handling
+this next thing.\<close>
+
+  case nonneg
+  then show ?thesis sorry
+next
+  case neg
+  then show ?thesis sorry
+qed
+  
+
+text\<open>You can then fill in the template. If you choose your cases wrong, like this:\<close>
+lemma case_example:
+  fixes x
+  shows "x \<le> (abs x)"
+proof -
+  fix x::real
+  consider (big) "x \<ge> 1" | (little) "x < 0" by linarith
+  oops
+
+  text\<open>... you'll find that Isabelle cannot complete the 'consider' statement, because 
+numbers larger than 1, and those less than zero...they don't constitute all 
+possible reals. In particular, 0.4 isn't in either set. On the other hand, 
+overlapping cases are fine:\<close>
+lemma case_example:
+  fixes x
+  shows "x \<le> (abs x)"
+proof -
+  fix x::real
+  consider (big) "x \<ge> 1" | (little) "x < 2" by linarith
+  oops
+
+  text\<open> A standard mistake to make here is to write the "consider" part and forget to 
+offer a proof that the cases are exhaustive. You then wonder why Isabelle 
+isn't giving you a template for your main proof, and see that there's
+a red mark indicating you messed up. My other usual mistake is forgetting the "then" before
+I ask for a template for a proof-by-cases. \<close>
+
+  text\<open>If we look back at that first example, it's this:\<close>
+lemma case_example_rewritten:
+  fixes x
+  shows "x \<le> (abs x)"
+proof -
+  fix x::real
+  consider (nonneg) "x \<ge> 0" | (neg) "x < 0" by linarith
+  then show ?thesis
+  proof cases
+  case nonneg
+  then show ?thesis sorry
+next
+  case neg
+  then show ?thesis sorry
+qed
+
+text\<open> ...then in the two separate proof-cases, the "show" is preceded by "then"; that means that within
+the first proof, the condition for "nonneg", namely "x \<ge> 0", will be included as a fact. If you click
+just after the first "then show ?thesis", you'll see that the current state is  
+
+proof (prove)
+using this:
+  0 \<le> x
+
+goal (1 subgoal):
+ 1. x \<le> Rosetta.abs x
+
+which indicates that "0 \<le> x is a fact you can use in your proof that x \<le> abs x. \<close>
+
+text \<open>Cases can be more complex that just values of some variable. Suppose you have
+a couple of predicates, A and B, which are mutually exhaustive. You can write a proof
+based on that like this:\<close>
+
+lemma complex_cases:
+  fixes A ::" 'a \<Rightarrow> bool"
+  fixes B ::" 'b \<Rightarrow> 'c \<Rightarrow> bool"
+  assumes two_cases: "(\<exists> x. A x) \<or> (\<exists> y z. B y z)"
+  shows "something"
+proof -
+  consider (a) x where "A x" | (b) y z where "B y z" using two_cases by blast
+  then show "something"
+  proof cases
+
+text\<open> The outline Isabelle offers is this:
+  case a
+  then show ?thesis sorry
+next
+  case b
+  then show ?thesis sorry
+qed
+
+...but it's nice to enhance it like this:
+\<close>
+  case a 
+  have fact1: "A x" using a by blast
+  then show ?thesis sorry
+next
+  case b
+  have fact2: "B y z" using b by blast
+  then show ?thesis sorry
+qed
+
+text\<open>Of course, you're welcome to choose better names thatn "fact1" or "fact2" \<close>
+  
+section \<open>Goal reduction, or 'backwards proofs'\<close>
+
+text \<open>Goal-reduction in the form "it suffices to prove". "It suffices to prove" is often used to
 simplify or alter the goal of a proof before getting into the meat of it. Isabelle 
 folks call this a 'backwards' proof, and it's not Isar's strong suit, but you
 can do it. Here I'm showing an example of proving that A and B imply C. I claim that it suffices to 
@@ -298,7 +443,7 @@ when you want to prove something like \<forall>n . 0 \<le> n^2, or more generall
 \<forall> k . P(k), where the 'dot' after the 'forall' is Isabelle's way of separating
 the variables from the proposition to be proved. Here's a proof of the 
 first of these:\<close>
-(*
+
 lemma nonnegative_squares:
   shows "\<forall> n::nat . 0 \<le> n^2" 
 proof \<comment> \<open>At this point the 'forall' has become a meta-logic forall\<close>
@@ -307,7 +452,7 @@ proof \<comment> \<open>At this point the 'forall' has become a meta-logic foral
                  instead of k. but I personally find that confusing\<close>
   show "0 \<le> k^2" by simp
 qed
-*)
+
 
 text \<open>Forall formulas, part 2. Because of Isabelle's structure, 'forall'
 formulas are seldom the ideal thing to prove. Instead, something like
@@ -322,6 +467,9 @@ lemma nonnegative_squares_2:
 proof 
 qed
 
+section \<open>Introduction steps\<close>
+
+text\<open>\<close>
 text\<open>TO DO\<close>
 text\<open>Existence formulas.\<close>
 text\<open>Applying foralls\<close>
