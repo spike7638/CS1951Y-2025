@@ -402,7 +402,7 @@ theorem (in affine_plane) parallel_alt:
   fixes m
   assumes "l \<noteq> m"
   assumes "l \<in> Lines" and "m \<in> Lines"
-  assumes "\<forall>P. (\<not>P \<lhd>  l) \<or> (\<not> P \<lhd>  m)"
+  assumes "\<forall>P. (P \<in> Points) \<longrightarrow> (\<not>P \<lhd>  l) \<or> (\<not> P \<lhd>  m)"
   shows "l || m"
   sorry
 
@@ -427,10 +427,11 @@ point lies on some line; for every line, there's \emph{some} point not on it; ev
 contains two points, although we'll delay that for a moment. \done\<close>
 
 lemma (in affine_plane) containing_line: "S \<in> Points \<Longrightarrow> (\<exists>l . (l \<in> Lines \<and>  S \<lhd> l))"
-sorre
+  sorry
 
 lemma (in affine_plane) missed_point: "k \<in> Lines \<Longrightarrow> (\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))" 
   sorry
+
 lemma (in affine_plane) contained_point: 
   assumes "k \<in> Lines"
   shows "\<exists> S. S \<in> Points \<and>  S \<lhd> k"
@@ -555,14 +556,13 @@ ix.  Hence S != P, S != Q.
 x. Similar (arguing about l), we get  S != R. 
 
 xi. Hence the four points P,Q,R,S are all distinct, and we are done. 
-\caleb \seiji\<close>
+\<close>
 
 proposition (in affine_plane) four_points_necessary: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
       P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points"
   sorry
 
-    text\<open>\done \done\<close>
-    text \<open>We can amplify this slightly to show that not only are there four points, but that no 
+text \<open>We can amplify this slightly to show that not only are there four points, but that no 
 three are collinear; then we'll finally be able to show that every line contains at least two points!\<close>
 
 proposition (in affine_plane) four_points_noncollinear_triples: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
