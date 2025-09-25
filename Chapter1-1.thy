@@ -404,7 +404,9 @@ theorem (in affine_plane) parallel_alt:
   assumes "l \<in> Lines" and "m \<in> Lines"
   assumes "\<forall>P. (P \<in> Points) \<longrightarrow> (\<not>P \<lhd>  l) \<or> (\<not> P \<lhd>  m)"
   shows "l || m"
-  sorry
+proof -
+  show ?thesis using assms by auto
+qed
 
 text  \<open>\begin{hartshorne}
 \prop[1.2] Two distinct lines have at most one point in common.
@@ -415,7 +417,13 @@ text  \<open>\begin{hartshorne}
 
 
 lemma (in affine_plane) prop1P2: "\<lbrakk>l \<noteq> m; l \<in> Lines; m \<in> Lines; P \<in> Points; Q \<in> Points; P \<lhd>  l; P \<lhd>  m; Q \<lhd>  l; Q \<lhd>  m\<rbrakk> \<Longrightarrow> P = Q"
-  sorry
+proof (rule ccontr)
+  assume asm: "l \<noteq> m" "l \<in> Lines" "m \<in> Lines" "P \<in> Points" "Q \<in> Points" "P \<lhd>  l" "P \<lhd>  m" "Q \<lhd>  l" "Q \<lhd>  m"
+  assume ch: "P \<noteq> Q"
+  have h1: "l = join P Q" using asm ch a1b by auto
+  have h2: "m = join P Q" using asm ch a1b [of P Q m] by auto
+  show False using asm h1 h2 by auto
+qed
 
 text \<open>We can use find_theorems to show all the things that have been created in the background as a result of 
 defining the 'affine_plane' locale and proving all these small lemmas. Be sure to look at the last two in the list closely. \<close>
@@ -427,15 +435,42 @@ point lies on some line; for every line, there's \emph{some} point not on it; ev
 contains two points, although we'll delay that for a moment. \done\<close>
 
 lemma (in affine_plane) containing_line: "S \<in> Points \<Longrightarrow> (\<exists>l . (l \<in> Lines \<and>  S \<lhd> l))"
-  sorry
+proof - 
+  assume asm: "S \<in> Points"
+  obtain P where Pdistpoint: "P \<in> Points \<and> P \<noteq> S" using a3 by auto
+  show ?thesis using Pdistpoint a1a asm by auto
+qed
 
 lemma (in affine_plane) missed_point: "k \<in> Lines \<Longrightarrow> (\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))" 
-  sorry
+proof (rule ccontr)
+  obtain P Q R where h0: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
+    using a3 by auto
+  assume h: "k \<in> Lines"
+  assume ch: "\<not>(\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))"
+  have h1: "P \<lhd> k \<and> Q \<lhd> k \<and> R \<lhd> k" using ch h0 by auto
+  have h2: "collinear P Q R" using h h0 h1 collinear_def by auto
+  show False using h0 h2 by auto
+qed
 
-lemma (in affine_plane) contained_point: 
+lemma (in affine_plane) contained_point:
   assumes "k \<in> Lines"
   shows "\<exists> S. S \<in> Points \<and>  S \<lhd> k"
-  sorry
+proof (rule ccontr)
+  assume ch: "\<not> (\<exists> S. S \<in> Points \<and>  S \<lhd> k)"
+  obtain P Q R where h0: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
+    using a3 by auto
+  have h1: "P \<lhd> join P Q" using h0 a1a by auto
+  have h2: "R \<lhd> join P R" using h0 a1a by auto
+  have h3: "\<not> R \<lhd> join P Q" using a1a collinear_def h0 by auto
+  obtain S where h2: "(S \<in> Points \<and> ( \<not>  S \<lhd> join P Q))"
+    using h0 a1a missed_point by metis
+  have h3: "join P Q \<noteq> join P S" using h0 h1 h2 a1a by metis
+  have h4: "\<not> join P Q || join P S" using h3 a1a h0 h2 parallel_def by metis
+  have h5: "join P Q || k" using ch h0 a1a assms parallel_alt by metis
+  have h6: "join P S || k" using ch h0 h2 a1a assms parallel_alt by metis
+  have h7: "join P Q || join P S" using h5 h6 parallel_transitive by blast
+  show False using h7 h4 by auto
+qed
 
 text  \<open>\begin{hartshorne}
 Example. An affine plane has at least four points. There is an affine plane with four points.
@@ -568,15 +603,53 @@ three are collinear; then we'll finally be able to show that every line contains
 proposition (in affine_plane) four_points_noncollinear_triples: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
       P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points
 \<and> \<not> collinear P Q R \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
-  sorry
-
-proposition (in affine_plane) four_points_parallel_pairs: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
-      P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S \<and> 
-      P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points \<and> 
-      parallel (join P Q) (join R S) \<and> parallel (join P R) (join Q S) \<and> 
-      (join P Q) \<noteq> (join R S) \<and> (join P R) \<noteq> (join Q S) \<and> 
-      \<not> collinear P Q R \<and>\<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
-  sorry
+proof - 
+  obtain P Q R where h0: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
+    using a3 by auto
+  obtain PQ where hPQ: "PQ = (join P Q)" by auto
+  obtain PR where hPR: "PR = (join P R)" by auto
+  obtain QR where hQR: "QR = (join Q R)" by auto
+  obtain l where hl: "l = find_parallel PQ R" by auto
+  obtain k where hk: "k = find_parallel PR Q" by auto
+  have h1: "\<not> l || k"
+  proof (rule ccontr)
+    assume ch: "\<not>\<not>l || k"
+    have h2: "PQ || l" using h0 hPQ hl a1a a2b by auto
+    have h3: "k || PR" using h0 hPR hk a1a a2b by auto
+    have h4: "PQ || k" using h2 ch parallel_transitive[of PQ l k] by auto
+    have h5: "PQ || PR" using h4 h3 parallel_transitive[of PQ k PR] by auto
+    have h6: "P \<lhd> PQ \<and> P \<lhd> PR" using a1a h0 hPQ hPR by auto
+    have h7: "\<not> PQ || PR" using hPQ hPR h6 h0 parallel_def collinear_def a1a by metis
+    show False using h7 h5 by auto
+qed
+  obtain S where hS: "S \<in> Points \<and> S \<lhd> l \<and> S \<lhd> k"
+    using h0 h1 hl hk hPQ hPR parallel_def a1a a2a by auto
+  have h2: "S \<noteq> P \<and> S \<noteq> Q \<and> S \<noteq> R"
+    using a1a a2a a2b a2c affine_plane_data.parallelE h0 h1 hPQ hPR hS hk hl prop1P2 by metis
+  have h3: "\<not>(collinear P Q S)"
+  proof (rule ccontr)
+    assume ch: "\<not>\<not>(collinear P Q S)"
+    have h4: "S \<lhd> l \<and> S \<lhd> PQ" using hS collinear_def a1b ch h0 hPQ by auto
+    have h5: "l \<noteq> PQ" using hl h0 a1a a1b a2c h1 h2 hPQ hPR hS hk parallel_def by metis
+    show False using a1a a2b h0 h4 h5 hPQ hS hl parallel_def by metis
+  qed
+  have h4: "\<not>(collinear P R S)"
+  proof (rule ccontr)
+    assume ch: "\<not>\<not>(collinear P R S)"
+    have h5: "S \<lhd> k \<and> S \<lhd> PR" using hS collinear_def a1b ch h0 hPR by auto
+    have h6: "k \<noteq> PR" using hl h0 a1a a1b a2c h1 h2 hPQ hPR hS hk parallel_def by metis
+    show False using a1a a2b h0 h5 h6 hPR hS hk parallel_def by metis
+  qed
+  have h5: "\<not>(collinear Q R S)"
+  proof (rule ccontr)
+    assume ch: "\<not>\<not>(collinear Q R S)"
+    have h6: "S \<lhd> k \<and> S \<lhd> QR" using hS collinear_def a1b ch h0 hQR by auto
+    have h7: "S = Q"
+      using h6 prop1P2 a1a a2a a2c h0 h1 h2 hPQ hPR hQR hS hk hl parallel_def by metis
+    show False using h7 h2 by auto
+  qed
+  show ?thesis using h0 h2 h3 h4 h5 hS by metis
+qed
 
     text \<open>Finally, we can prove that every line contains at least two points. Recall that the statement was
 
@@ -619,7 +692,20 @@ lemma (in affine_plane) contained_points:
   fixes l
   assumes "l \<in> Lines"
   shows "\<exists> S T. S \<in> Points \<and> T \<in> Points \<and>  S \<noteq> T \<and>  S \<lhd> l \<and>  T \<lhd> l"
-  sorry
+proof (rule ccontr)
+  assume ch: "\<not> (\<exists> S T. S \<in> Points \<and> T \<in> Points \<and>  S \<noteq> T \<and>  S \<lhd> l \<and>  T \<lhd> l)"
+  obtain S where hS: "S \<in> Points \<and>  S \<lhd> l" using contained_point assms by auto
+  obtain P Q R where h0: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
+    using a3 by auto
+  consider (c1) "S = P"
+    | (c2) "S = Q"
+    | (c3) "S = R"
+    | (c4) "S \<noteq> P \<and> S \<noteq> Q \<and> S \<noteq> R" by blast
+  then show False
+  proof cases
+    case c1
+    have h1 "join Q R"
+
 
 text \<open>We've now proved the first assertion in the Example after Prop 1.2, and several other
 small lemmas that may be useful when we get to later steps. We must also show there
@@ -672,7 +758,7 @@ lemma all_pairs:
   fixes P::a4pt and Q::a4pt
   assumes "P \<noteq> Q" 
   shows "{P, Q} \<in> A4Lines"
-
+  sorry
 lemma all_joins_are_lines:
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
@@ -881,7 +967,7 @@ theorem A2_a1a1:
   fixes Q
   assumes "P \<noteq> Q" and "P \<in> A2Points" and "Q \<in> A2Points"
   shows "a2join P Q \<in> A2Lines"
-
+  sorry
 
 
 theorem A2_a1a2: 
