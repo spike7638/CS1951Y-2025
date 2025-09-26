@@ -924,81 +924,81 @@ undefined))))))"
 fun A4find_parallel::"a4pt set \<Rightarrow> a4pt \<Rightarrow> a4pt set"  where
 "A4find_parallel m T = (if (m \<in> A4Lines) then (if T \<in> m then m else (A4complement m)) else undefined)"
 
+(* Jiayi *)
 lemma all_pairs:
   fixes P::a4pt and Q::a4pt
   assumes "P \<noteq> Q" 
   shows "{P, Q} \<in> A4Lines"
-proof -
-  consider
-  (pq) "P = Pa \<and> Q = Qa"
-  | (pr) "P = Pa \<and> Q = Ra"
-  | (ps) "P = Pa \<and> Q = Sa"
-  | (qr) "P = Qa \<and> Q = Ra"
-  | (qs) "P = Qa \<and> Q = Sa"
-  | (rs) "P = Ra \<and> Q = Sa"
-  | (qp) "P = Qa \<and> Q = Pa"
-  | (rp) "P = Ra \<and> Q = Pa"
-  | (sp) "P = Sa \<and> Q = Pa"
-  | (rq) "P = Ra \<and> Q = Qa"
-  | (sq) "P = Sa \<and> Q = Qa"
-  | (sr) "P = Sa \<and> Q = Ra" using a4pt.exhaust assms by metis
-  then show ?thesis 
-  proof (cases)
+proof - 
+  consider (pq) "P = Pa \<and> Q = Qa"
+     | (qp) "P = Qa \<and> Q = Pa"
+     | (rs) "P = Ra \<and> Q = Sa"
+     | (sr) "P = Sa \<and> Q = Ra"
+     | (pr) "P = Pa \<and> Q = Ra"
+     | (rp) "P = Ra \<and> Q = Pa"
+     | (qr) "P = Qa \<and> Q = Ra"
+     | (rq) "P = Ra \<and> Q = Qa"
+     | (ps) "P = Pa \<and> Q = Sa"
+     | (sp) "P = Sa \<and> Q = Pa"
+     | (qs) "P = Qa \<and> Q = Sa"
+     | (sq) "P = Sa \<and> Q = Qa" using assms a4pt.exhaust A4Points_def by metis
+  then show ?thesis
+  proof cases
     case pq
     then show ?thesis using A4Lines_def A4PQ_def by auto
   next
-    case pr
-    then show ?thesis using A4Lines_def A4PR_def by auto
-  next
-    case ps
-    then show ?thesis using A4Lines_def A4PS_def by auto
-  next
-    case qr
-    then show ?thesis using A4Lines_def A4QR_def by auto
-  next
-    case qs
-    then show ?thesis using A4Lines_def A4QS_def by auto
+    case qp
+    then show ?thesis using A4Lines_def A4PQ_def by blast
   next
     case rs
     then show ?thesis using A4Lines_def A4RS_def by auto
   next
-    case qp
-    then show ?thesis using A4Lines_def A4PQ_def by auto
+    case sr
+    then show ?thesis using A4Lines_def A4RS_def by blast
+  next
+    case pr
+    then show ?thesis using A4Lines_def A4PR_def by auto
   next
     case rp
-    then show ?thesis 
-      using A4Lines_def A4PR_def insertCI insert_commute by auto
+    then show ?thesis using A4Lines_def A4PR_def by blast
   next
-    case sp
-    then show ?thesis 
-      using A4Lines_def A4PS_def insertCI insert_commute by auto
+    case qr
+    then show ?thesis using A4Lines_def A4QR_def by auto
   next
     case rq
-    then show ?thesis
-      using A4Lines_def A4QR_def insertCI insert_commute by auto
+    then show ?thesis using A4Lines_def A4QR_def by blast
+  next
+    case ps
+    then show ?thesis using A4Lines_def A4PS_def by auto
+  next
+    case sp
+    then show ?thesis using A4Lines_def A4PS_def by blast
+  next
+    case qs
+    then show ?thesis using A4Lines_def A4QS_def by auto
   next
     case sq
-    then show ?thesis
-      using A4Lines_def A4QS_def insertCI insert_commute by auto
-  next
-    case sr
-    then show ?thesis
-      using A4Lines_def A4RS_def insertCI insert_commute by auto
-  qed
+    then show ?thesis using A4Lines_def A4QS_def by blast
+  qed 
 qed
 
+(* Jiayi *)
 lemma all_joins_are_lines:
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
   shows "A4join P Q \<in> A4Lines"
-  using assms all_pairs by auto
-(* this lemma does not need the second and third assumptions *)
+proof - 
+  show ?thesis using assms all_pairs by auto
+qed
 
+(* Jiayi *)
 theorem PinPQ1:
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points" 
   shows "P \<in> A4join P Q"
-  using assms by auto
+proof - 
+  show ?thesis using assms by auto
+qed
 (* this lemma does not need the second and third assumptions *)
 
 theorem QinPQ1:
