@@ -1068,106 +1068,72 @@ theorem
 
 find_theorems name: collinear
 
-text \<open>\Luke HW 3 \<close>
-
-theorem  A4affine_plane_a3_lemma:
+lemma A4affine_plane_a3_lemma:
   shows "Pa \<in> A4Points \<and> Qa \<in> A4Points \<and> Ra \<in> A4Points" and 
         "Pa \<noteq> Qa \<and> Pa \<noteq> Ra \<and> Qa \<noteq> Ra" and  
-        "\<not>  affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
-proof - 
-  have 0: "Pa \<in> A4Points" using A4Points_def by auto
-  have 1: "Qa \<in> A4Points" using A4Points_def by auto
-  have 2: "Ra \<in> A4Points" using A4Points_def by auto
-
-  show "Pa \<in> A4Points \<and> Qa \<in> A4Points \<and> Ra \<in> A4Points" using 0 1 2 by auto
-  show "Pa \<noteq> Qa \<and> Pa \<noteq> Ra \<and> Qa \<noteq> Ra" by auto
-  show "\<not>  affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra" 
-    unfolding affine_plane_data.collinear_def A4incid.simps A4Lines_def A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def
-    using 0 1 2 by auto
+        "\<not> affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
+proof -
+  show t0: "Pa \<in> A4Points \<and> Qa \<in> A4Points \<and> Ra \<in> A4Points" 
+    and "Pa \<noteq> Qa \<and> Pa \<noteq> Ra \<and> Qa \<noteq> Ra" using A4Points_def by auto
+  show "\<not> affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
+  proof (rule ccontr)
+    assume cd: "\<not> (\<not> affine_plane_data.collinear 
+      A4Points A4Lines A4incid Pa Qa Ra)"
+    show False
+    proof -
+      have "affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
+        using cd by auto
+      then obtain L where ldef: "L \<in> A4Lines \<and> Pa \<in> L \<and> Qa \<in> L \<and> Ra \<in> L" 
+        using A4incid.elims t0 affine_plane_data.collinear_def by (smt (verit))
+      consider
+      (pq) "L = A4PQ"
+      | (pr) "L = A4PR"
+      | (ps) "L = A4PS"
+      | (qr) "L = A4QR"
+      | (qs) "L = A4QS"
+      | (rs) "L = A4RS" using A4Lines_def ldef by blast
+      then show False
+      proof (cases)
+        case pq
+        then show ?thesis using A4PQ_def ldef by auto
+      next
+        case pr
+        then show ?thesis using A4PR_def ldef by auto
+      next
+        case ps
+        then show ?thesis using A4PS_def ldef by auto
+      next
+        case qr
+        then show ?thesis using A4QR_def ldef by auto
+      next
+        case qs
+        then show ?thesis using A4QS_def ldef by auto
+      next
+        case rs
+        then show ?thesis using A4RS_def ldef by auto
+      qed
+    qed
+  qed
 qed
 
 theorem A4affine_plane_a3: 
-  " \<exists>P Q R.
-       P \<in> A4Points \<and> Q \<in> A4Points \<and> R \<in> A4Points \<and>
-       P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and>
-       \<not> affine_plane_data.collinear
-           A4Points
-           A4Lines
-           A4incid P Q R" 
-proof - 
-  show ?thesis using  A4affine_plane_a3_lemma by auto
-qed
-
-text \<open>\Done\<close>
-
-text \<open>\Luke \Jiayi\<close>
+  "\<exists>P Q R. P \<in> A4Points \<and> Q \<in> A4Points \<and> R \<in> A4Points \<and> P \<noteq> Q \<and> P \<noteq> R 
+  \<and> Q \<noteq> R \<and> \<not> affine_plane_data.collinear A4Points A4Lines A4incid P Q R"
+  using A4affine_plane_a3_lemma by auto
 
 theorem A4affine_plane_a1a: 
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points" 
-  shows "A4join P Q \<in> A4Lines" and "A4incid P (A4join P Q)" and "A4incid Q (A4join P Q)"
+  shows "A4join P Q \<in> A4Lines" and "A4incid P (A4join P Q)" 
+    and "A4incid Q (A4join P Q)"
   using assms all_joins_are_lines by auto
-
-lemma A4affine_line_card_2:
-  fixes m
-  assumes "m \<in> A4Lines"
-  shows "card(m) = 2"
-proof -
-  consider
-  (pq) "m = A4PQ"
-      | (pr) "m = A4PR"
-      | (ps) "m = A4PS"
-      | (qr) "m = A4QR"
-      | (qs) "m = A4QS"
-      | (rs) "m = A4RS"
-    using assms A4Lines_def by blast
-  then show ?thesis
-  proof cases
-    case pq
-    have "m = {Pa, Qa}" using A4PQ_def pq by auto
-    then show ?thesis using assms by auto
-  next
-    case pr
-    have "m = {Pa, Ra}" using A4PR_def pr by auto
-    then show ?thesis using assms by auto
-  next
-    case ps
-    have "m = {Pa, Sa}" using A4PS_def ps by auto
-    then show ?thesis using assms by auto
-  next
-    case qr
-    have "m = {Qa, Ra}" using A4QR_def qr by auto
-    then show ?thesis using assms by auto
-  next
-    case qs
-    have "m = {Qa, Sa}" using A4QS_def qs by auto
-    then show ?thesis using assms by auto
-  next
-    case rs
-    have "m = {Ra, Sa}" using A4RS_def rs by auto
-    then show ?thesis using assms by auto
-  qed
-qed
-
 
 theorem A4affine_plane_a1b:  
   fixes P Q
-  assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
+  assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points" 
     and "A4incid P m" and "A4incid Q m"
   shows "m = A4join P Q"
-proof -
-  have 0: "A4join P Q = {P, Q}" using assms by auto
-  have 1: "card(A4join P Q) = 2" using assms 0 by auto
-  have 2: "m \<in> A4Lines" using assms by auto
-  have 3: "card(m) = 2" using assms 2 A4affine_line_card_2 by auto
-  have 4: "P \<in> m" using assms by auto
-  have 5: "Q \<in> m" using assms by auto
-  have 6: "m = {P, Q}" using assms 3 4 5 card_2_iff
-      emptyE insertE insert_commute by metis
-  then show ?thesis using assms by auto
-qed
-
-(* NB. My initial proof of the theorem above was 250 lines long. My final proof was one line. --Spike *)
+  sorry
 
 lemma A4line_complement:
   fixes l
@@ -1197,116 +1163,10 @@ theorem A4affine_plane_a2:
   fixes P l
   assumes "\<not> A4incid P l" 
   assumes "P \<in> A4Points " and "l \<in> A4Lines"
-  shows "A4find_parallel l P \<in> A4Lines" and
-     "affine_plane_data.parallel A4Points A4Lines A4incid  (A4find_parallel l P) l" and
-     "A4incid P (A4find_parallel l P)"
-proof - 
-  show "A4find_parallel l P \<in> A4Lines" using A4find_parallel.simps A4line_complement assms A4Lines_def by auto
-
-  show "affine_plane_data.parallel A4Points A4Lines A4incid  (A4find_parallel l P) l"
-    using A4find_parallel.simps A4line_complement assms A4Lines_def A4complement by auto
-
-  have 0: "A4find_parallel l P = A4complement l" using A4find_parallel.simps assms by auto
-
-  consider (PPa) "P = Pa"
-    | (PQa) "P = Qa"
-    | (PRa) "P = Ra"
-    | (PSa) "P = Sa" using A4Points_def a4pt.exhaust by blast
-  then show "A4incid P (A4find_parallel l P)"
-  proof cases
-    case PPa
-    consider (lQR) "l = A4QR"
-      | (lQS) "l = A4QS"
-      | (lRS) "l = A4RS" using PPa A4Lines_def A4PQ_def A4PR_def A4PS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lQR
-      then have "A4complement l = A4PS" using A4complement assms PPa 
-        by (simp add: A4PQ_def A4PR_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PS_def PPa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lQS
-      then have "A4complement l = A4PR" using A4complement assms PPa 
-        by (simp add: A4PQ_def A4PR_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PR_def PPa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lRS
-      then have "A4complement l = A4PQ" using A4complement assms PPa 
-        by (simp add: A4PQ_def A4PR_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PQ_def PPa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-
-  next
-    case PQa
-    consider (lPR) "l = A4PR"
-      | (lPS) "l = A4PS"
-      | (lRS) "l = A4RS" using PQa A4Lines_def A4PQ_def A4QR_def A4QS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lPR
-      then have "A4complement l = A4QS" using A4complement assms PQa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QS_def PQa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lPS
-      then have "A4complement l = A4QR" using A4complement assms PQa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QR_def PQa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lRS
-      then have "A4complement l = A4PQ" using A4complement assms PQa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PQ_def PQa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-
-  next
-    case PRa
-    consider (lPQ) "l = A4PQ"
-      | (lPS) "l = A4PS"
-      | (lQS) "l = A4QS" using PRa A4Lines_def A4PR_def A4QR_def A4RS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lPQ
-      then have "A4complement l = A4RS" using A4complement assms PRa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4RS_def PRa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lPS
-      then have "A4complement l = A4QR" using A4complement assms PRa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QR_def PRa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lQS
-      then have "A4complement l = A4PR" using A4complement assms PRa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PR_def PRa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-  next
-    case PSa
-    consider (lPQ) "l = A4PQ"
-      | (lPR) "l = A4PR"
-      | (lQR) "l = A4QR" using PSa A4Lines_def A4PS_def A4QS_def A4RS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lPQ
-      then have "A4complement l = A4RS" using A4complement assms PSa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4RS_def PSa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lPR
-      then have "A4complement l = A4QS" using A4complement assms PSa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QS_def PSa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lQR
-      then have "A4complement l = A4PS" using A4complement assms PSa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PS_def PSa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-  qed
-qed
-
-text \<open>\Done \Done\<close>
+  shows "A4find_parallel l P \<in> A4Lines" and "affine_plane_data.parallel 
+    A4Points A4Lines A4incid (A4find_parallel l P) l" 
+    and "A4incid P (A4find_parallel l P)"
+  sorry
 
 lemma fpp: 
   fixes P l m
