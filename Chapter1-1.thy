@@ -170,9 +170,7 @@ lemma parallel_reflexive [iff]:
   fixes l
   assumes "l \<in> Lines" 
   shows "parallel l l"
-proof -
-  show ?thesis using assms parallel_def by auto
-qed
+  using assms parallel_def by auto
 
 lemma parallel_symmetric [iff]: 
   fixes l m
@@ -200,17 +198,13 @@ lemma parallel_if_no_shared_pointsI [intro]:
   assumes " \<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  l \<and> P \<lhd>  m)" and
   "l \<in> Lines" and "m \<in> Lines"
   shows "l || m"
-proof -
-  show ?thesis using assms parallel_def by auto
-qed
+  using assms parallel_def by auto
 
 lemma parallel_if_no_shared_points2I [intro]:
   assumes "\<forall>P .  P \<notin>  Points \<or> \<not> P \<lhd>  l \<and>  \<not>P \<lhd>  m" and
   "l \<in> Lines" and "m \<in> Lines"
   shows "l || m"
-proof -
-  show ?thesis using assms parallel_def by auto
-qed
+  using assms parallel_def by auto
 
 definition point_pencil::"'p \<Rightarrow> 'l set" where
 "point_pencil P = { n::'l . (n \<in> Lines) \<and> P \<lhd>  n}"
@@ -459,11 +453,9 @@ theorem (in affine_plane) parallel_alt:
   fixes m
   assumes "l \<noteq> m"
   assumes "l \<in> Lines" and "m \<in> Lines"
-  assumes "\<forall>P. (P \<in> Points) \<longrightarrow> (\<not>P \<lhd>  l) \<or> (\<not> P \<lhd>  m)"
-  shows "l || m"
-proof -
-  show ?thesis using assms by auto
-qed
+  assumes "\<forall>P. (P \<in> Points) \<longrightarrow> (\<not> P \<lhd> l) \<or> (\<not> P \<lhd> m)"
+  shows "l || m" 
+  using assms by auto
 
 text  \<open>\begin{hartshorne}
 \prop[1.2] Two distinct lines have at most one point in common.
@@ -472,14 +464,10 @@ text  \<open>\begin{hartshorne}
 \end{hartshorne}
 \<close>
 
-lemma (in affine_plane) prop1P2: "\<lbrakk>l \<noteq> m; l \<in> Lines; m \<in> Lines; P \<in> Points; Q \<in> Points; P \<lhd>  l; P \<lhd>  m; Q \<lhd>  l; Q \<lhd>  m\<rbrakk> \<Longrightarrow> P = Q"
-proof (rule ccontr)
-  assume asm: "l \<noteq> m" "l \<in> Lines" "m \<in> Lines" "P \<in> Points" "Q \<in> Points" "P \<lhd>  l" "P \<lhd>  m" "Q \<lhd>  l" "Q \<lhd>  m"
-  assume ch: "P \<noteq> Q"
-  have h1: "l = join P Q" using asm ch a1b by auto
-  have h2: "m = join P Q" using asm ch a1b [of P Q m] by auto
-  show False using asm h1 h2 by auto
-qed
+lemma (in affine_plane) prop1P2: 
+  "\<lbrakk>l \<noteq> m; l \<in> Lines; m \<in> Lines; P \<in> Points; Q \<in> Points; 
+  P \<lhd> l; P \<lhd> m; Q \<lhd> l; Q \<lhd> m\<rbrakk> \<Longrightarrow> P = Q"
+  using a1b by blast
 
 text \<open>We can use find_theorems to show all the things that have been created in the background as a result of 
 defining the 'affine_plane' locale and proving all these small lemmas. Be sure to look at the last two in the list closely. \<close>
@@ -490,43 +478,49 @@ We can also prove some basic theorems about affine planes not in Hartshorne: eve
 point lies on some line; for every line, there's \emph{some} point not on it; every line contains some point, and in fact every line 
 contains two points, although we'll delay that for a moment. \done\<close>
 
-lemma (in affine_plane) containing_line: "S \<in> Points \<Longrightarrow> (\<exists>l . (l \<in> Lines \<and>  S \<lhd> l))"
-proof - 
-  assume asm: "S \<in> Points"
-  obtain P where Pdistpoint: "P \<in> Points \<and> P \<noteq> S" using a3 by auto
-  show ?thesis using Pdistpoint a1a asm by auto
+text \<open>\hadi\<close>
+lemma (in affine_plane) containing_line: 
+  "S \<in> Points \<Longrightarrow> (\<exists>l. (l \<in> Lines \<and> S \<lhd> l))"
+proof -
+  assume sdef: "S \<in> Points"
+  obtain T where tdef: "T \<in> Points \<and> T \<noteq> S" using a3 by auto
+  have "(join S T) \<in> Lines" using a1a tdef sdef by auto
+  then show ?thesis using join_containsL2 sdef tdef by auto
 qed
+(* or simply using a1a a3 by metis *)
+text \<open>\done\<close>
 
-lemma (in affine_plane) missed_point: "k \<in> Lines \<Longrightarrow> (\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))" 
-proof (rule ccontr)
-  obtain P Q R where h0: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
-    using a3 by auto
-  assume h: "k \<in> Lines"
-  assume ch: "\<not>(\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))"
-  have h1: "P \<lhd> k \<and> Q \<lhd> k \<and> R \<lhd> k" using ch h0 by auto
-  have h2: "collinear P Q R" using h h0 h1 collinear_def by auto
-  show False using h0 h2 by auto
+text \<open>\hadi\<close>
+lemma (in affine_plane) missed_point: 
+  "k \<in> Lines \<Longrightarrow> (\<exists>S. (S \<in> Points \<and> (\<not> S \<lhd> k)))" 
+proof -
+  assume kdef: "k \<in> Lines"
+  obtain P Q R where pqr: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points 
+    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
+  have "(\<not> P \<lhd> k) \<or> (\<not> Q \<lhd> k) \<or> (\<not> R \<lhd> k)" 
+    using kdef pqr collinear_def by auto
+  then show ?thesis using pqr by auto
 qed
+(* or simply using collinear_def a3 by metis *)
+text \<open>\done\<close>
 
-lemma (in affine_plane) contained_point:
+text \<open>\hadi\<close>
+lemma (in affine_plane) contained_point: 
   assumes "k \<in> Lines"
-  shows "\<exists> S. S \<in> Points \<and>  S \<lhd> k"
+  shows "\<exists>S. S \<in> Points \<and> S \<lhd> k"
 proof (rule ccontr)
-  assume ch: "\<not> (\<exists> S. S \<in> Points \<and>  S \<lhd> k)"
-  obtain P Q R where h0: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
-    using a3 by auto
-  have h1: "P \<lhd> join P Q" using h0 a1a by auto
-  have h2: "R \<lhd> join P R" using h0 a1a by auto
-  have h3: "\<not> R \<lhd> join P Q" using a1a collinear_def h0 by auto
-  obtain S where h2: "(S \<in> Points \<and> ( \<not>  S \<lhd> join P Q))"
-    using h0 a1a missed_point by metis
-  have h3: "join P Q \<noteq> join P S" using h0 h1 h2 a1a by metis
-  have h4: "\<not> join P Q || join P S" using h3 a1a h0 h2 parallel_def by metis
-  have h5: "join P Q || k" using ch h0 a1a assms parallel_alt by metis
-  have h6: "join P S || k" using ch h0 h2 a1a assms parallel_alt by metis
-  have h7: "join P Q || join P S" using h5 h6 parallel_transitive by blast
-  show False using h7 h4 by auto
+  assume cd: "\<not> (\<exists>S. S \<in> Points \<and> S \<lhd> k)"
+  obtain P Q R where pqr: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points 
+    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
+  show False
+  proof -
+    have 0: "\<not> (join P Q || join Q R)" 
+      using pqr a1a collinear_def parallel_def by metis
+    have 1: "join P Q || k \<and> join Q R || k" using pqr a1a assms cd by auto
+    show False using 0 1 parallel_transitive by blast
+  qed
 qed
+text \<open>\done\<close>
 
 text  \<open>\begin{hartshorne}
 Example. An affine plane has at least four points. There is an affine plane with four points.
@@ -655,58 +649,12 @@ proposition (in affine_plane) four_points_necessary:
 text \<open>We can amplify this slightly to show that not only are there four points, but that no 
 three are collinear; then we'll finally be able to show that every line contains at least two points!\<close>
 
-text \<open>\nick\oliver\<close>
-proposition (in affine_plane) four_points_noncollinear_triples: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
-      P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points
-\<and> \<not> collinear P Q R \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
-proof - 
-  obtain P Q R where h0: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
-    using a3 by auto
-  obtain PQ where hPQ: "PQ = (join P Q)" by auto
-  obtain PR where hPR: "PR = (join P R)" by auto
-  obtain QR where hQR: "QR = (join Q R)" by auto
-  obtain l where hl: "l = find_parallel PQ R" by auto
-  obtain k where hk: "k = find_parallel PR Q" by auto
-  have h1: "\<not> l || k"
-  proof (rule ccontr)
-    assume ch: "\<not>\<not>l || k"
-    have h2: "PQ || l" using h0 hPQ hl a1a a2b by auto
-    have h3: "k || PR" using h0 hPR hk a1a a2b by auto
-    have h4: "PQ || k" using h2 ch parallel_transitive[of PQ l k] by auto
-    have h5: "PQ || PR" using h4 h3 parallel_transitive[of PQ k PR] by auto
-    have h6: "P \<lhd> PQ \<and> P \<lhd> PR" using a1a h0 hPQ hPR by auto
-    have h7: "\<not> PQ || PR" using hPQ hPR h6 h0 parallel_def collinear_def a1a by metis
-    show False using h7 h5 by auto
-qed
-  obtain S where hS: "S \<in> Points \<and> S \<lhd> l \<and> S \<lhd> k"
-    using h0 h1 hl hk hPQ hPR parallel_def a1a a2a by auto
-  have h2: "S \<noteq> P \<and> S \<noteq> Q \<and> S \<noteq> R"
-    using a1a a2a a2b a2c affine_plane_data.parallelE h0 h1 hPQ hPR hS hk hl prop1P2 by metis
-  have h3: "\<not>(collinear P Q S)"
-  proof (rule ccontr)
-    assume ch: "\<not>\<not>(collinear P Q S)"
-    have h4: "S \<lhd> l \<and> S \<lhd> PQ" using hS collinear_def a1b ch h0 hPQ by auto
-    have h5: "l \<noteq> PQ" using hl h0 a1a a1b a2c h1 h2 hPQ hPR hS hk parallel_def by metis
-    show False using a1a a2b h0 h4 h5 hPQ hS hl parallel_def by metis
-  qed
-  have h4: "\<not>(collinear P R S)"
-  proof (rule ccontr)
-    assume ch: "\<not>\<not>(collinear P R S)"
-    have h5: "S \<lhd> k \<and> S \<lhd> PR" using hS collinear_def a1b ch h0 hPR by auto
-    have h6: "k \<noteq> PR" using hl h0 a1a a1b a2c h1 h2 hPQ hPR hS hk parallel_def by metis
-    show False using a1a a2b h0 h5 h6 hPR hS hk parallel_def by metis
-  qed
-  have h5: "\<not>(collinear Q R S)"
-  proof (rule ccontr)
-    assume ch: "\<not>\<not>(collinear Q R S)"
-    have h6: "S \<lhd> k \<and> S \<lhd> QR" using hS collinear_def a1b ch h0 hQR by auto
-    have h7: "S = Q"
-      using h6 prop1P2 a1a a2a a2c h0 h1 h2 hPQ hPR hQR hS hk hl parallel_def by metis
-    show False using h7 h2 by auto
-  qed
-  show ?thesis using h0 h2 h3 h4 h5 hS by metis
-qed
-text \<open>\done\<close>
+proposition (in affine_plane) four_points_noncollinear_triples: 
+  "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). P \<noteq> Q \<and> P \<noteq> R 
+  \<and> Q \<noteq> R \<and> P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points 
+  \<and> R \<in> Points \<and> S \<in> Points \<and> \<not> collinear P Q R \<and> \<not> collinear P Q S
+  \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
+  sorry
 
 text \<open>\hadi\<close>
 lemma (in affine_plane) not_collinear_join:
@@ -970,81 +918,81 @@ undefined))))))"
 fun A4find_parallel::"a4pt set \<Rightarrow> a4pt \<Rightarrow> a4pt set"  where
 "A4find_parallel m T = (if (m \<in> A4Lines) then (if T \<in> m then m else (A4complement m)) else undefined)"
 
-(* Jiayi *)
 lemma all_pairs:
   fixes P::a4pt and Q::a4pt
   assumes "P \<noteq> Q" 
   shows "{P, Q} \<in> A4Lines"
-proof - 
-  consider (pq) "P = Pa \<and> Q = Qa"
-     | (qp) "P = Qa \<and> Q = Pa"
-     | (rs) "P = Ra \<and> Q = Sa"
-     | (sr) "P = Sa \<and> Q = Ra"
-     | (pr) "P = Pa \<and> Q = Ra"
-     | (rp) "P = Ra \<and> Q = Pa"
-     | (qr) "P = Qa \<and> Q = Ra"
-     | (rq) "P = Ra \<and> Q = Qa"
-     | (ps) "P = Pa \<and> Q = Sa"
-     | (sp) "P = Sa \<and> Q = Pa"
-     | (qs) "P = Qa \<and> Q = Sa"
-     | (sq) "P = Sa \<and> Q = Qa" using assms a4pt.exhaust A4Points_def by metis
-  then show ?thesis
-  proof cases
+proof -
+  consider
+  (pq) "P = Pa \<and> Q = Qa"
+  | (pr) "P = Pa \<and> Q = Ra"
+  | (ps) "P = Pa \<and> Q = Sa"
+  | (qr) "P = Qa \<and> Q = Ra"
+  | (qs) "P = Qa \<and> Q = Sa"
+  | (rs) "P = Ra \<and> Q = Sa"
+  | (qp) "P = Qa \<and> Q = Pa"
+  | (rp) "P = Ra \<and> Q = Pa"
+  | (sp) "P = Sa \<and> Q = Pa"
+  | (rq) "P = Ra \<and> Q = Qa"
+  | (sq) "P = Sa \<and> Q = Qa"
+  | (sr) "P = Sa \<and> Q = Ra" using a4pt.exhaust assms by metis
+  then show ?thesis 
+  proof (cases)
     case pq
     then show ?thesis using A4Lines_def A4PQ_def by auto
-  next
-    case qp
-    then show ?thesis using A4Lines_def A4PQ_def by blast
-  next
-    case rs
-    then show ?thesis using A4Lines_def A4RS_def by auto
-  next
-    case sr
-    then show ?thesis using A4Lines_def A4RS_def by blast
   next
     case pr
     then show ?thesis using A4Lines_def A4PR_def by auto
   next
-    case rp
-    then show ?thesis using A4Lines_def A4PR_def by blast
+    case ps
+    then show ?thesis using A4Lines_def A4PS_def by auto
   next
     case qr
     then show ?thesis using A4Lines_def A4QR_def by auto
   next
-    case rq
-    then show ?thesis using A4Lines_def A4QR_def by blast
-  next
-    case ps
-    then show ?thesis using A4Lines_def A4PS_def by auto
-  next
-    case sp
-    then show ?thesis using A4Lines_def A4PS_def by blast
-  next
     case qs
     then show ?thesis using A4Lines_def A4QS_def by auto
   next
+    case rs
+    then show ?thesis using A4Lines_def A4RS_def by auto
+  next
+    case qp
+    then show ?thesis using A4Lines_def A4PQ_def by auto
+  next
+    case rp
+    then show ?thesis 
+      using A4Lines_def A4PR_def insertCI insert_commute by auto
+  next
+    case sp
+    then show ?thesis 
+      using A4Lines_def A4PS_def insertCI insert_commute by auto
+  next
+    case rq
+    then show ?thesis
+      using A4Lines_def A4QR_def insertCI insert_commute by auto
+  next
     case sq
-    then show ?thesis using A4Lines_def A4QS_def by blast
-  qed 
+    then show ?thesis
+      using A4Lines_def A4QS_def insertCI insert_commute by auto
+  next
+    case sr
+    then show ?thesis
+      using A4Lines_def A4RS_def insertCI insert_commute by auto
+  qed
 qed
 
-(* Jiayi *)
 lemma all_joins_are_lines:
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
   shows "A4join P Q \<in> A4Lines"
-proof - 
-  show ?thesis using assms all_pairs by auto
-qed
+  using assms all_pairs by auto
+(* this lemma does not need the second and third assumptions *)
 
-(* Jiayi *)
 theorem PinPQ1:
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points" 
   shows "P \<in> A4join P Q"
-proof - 
-  show ?thesis using assms by auto
-qed
+  using assms by auto
 (* this lemma does not need the second and third assumptions *)
 
 theorem QinPQ1:
@@ -1068,245 +1016,127 @@ theorem
 
 find_theorems name: collinear
 
-text \<open>\Luke HW 3 \<close>
-
-theorem  A4affine_plane_a3_lemma:
+lemma A4affine_plane_a3_lemma:
   shows "Pa \<in> A4Points \<and> Qa \<in> A4Points \<and> Ra \<in> A4Points" and 
         "Pa \<noteq> Qa \<and> Pa \<noteq> Ra \<and> Qa \<noteq> Ra" and  
-        "\<not>  affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
-proof - 
-  have 0: "Pa \<in> A4Points" using A4Points_def by auto
-  have 1: "Qa \<in> A4Points" using A4Points_def by auto
-  have 2: "Ra \<in> A4Points" using A4Points_def by auto
-
-  show "Pa \<in> A4Points \<and> Qa \<in> A4Points \<and> Ra \<in> A4Points" using 0 1 2 by auto
-  show "Pa \<noteq> Qa \<and> Pa \<noteq> Ra \<and> Qa \<noteq> Ra" by auto
-  show "\<not>  affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra" 
-    unfolding affine_plane_data.collinear_def A4incid.simps A4Lines_def A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def
-    using 0 1 2 by auto
+        "\<not> affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
+proof -
+  show t0: "Pa \<in> A4Points \<and> Qa \<in> A4Points \<and> Ra \<in> A4Points" 
+    and "Pa \<noteq> Qa \<and> Pa \<noteq> Ra \<and> Qa \<noteq> Ra" using A4Points_def by auto
+  show "\<not> affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
+  proof (rule ccontr)
+    assume cd: "\<not> (\<not> affine_plane_data.collinear 
+      A4Points A4Lines A4incid Pa Qa Ra)"
+    show False
+    proof -
+      have "affine_plane_data.collinear A4Points A4Lines A4incid Pa Qa Ra"
+        using cd by auto
+      then obtain L where ldef: "L \<in> A4Lines \<and> Pa \<in> L \<and> Qa \<in> L \<and> Ra \<in> L" 
+        using A4incid.elims t0 affine_plane_data.collinear_def by (smt (verit))
+      consider
+      (pq) "L = A4PQ"
+      | (pr) "L = A4PR"
+      | (ps) "L = A4PS"
+      | (qr) "L = A4QR"
+      | (qs) "L = A4QS"
+      | (rs) "L = A4RS" using A4Lines_def ldef by blast
+      then show False
+      proof (cases)
+        case pq
+        then show ?thesis using A4PQ_def ldef by auto
+      next
+        case pr
+        then show ?thesis using A4PR_def ldef by auto
+      next
+        case ps
+        then show ?thesis using A4PS_def ldef by auto
+      next
+        case qr
+        then show ?thesis using A4QR_def ldef by auto
+      next
+        case qs
+        then show ?thesis using A4QS_def ldef by auto
+      next
+        case rs
+        then show ?thesis using A4RS_def ldef by auto
+      qed
+    qed
+  qed
 qed
 
 theorem A4affine_plane_a3: 
-  " \<exists>P Q R.
-       P \<in> A4Points \<and> Q \<in> A4Points \<and> R \<in> A4Points \<and>
-       P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and>
-       \<not> affine_plane_data.collinear
-           A4Points
-           A4Lines
-           A4incid P Q R" 
-proof - 
-  show ?thesis using  A4affine_plane_a3_lemma by auto
-qed
-
-text \<open>\Done\<close>
-
-text \<open>\Luke \Jiayi\<close>
+  "\<exists>P Q R. P \<in> A4Points \<and> Q \<in> A4Points \<and> R \<in> A4Points \<and> P \<noteq> Q \<and> P \<noteq> R 
+  \<and> Q \<noteq> R \<and> \<not> affine_plane_data.collinear A4Points A4Lines A4incid P Q R"
+  using A4affine_plane_a3_lemma by auto
 
 theorem A4affine_plane_a1a: 
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points" 
-  shows "A4join P Q \<in> A4Lines" and "A4incid P (A4join P Q)" and "A4incid Q (A4join P Q)"
+  shows "A4join P Q \<in> A4Lines" and "A4incid P (A4join P Q)" 
+    and "A4incid Q (A4join P Q)"
   using assms all_joins_are_lines by auto
-
-lemma A4affine_line_card_2:
-  fixes m
-  assumes "m \<in> A4Lines"
-  shows "card(m) = 2"
-proof -
-  consider
-  (pq) "m = A4PQ"
-      | (pr) "m = A4PR"
-      | (ps) "m = A4PS"
-      | (qr) "m = A4QR"
-      | (qs) "m = A4QS"
-      | (rs) "m = A4RS"
-    using assms A4Lines_def by blast
-  then show ?thesis
-  proof cases
-    case pq
-    have "m = {Pa, Qa}" using A4PQ_def pq by auto
-    then show ?thesis using assms by auto
-  next
-    case pr
-    have "m = {Pa, Ra}" using A4PR_def pr by auto
-    then show ?thesis using assms by auto
-  next
-    case ps
-    have "m = {Pa, Sa}" using A4PS_def ps by auto
-    then show ?thesis using assms by auto
-  next
-    case qr
-    have "m = {Qa, Ra}" using A4QR_def qr by auto
-    then show ?thesis using assms by auto
-  next
-    case qs
-    have "m = {Qa, Sa}" using A4QS_def qs by auto
-    then show ?thesis using assms by auto
-  next
-    case rs
-    have "m = {Ra, Sa}" using A4RS_def rs by auto
-    then show ?thesis using assms by auto
-  qed
-qed
-
 
 theorem A4affine_plane_a1b:  
   fixes P Q
-  assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
+  assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points" 
     and "A4incid P m" and "A4incid Q m"
   shows "m = A4join P Q"
 proof -
-  have 0: "A4join P Q = {P, Q}" using assms by auto
-  have 1: "card(A4join P Q) = 2" using assms 0 by auto
-  have 2: "m \<in> A4Lines" using assms by auto
-  have 3: "card(m) = 2" using assms 2 A4affine_line_card_2 by auto
-  have 4: "P \<in> m" using assms by auto
-  have 5: "Q \<in> m" using assms by auto
-  have 6: "m = {P, Q}" using assms 3 4 5 card_2_iff
-      emptyE insertE insert_commute by metis
-  then show ?thesis using assms by auto
+  let ?j = "A4join P Q"
+  show ?thesis using assms A4affine_plane_a1a by (smt (z3) A4Lines_def A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def
+      A4incid.elims(2) insert_commute insert_iff singletonD)
 qed
-
-(* NB. My initial proof of the theorem above was 250 lines long. My final proof was one line. --Spike *)
 
 lemma A4line_complement:
   fixes l
   assumes "l \<in> A4Lines"
   shows "A4complement l \<in> A4Lines"
-  sorry
+proof -
+  let ?m = "A4complement l"
+  have "l = A4PQ \<or> l = A4PR \<or> l = A4PS \<or> l = A4QR \<or> l = A4QS \<or> l = A4RS" 
+    using assms unfolding A4Lines_def by auto
+  then have 
+    "?m = A4RS \<or> ?m = A4QS \<or> ?m = A4QR \<or> ?m = A4PS \<or> ?m = A4PR \<or> ?m = A4PQ" 
+    using assms A4complement.simps unfolding A4Lines_def by presburger
+  then show ?thesis unfolding A4Lines_def by blast
+qed
 
 lemma A4complement_parallel_helper: 
   fixes n
   assumes "n \<in> A4Lines"
   shows "n \<inter> (A4complement n) = {}"
-  sorry
+proof -
+  have "(A4complement n) \<in> A4Lines" using assms A4line_complement by auto
+  then show ?thesis
+  by (smt (verit) A4Lines_def A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def
+      A4RS_def A4complement.simps Int_insert_right_if0 Int_insert_right_if1
+      a4pt.distinct(1,11,3,5,7,9) assms bot_set_def disjoint_iff empty_iff inf.idem
+      inf.left_idem inf_bot_left inf_bot_right inf_commute insertE insert_absorb
+      insert_absorb2 insert_commute insert_disjoint(2) insert_ident insert_iff
+      singletonD singletonI singleton_iff)
+qed
 
 lemma A4disjoint_parallel:
   fixes n k
   assumes "n \<inter> k = {}" and "n \<in> A4Lines" and "k \<in> A4Lines"
   shows "affine_plane_data.parallel A4Points A4Lines A4incid k n"
-  sorry
+  using assms affine_plane_data.parallel_def by fastforce
 
 lemma A4complement: 
   fixes n
   assumes "n \<in> A4Lines"
   shows "affine_plane_data.parallel A4Points A4Lines A4incid (A4complement n) n"
-  sorry
+  using assms A4complement_parallel_helper 
+    A4disjoint_parallel A4line_complement by presburger
 
 theorem A4affine_plane_a2: 
   fixes P l
   assumes "\<not> A4incid P l" 
   assumes "P \<in> A4Points " and "l \<in> A4Lines"
-  shows "A4find_parallel l P \<in> A4Lines" and
-     "affine_plane_data.parallel A4Points A4Lines A4incid  (A4find_parallel l P) l" and
-     "A4incid P (A4find_parallel l P)"
-proof - 
-  show "A4find_parallel l P \<in> A4Lines" using A4find_parallel.simps A4line_complement assms A4Lines_def by auto
-
-  show "affine_plane_data.parallel A4Points A4Lines A4incid  (A4find_parallel l P) l"
-    using A4find_parallel.simps A4line_complement assms A4Lines_def A4complement by auto
-
-  have 0: "A4find_parallel l P = A4complement l" using A4find_parallel.simps assms by auto
-
-  consider (PPa) "P = Pa"
-    | (PQa) "P = Qa"
-    | (PRa) "P = Ra"
-    | (PSa) "P = Sa" using A4Points_def a4pt.exhaust by blast
-  then show "A4incid P (A4find_parallel l P)"
-  proof cases
-    case PPa
-    consider (lQR) "l = A4QR"
-      | (lQS) "l = A4QS"
-      | (lRS) "l = A4RS" using PPa A4Lines_def A4PQ_def A4PR_def A4PS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lQR
-      then have "A4complement l = A4PS" using A4complement assms PPa 
-        by (simp add: A4PQ_def A4PR_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PS_def PPa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lQS
-      then have "A4complement l = A4PR" using A4complement assms PPa 
-        by (simp add: A4PQ_def A4PR_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PR_def PPa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lRS
-      then have "A4complement l = A4PQ" using A4complement assms PPa 
-        by (simp add: A4PQ_def A4PR_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PQ_def PPa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-
-  next
-    case PQa
-    consider (lPR) "l = A4PR"
-      | (lPS) "l = A4PS"
-      | (lRS) "l = A4RS" using PQa A4Lines_def A4PQ_def A4QR_def A4QS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lPR
-      then have "A4complement l = A4QS" using A4complement assms PQa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QS_def PQa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lPS
-      then have "A4complement l = A4QR" using A4complement assms PQa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QR_def PQa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lRS
-      then have "A4complement l = A4PQ" using A4complement assms PQa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PQ_def PQa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-
-  next
-    case PRa
-    consider (lPQ) "l = A4PQ"
-      | (lPS) "l = A4PS"
-      | (lQS) "l = A4QS" using PRa A4Lines_def A4PR_def A4QR_def A4RS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lPQ
-      then have "A4complement l = A4RS" using A4complement assms PRa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4RS_def PRa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lPS
-      then have "A4complement l = A4QR" using A4complement assms PRa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QR_def PRa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lQS
-      then have "A4complement l = A4PR" using A4complement assms PRa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PR_def PRa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-  next
-    case PSa
-    consider (lPQ) "l = A4PQ"
-      | (lPR) "l = A4PR"
-      | (lQR) "l = A4QR" using PSa A4Lines_def A4PS_def A4QS_def A4RS_def assms(1,3) by auto
-    then show ?thesis
-    proof cases
-      case lPQ
-      then have "A4complement l = A4RS" using A4complement assms PSa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4RS_def PSa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lPR
-      then have "A4complement l = A4QS" using A4complement assms PSa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4QS_def PSa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    next
-      case lQR
-      then have "A4complement l = A4PS" using A4complement assms PSa 
-        by (simp add: A4PQ_def A4PR_def A4PS_def A4QR_def A4QS_def A4RS_def doubleton_eq_iff)
-      then show ?thesis using "0" A4PS_def PSa \<open>A4find_parallel l P \<in> A4Lines\<close> by auto
-    qed
-  qed
-qed
-
-text \<open>\Done \Done\<close>
+  shows "A4find_parallel l P \<in> A4Lines" and "affine_plane_data.parallel 
+    A4Points A4Lines A4incid (A4find_parallel l P) l" 
+    and "A4incid P (A4find_parallel l P)"
+  sorry
 
 lemma fpp: 
   fixes P l m
@@ -1377,7 +1207,6 @@ next
            P Q R" using A4affine_plane_a3 by blast
 qed
 
-
 (* ======================Switch to talking about A2, real affine 2-space =================*)
 
 text\<open>\spike Now we move on to showing that the real affine plane is in fact an affine plane. 
@@ -1410,7 +1239,7 @@ fun a2join :: "a2pt \<Rightarrow> a2pt \<Rightarrow> a2ln" where
 
 fun a2find_parallel::"a2ln \<Rightarrow> a2pt \<Rightarrow> a2ln" where
 "a2find_parallel (A2Ordinary m b) (A2Point x y)  = (A2Ordinary m (y-m*x))" |
-"a2find_parallel  (A2Vertical xi) (A2Point x y) = (A2Vertical x)"
+"a2find_parallel (A2Vertical xi) (A2Point x y) = (A2Vertical x)"
 
 text\<open>Now we'll write some small lemmas, basically establishing the three axioms.\<close>
 
@@ -1449,7 +1278,7 @@ theorem A2_a1a:
   assumes "P \<noteq> Q" and "P \<in> A2Points" and "Q \<in> A2Points"
   shows "a2join P Q \<in> A2Lines" and "a2incid P (a2join P Q)" 
     and "a2incid Q (a2join P Q)"
-  using A2Lines_def apply simp
+  sorry
 
 text\<open>\spike For this next theorem, it might make sense to phrase it as "P notequal Q lets us 
 derive a unique line l such that..."
@@ -1754,7 +1583,7 @@ lemma AB:
   assumes "P \<in> Points"
   defines pp: "pPoints \<equiv>  {OrdinaryP R | R. (R \<in> Points)} \<union> {Ideal s | s k . (k \<in> Lines) \<and> s = lp k}" 
   assumes "Ideal t \<in> pPoints" 
-  shows "\<exists>! k \<in> Lines . k \<in> t \<and> P \<lhd> k"
+  shows "\<exists>!k \<in> Lines. k \<in> t \<and> P \<lhd> k"
   sorry
 
 
@@ -1842,7 +1671,7 @@ lemma Ap1a:
   assumes \<open>pincid =  mprojectivize (incid)\<close>
   assumes pq_pts: "P \<in> pPoints \<and> Q \<in> pPoints"
   assumes pq_diff:"P \<noteq> Q"
-  shows "(\<exists>k . k \<in> pLines \<and> P p\<lhd> k  \<and> Q p\<lhd> k)"
+  shows "(\<exists>k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k)"
   sorry
 
 lemma disjoint_pencils:
@@ -1864,7 +1693,6 @@ lemma same_pencils:
   shows "s = t"
   sorry
 
-text \<open>\nick\<close>
 lemma two_ideal_is_infinite:
   fixes P Q k
   assumes pq_def: "P = Ideal s \<and> Q = Ideal t"
@@ -1879,58 +1707,122 @@ lemma two_ideal_is_infinite:
   assumes qPoint: "Q \<in> pPoints"
   assumes k_facts: "k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k" 
   shows "k = Infty"
-proof (rule ccontr)
-  assume ch: "\<not> k = Infty"
-  obtain n where hn: "n \<in> Lines \<and> k = OrdinaryL n" using ch k_facts projLine.exhaust pLdef by auto
-  have h1: "n \<in> s \<and> n \<in> t" using pq_def k_facts hn pm_def by auto
-  obtain k1 where hk1: "k1 \<in> Lines \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k1)"
-    using pPdef pq_def qPoint by blast
-  obtain k2 where hk2: "k2 \<in> Lines \<and> (s = affine_plane_data.line_pencil Points Lines (incid) k2)"
-    using pPdef pq_def pPoint by blast
-  have h2: "affine_plane_data.parallel Points Lines incid n k1" 
-    using hk1 affine_plane_data.line_pencil_def h1 by fastforce
-  have h3: "affine_plane_data.parallel Points Lines incid n k2" 
-    using hk2 affine_plane_data.line_pencil_def h1 by fastforce
-  have h4: "affine_plane_data.parallel Points Lines incid k1 k2" 
-    using h2 h3 affine_plane.parallel_transitive affine_plane_data.parallel_symmetric ap by metis
-  have h5: "P = Q" using h4 ap hk1 hk2 same_pencils pq_def by metis
-  show False using h5 pq_diff by auto
-qed
-text \<open>\done\<close>
+  sorry
 
-text \<open>\nick\<close>
+text \<open>\hadi\<close>
 lemma any_ordinary_is_ordinary:
   fixes P k
   assumes p_def: "P = OrdinaryP A"
   assumes ap: "affine_plane Points Lines incid join find_parallel"
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k) )}"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
   defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in> Lines)} \<union> {Infty}"
   defines pm_def: "pincid \<equiv>  mprojectivize (incid)"
   assumes pPoint: "P \<in> pPoints"
   assumes k_facts: "k \<in> pLines \<and> pincid P k" 
-  shows "\<exists> n.  n \<in> Lines \<and> k = OrdinaryL n"
-proof (rule ccontr)
-  assume ch: "\<not> (\<exists> n. n \<in> Lines \<and> k = OrdinaryL n)"
-  have h0: "k = Infty" using ch k_facts pLdef by blast
-  have h1: "\<not> (\<exists> Q. Q \<in> Points \<and> (mprojectivize (incid) (OrdinaryP Q) Infty))" using k_facts pm_def by auto
-  show False using h0 h1 p_def k_facts pm_def by auto
-qed
+  shows "\<exists>n. n \<in> Lines \<and> k = OrdinaryL n"
+  using k_facts pLdef p_def pm_def by auto
+(*proof (rule ccontr)
+  assume cd: "\<not> (\<exists>n. n \<in> Lines \<and> k = OrdinaryL n)"
+  show False
+  proof -
+    have "k = Infty" using cd k_facts pLdef by auto
+    then show False using k_facts p_def pm_def by auto
+  qed
+qed*)
 text \<open>\done\<close>
 
+text \<open>\hadi\<close>
+lemma (in affine_plane) equal_pencils:
+  fixes l m
+  assumes "l \<in> Lines \<and> m \<in> Lines"
+  assumes "l || m"
+  shows "line_pencil l = line_pencil m"
+  using assms affine_plane_axioms same_pencils by metis
+lemma (in affine_plane) in_pencil_parallel:
+  fixes l m k
+  assumes "l \<in> Lines \<and> m \<in> Lines \<and> k \<in> Lines"
+  assumes "l \<in> (line_pencil k) \<and> m \<in> (line_pencil k)"
+  shows "l || m"
+  using assms line_pencil_def equal_pencils mem_Collect_eq by metis
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
 lemma Ap1b:
   fixes P Q k n Points Lines incid
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k) )}"
-  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in> Lines)} \<union> {Infty}"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
   fixes pincid (infix "p\<lhd>" 60)
   assumes pm: \<open>pincid =  mprojectivize (incid)\<close>
   assumes pq_pts: "P \<in> pPoints \<and> Q \<in> pPoints"
   assumes pq_diff:"P \<noteq> Q"
   assumes ap: "affine_plane Points Lines incid join find_parallel"
-  assumes k_facts: "k \<in> pLines \<and> P p\<lhd> k  \<and> Q p\<lhd> k" and n_facts: "n \<in> pLines \<and> P p\<lhd> n  \<and> Q p\<lhd> n"
+  assumes k_facts: "k \<in> pLines \<and> P p\<lhd> k  \<and> Q p\<lhd> k" 
+    and n_facts: "n \<in> pLines \<and> P p\<lhd> n  \<and> Q p\<lhd> n"
   shows "k = n"
-  sorry
+proof (cases P)
+  case PO: (OrdinaryP A)
+  obtain k0 where k0_facts: "k = OrdinaryL k0 \<and> k0 \<in> Lines" 
+    using k_facts pLdef pm PO by auto
+  obtain n0 where n0_facts: "n = OrdinaryL n0 \<and> n0 \<in> Lines" 
+    using n_facts pLdef pm PO by auto
+  then show ?thesis
+  proof (cases Q)
+    case QO: (OrdinaryP B)
+    have abk0: "incid A k0 \<and> incid B k0" 
+      using PO QO k0_facts k_facts pm by auto
+    have abn0: "incid A n0 \<and> incid B n0" 
+      using PO QO n0_facts n_facts pm by auto
+    have k0n0: "k0 = n0" using abn0 PO QO abk0 affine_plane.prop1P2 ap 
+      k0_facts n0_facts pPdef pq_diff pq_pts by fastforce
+    then show ?thesis using k0n0 k0_facts n0_facts by auto
+  next
+    case QI: (Ideal C)
+    have ak0n0: "incid A k0 \<and> incid A n0" 
+      using PO k0_facts k_facts n0_facts n_facts pm by auto
+    have k0n0C: "k0 \<in> C \<and> n0 \<in> C" 
+      using QI k0_facts k_facts n0_facts n_facts pm by auto
+    have k0parn0: "affine_plane_data.parallel Points Lines incid k0 n0"
+      using QI ap k0_facts k0n0C n0_facts pPdef pq_pts 
+      affine_plane.in_pencil_parallel by fastforce
+    obtain R where rdef: "R \<in> Points \<and> incid R k0 \<and> incid R n0" 
+      using PO ak0n0 pPdef pq_pts by blast
+    have k0eqn0: "k0 = n0" 
+      using rdef affine_plane_data.parallel_def k0parn0 by metis
+    show ?thesis using k0eqn0 k0_facts n0_facts by auto
+  qed
+next
+  case PI: (Ideal D)
+  then show ?thesis
+  proof (cases Q)
+    case QO: (OrdinaryP E)
+    obtain k0 where k0_facts: "k = OrdinaryL k0 \<and> k0 \<in> Lines" 
+      using k_facts pLdef pm QO by auto
+    obtain n0 where n0_facts: "n = OrdinaryL n0 \<and> n0 \<in> Lines" 
+      using n_facts pLdef pm QO by auto
+    have ek0n0: "incid E k0 \<and> incid E n0" 
+      using QO k0_facts k_facts n0_facts n_facts pm by auto
+    have k0n0D: "k0 \<in> D \<and> n0 \<in> D" 
+      using PI k0_facts k_facts n0_facts n_facts pm by auto
+    have k0parn0: "affine_plane_data.parallel Points Lines incid k0 n0"
+      using PI ap k0_facts k0n0D n0_facts pPdef pq_pts 
+      affine_plane.in_pencil_parallel by fastforce
+    obtain R where rdef: "R \<in> Points \<and> incid R k0 \<and> incid R n0" 
+      using QO ek0n0 pPdef pq_pts by blast
+    have k0eqn0: "k0 = n0" 
+      using rdef affine_plane_data.parallel_def k0parn0 by metis
+    show ?thesis using k0eqn0 k0_facts n0_facts by auto
+  next
+    case QI: (Ideal F)
+    then have kinf: "k = Infty" using two_ideal_is_infinite Collect_cong PI ap 
+      k_facts pLdef pPdef pm pq_diff pq_pts by (smt (z3))
+    have "n = Infty" using two_ideal_is_infinite Collect_cong PI QI ap 
+      n_facts pLdef pPdef pm pq_diff pq_pts by (smt (z3))
+    then show ?thesis using kinf by auto
+  qed
+qed
+text \<open>\done\<close>
 
 theorem projectivization_is_projective:
   fixes Points::"'p set" 
@@ -1947,8 +1839,6 @@ theorem projectivization_is_projective:
   shows   "projective_plane2 pPoints pLines pincid"
   sorry
 (* proof (unfold_locales) *)
-
-
 end
 
 
