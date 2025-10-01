@@ -1,4 +1,4 @@
-theory "Chapter1-1-9-12"
+theory "Chapter1-1"
   imports Complex_Main  "HOL-Library.Uprod" "HOL-Library.Quadratic_Discriminant" 
 
 begin
@@ -165,9 +165,7 @@ lemma parallel_symmetric [iff]:
   fixes l m
   assumes "parallel l m"
   shows "parallel m l"
-proof -
-  show ?thesis using assms parallel_def by auto
-qed
+  sorry
 
 (* We can't prove parallel is transitive yet, because it 
 actually requires axiom 2 of a plane *)
@@ -189,18 +187,13 @@ lemma parallel_if_no_shared_pointsI [intro]:
   assumes " \<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  l \<and> P \<lhd>  m)" and
   "l \<in> Lines" and "m \<in> Lines"
   shows "l || m"
-proof -
-  show ?thesis using assms parallel_def by auto
-qed
+  sorry
 
 lemma parallel_if_no_shared_points2I [intro]:
   assumes "\<forall>P .  P \<notin>  Points \<or> \<not> P \<lhd>  l \<and>  \<not>P \<lhd>  m" and
   "l \<in> Lines" and "m \<in> Lines"
   shows "l || m"
-proof -
-  show ?thesis using assms parallel_def by auto
-qed
-
+  sorry
 
 definition point_pencil::"'p \<Rightarrow> 'l set" where
 "point_pencil P = { n::'l . (n \<in> Lines) \<and> P \<lhd>  n}"
@@ -308,9 +301,7 @@ theorem contains_implies_liesOn:
   assumes "m  \<in> Lines"
   assumes "m contains P"
   shows "P liesOn m"
-proof -
-  show ?thesis using assms contains_def by auto
-qed
+  sorry
 
 theorem liesOn_implies_contains:
   fixes P m
@@ -328,56 +319,31 @@ lemma parallel_transitive:
 proof -
   have 0: "parallel l m = ((l = m) \<or> \<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  l \<and> P \<lhd>  m))" using assms parallel_def by auto
   have 1: "parallel m k = ((m = k) \<or> \<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  m \<and> P \<lhd>  k))" using assms parallel_def by auto
-  consider
+  consider 
     (lmmk) "(l = m)" and "(m = k)" 
     | (lm) "(l = m)" and "(m \<noteq> k)" 
     | (mk) "(l \<noteq> m)" and "(m = k)" 
     | (neither) "(l \<noteq> m)" and "(m \<noteq> k)" by blast
-  then show ?thesis
-  proof cases
+  then have  ?thesis
+    sorry
+  oops
+(*  proof cases
     case lmmk
-    then show ?thesis using 0 1 by auto
-  next
-    case lm
-    have 2: "\<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  m \<and> P \<lhd>  k)" using 1 assms lm by auto
-    have 3: "\<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  l \<and> P \<lhd>  k)" using 2 lm by auto
-    have 4: "l \<in> Lines" using assms parallel_def by auto
-    have 5: "k \<in> Lines" using assms parallel_def by auto
-    then show ?thesis unfolding parallel_def using 3 4 5 assms by auto
-  next
-    case mk
-    have 6: "\<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  m \<and> P \<lhd>  l)" using 0 assms mk by auto
-    have 7: "\<not> (\<exists> P. P \<in> Points \<and> P \<lhd>  k \<and> P \<lhd>  l)" using 6 mk by auto
-    have 8: "k \<in> Lines" using assms parallel_def  by auto
-    have 9: "l \<in> Lines" using assms parallel_def  by auto
-    then show ?thesis unfolding parallel_def using 7 8 9 assms by auto
-  next
-    case neither
-    then show ?thesis using assms 0 1 parallel_def a2d by metis
-  qed
-qed
-
-
+    ... *)
 
 text\<open>The following says not that parallelism is reflexive (it's not, at least not on all of type 'l!), 
 but rather that when restricted to the set Lines, it's reflexive.\<close>
 lemma parallel_refl:
   shows "reflp_on Lines parallel"
-proof -
-  show ?thesis unfolding reflp_on_def parallel_def by auto 
-qed
+  sorry
 
 lemma parallel_sym:
   shows "symp parallel" 
-proof -
-  show ?thesis unfolding symp_def parallel_def by auto
-qed
+  sorry
 
 lemma parallel_trans:
   shows "transp_on Lines parallel" 
-proof -
-  show ?thesis unfolding transp_on_def using parallel_transitive by blast
-qed
+  sorry
 
 text\<open>Sadly, defining an equivalence relation on a set
 (as contrasted with a whole type) is a bit of a pain, so we have to settle for just the three lemmas above.
@@ -485,9 +451,7 @@ theorem (in affine_plane) parallel_alt:
   assumes "l \<in> Lines" and "m \<in> Lines"
   assumes "\<forall>P. (\<not>P \<lhd>  l) \<or> (\<not> P \<lhd>  m)"
   shows "l || m"
-proof -
-  show ?thesis using assms parallel_def by auto
-qed
+  sorry
 
 text  \<open>\begin{hartshorne}
 \prop[1.2] Two distinct lines have at most one point in common.
