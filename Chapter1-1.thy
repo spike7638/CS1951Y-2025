@@ -1805,10 +1805,43 @@ theorem projectivization_is_projective:
   assumes pm: \<open>pincid =  mprojectivize (incid)\<close>
   assumes ap: "affine_plane Points Lines incid join find_parallel"
   shows   "projective_plane2 pPoints pLines pincid"
-  sorry
-(* proof (unfold_locales) *)
-
+proof (unfold_locales)
+  show "\<And>P Q. P \<noteq> Q \<Longrightarrow> P \<in> pPoints \<Longrightarrow> Q \<in> pPoints \<Longrightarrow> \<exists>!k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k" 
+  proof (safe)
+    fix P Q 
+    assume pq_diff: "P \<noteq> Q" and p_pt: "P \<in> pPoints" and q_pt: "Q \<in> pPoints"
+    obtain k where "k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k" 
+      using Ap1a[of Points Lines incid join find_parallel pincid P Q] ap pPdef pLdef pm ap assms pq_diff p_pt q_pt by auto
+    then show "\<exists>k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k" by auto
+  next
+    fix P Q k y
+    assume pq_diff: "P \<noteq> Q" and p_pt: "P \<in> pPoints" and q_pt: "Q \<in> pPoints"
+    assume asm: "k \<in> pLines" and "y \<in> pLines" and "P p\<lhd> k" and "Q p\<lhd> k" and "P p\<lhd> y" and "Q p\<lhd> y"
+    then show "k = y"
+      using Ap1b[of pincid incid P Points Lines Q] p_pt q_pt pq_diff by (metis (lifting) ap pLdef pPdef pm)
+  qed
+  show "\<And>k n. k \<in> pLines \<Longrightarrow> n \<in> pLines \<Longrightarrow> \<exists>P. P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n"
+  proof -
+    fix k n
+    assume "k \<in> pLines" and "n \<in> pLines"
+    then obtain P where hP: "P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n" 
+      using Ap2[of Points Lines incid join find_parallel pincid k n] ap pLdef pPdef pm by auto
+    show "\<exists>P. P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n" using hP by auto
+  qed
+  show "\<exists>P Q R.
+       P \<in> pPoints \<and>
+       Q \<in> pPoints \<and>
+       R \<in> pPoints \<and>
+       P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> projective_plane_data2.pcollinear pPoints pLines (p\<lhd>) P Q R"
+    using Ap3[of Points Lines incid join find_parallel pincid] ap pLdef pPdef pm by auto
+  show "\<And>k U. k \<in> pLines \<Longrightarrow>
+           U = {P \<in> pPoints. P p\<lhd> k} \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+  proof -
+    fix k U
+    assume "k \<in> pLines" and "U = {P \<in> pPoints. P p\<lhd> k}"
+    then show "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+      using Ap4[of Points Lines incid join find_parallel pincid k U] ap pLdef pPdef pm by auto
+  qed
+qed
 
 end
-
-
