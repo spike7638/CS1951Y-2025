@@ -1734,7 +1734,76 @@ lemma Ap1a:
   assumes pq_pts: "P \<in> pPoints \<and> Q \<in> pPoints"
   assumes pq_diff:"P \<noteq> Q"
   shows "(\<exists>k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k)"
-  sorry
+text \<open> \George \<close>
+proof (cases P)
+  case Ordinary_P: (OrdinaryP x1)
+  then show ?thesis
+  proof (cases Q)
+    case Ordinary_Q: (OrdinaryP y1)
+    have xy_diff: "x1 \<noteq> y1" using pq_diff Ordinary_P Ordinary_Q by auto
+    (* Show join P Q \in affine_plane_data.lines using a1a
+    Show anything in lines must be in pLines
+    Show that pincid is induced by incid in a1a *)
+    let ?l = "join x1 y1"
+    thm emptyE
+    have h0: "?l \<in> Lines \<and> incid x1 ?l \<and> incid y1 ?l" using xy_diff affine_plane.a1a Ordinary_P Ordinary_Q ap pPdef pq_pts by fastforce
+    then show ?thesis using Ordinary_P Ordinary_Q Un_def assms(4) mem_Collect_eq pLdef by auto
+  next
+    case Ideal_Q: (Ideal y2)
+    obtain k0 where k0_props:
+      "k0 \<in> Lines" "y2 = affine_plane_data.line_pencil Points Lines (incid) k0"
+      using pq_pts pPdef Ordinary_P Ideal_Q by auto
+    obtain m where m_props: "m \<in> Lines" "incid x1 m" "m \<in> affine_plane_data.line_pencil Points Lines (incid) k0"
+      using ap by (smt (z3) Ordinary_P
+    Un_iff affine_plane.a2c
+    affine_plane_data.line_pencil_def
+    affine_plane_def
+    k0_props(1)
+    mem_Collect_eq pPdef
+    pq_pts
+    projPoint.distinct(1)
+    projPoint.inject(1))
+    have h0: "OrdinaryL m \<in> pLines" using pLdef m_props(1) by auto
+    have h1: "OrdinaryP x1 p\<lhd> OrdinaryL m" using m_props(2) assms(4) by (simp add: mprojectivize.simps)
+    have h2: "Ideal y2 p\<lhd> OrdinaryL m" using m_props(3) k0_props assms(4)
+      by auto
+    show ?thesis using Ideal_Q Ordinary_P h0 h1 h2 by auto
+  qed
+next
+  case Ideal_P: (Ideal x2)
+  then show ?thesis 
+  proof (cases Q)
+    case Ordinary_Q: (OrdinaryP y1)
+      obtain k0 where k0_props:
+        "k0 \<in> Lines" "x2 = affine_plane_data.line_pencil Points Lines (incid) k0"
+        using pq_pts pPdef Ideal_P Ordinary_Q by auto
+      obtain m where m_props: 
+        "m \<in> Lines" "incid y1 m" "m \<in> affine_plane_data.line_pencil Points Lines (incid) k0"
+        using ap by (smt (z3) Ordinary_Q
+          Un_iff affine_plane.a2c
+          affine_plane_data.line_pencil_def
+          affine_plane_def
+          k0_props(1)
+          mem_Collect_eq pPdef
+          pq_pts
+          projPoint.distinct(1)
+          projPoint.inject(1))
+      have h0: "OrdinaryL m \<in> pLines" using pLdef m_props(1) by auto
+      have h1: "OrdinaryP y1 p\<lhd> OrdinaryL m" 
+        using m_props(2) assms(4) by (simp add: mprojectivize.simps)
+      have h2: "Ideal x2 p\<lhd> OrdinaryL m" 
+        using m_props(3) k0_props assms(4) by auto
+      show ?thesis using Ideal_P Ordinary_Q h0 h1 h2 by auto
+  next
+    case Ideal_Q: (Ideal y2)
+    (* Any 2 ideal points are on the line at Infinity *)
+    have h0: "Infty \<in> pLines" using pLdef by auto
+    have h1: "Ideal y2 p\<lhd> Infty" using assms(4) by auto
+    have h1: "Ideal x2 p\<lhd> Infty" using assms(4) by auto
+    then show ?thesis using Ideal_P Ideal_Q assms(4) h0 by auto
+  qed
+qed
+text \<open> \done \<close>
 
 lemma disjoint_pencils:
   fixes s t k n
@@ -1743,7 +1812,16 @@ lemma disjoint_pencils:
   assumes sdef: "s = affine_plane_data.line_pencil Points Lines (incid) n"
   assumes kn_diff: "\<not> affine_plane_data.parallel Points Lines (incid) k n"
   shows "s \<inter> t = {}"
-  sorry
+text \<open> \George \<close>
+proof (rule ccontr)
+  assume contr_kn_diff: "\<not>(s \<inter> t = {})"
+  obtain p where p_in_s_t: "p \<in> (s \<inter> t)" using contr_kn_diff by auto
+  have h0: "affine_plane_data.parallel Points Lines (incid) p k" using affine_plane_data.line_pencil_def p_in_s_t tdef by force
+  have h1: "affine_plane_data.parallel Points Lines (incid) p n" using affine_plane_data.line_pencil_def p_in_s_t sdef by force
+  have h2: "affine_plane_data.parallel Points Lines (incid) k n" using h0 h1 affine_plane.parallel_transitive affine_plane_data.parallel_symmetric by (metis ap)
+  show "False" using h2 kn_diff by auto
+qed
+text \<open> \done \<close>
 
 lemma same_pencils:
   fixes s t k n
@@ -1753,7 +1831,19 @@ lemma same_pencils:
   assumes sdef: "s = affine_plane_data.line_pencil Points Lines (incid) n"
   assumes kn_par: "affine_plane_data.parallel Points Lines (incid) k n"
   shows "s = t"
-  sorry
+text \<open> \George \<close>
+proof (rule ccontr)
+  assume contr: "\<not>(s = t)"
+  show "False" using
+    affine_plane.parallel_transitive
+    affine_plane_data.line_pencil_def
+    affine_plane_data.parallel_symmetric
+    ap contr kn_par
+    mem_Collect_eq sdef
+    subsetI subset_antisym
+    tdef by metis
+qed
+text \<open> \done \<close>
 
 lemma two_ideal_is_infinite:
   fixes P Q k
