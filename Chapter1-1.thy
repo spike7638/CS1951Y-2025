@@ -20,7 +20,7 @@ This is something written by Spike
 \done
 with the black marker indicating the end of the section written by Spike (except that in this case, 
 it's part of a larger section Spike wrote). 
-
+git@github.com:spike7638/CS1951Y-2025.git
 Within Isabelle, numbered propositions or theorems from Hartshorne are given names that tie back 
 to the text, so Proposition 1.1 in the text is called \texttt{Prop1P1}, with ``P'' replacing the period, 
 for instance. 
@@ -644,7 +644,46 @@ xi. Hence the four points P,Q,R,S are all distinct, and we are done.
 proposition (in affine_plane) four_points_necessary: 
   "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S 
   \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points"
-  sorry
+text \<open> \George \<close>
+proof -
+  obtain P Q R where h0a: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points" and h0b: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
+  have h1: "join Q R \<in> Lines \<and> Q \<lhd>  (join Q R)  \<and> R \<lhd>  (join Q R)" using a1a h0a h0b by auto
+  let ?l = "find_parallel (join Q R) P"
+  have h2a: "?l \<in> Lines" using a2a h1 h0a by auto
+  have h2b: "?l || join Q R" using a2b h1 h0a by auto
+  have h3: "join P Q \<in> Lines \<and> P \<lhd>  (join P Q)  \<and> Q \<lhd>  (join P Q)" using a1a h0a h0b by auto
+  let ?m = "find_parallel (join P Q) R"
+  have h4a: "?m \<in> Lines" using a2a h3 h0a by auto
+  have h4b: "?m || join P Q" using a2b h3 h0a by auto
+  consider (parallel) "?l || ?m" | (not_parallel) "\<not>(?l || ?m)" by auto
+  then show ?thesis
+  proof cases
+    case parallel
+    show ?thesis
+    proof (rule ccontr)
+      have c0: "join Q R || join P Q" using parallel parallel_transitive parallel_symmetric h2b h4b by blast
+      have c1: "Q \<lhd> join Q R" and "Q \<lhd> join P Q" using h1 h3 by auto
+      consider (equal) "join Q R = join P Q" | (not_equal) "join Q R \<noteq> join P Q" by auto
+      then have c2: "join Q R = join P Q" 
+      proof cases 
+        case equal
+        show ?thesis using equal by auto
+      next
+        case not_equal
+        show ?thesis
+        proof (rule ccontr)
+          show False using c0 c1 h2a h4a not_equal parallel_def h0a h3 by blast
+        qed
+      qed
+      show False using c2 h0b collinear_def h0a h1 h3 by auto
+    qed
+  next
+    case not_parallel
+    obtain S where "S \<in> Points" and "P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S" using a2c collinear_def h0a h0b h1 h2b h3 h4b not_parallel parallel_def by (smt (verit))
+    show ?thesis using \<open>P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S\<close> \<open>S \<in> Points\<close> h0a h0b by auto
+  qed
+qed
+text \<open> \done \<close>
 
 text \<open>We can amplify this slightly to show that not only are there four points, but that no 
 three are collinear; then we'll finally be able to show that every line contains at least two points!\<close>
