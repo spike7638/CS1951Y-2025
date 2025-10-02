@@ -1,5 +1,5 @@
 theory "Chapter1-1"
-  imports Complex_Main  "HOL-Library.Uprod" "HOL-Library.Quadratic_Discriminant" 
+  imports Complex_Main  "HOL-Library.Uprod" (*"HOL-Library.Quadratic_Discriminant" *)
 
 begin
 
@@ -20,7 +20,7 @@ This is something written by Spike
 \done
 with the black marker indicating the end of the section written by Spike (except that in this case, 
 it's part of a larger section Spike wrote). 
-
+git@github.com:spike7638/CS1951Y-2025.git
 Within Isabelle, numbered propositions or theorems from Hartshorne are given names that tie back 
 to the text, so Proposition 1.1 in the text is called \texttt{Prop1P1}, with ``P'' replacing the period, 
 for instance. 
@@ -561,7 +561,8 @@ find_parallel UV S = k
 find_parallel VW S = k
 That makes UV and VW parallel; because they both contain V, they're equal. That means that UV contains 
 U, V, and W, so they're collinear -- a contradiction. 
-Here's the theorem, with proof:
+
+Here's the theorem:
 
 lemma (in affine_plane) contained_points: 
   fixes k
@@ -644,7 +645,46 @@ xi. Hence the four points P,Q,R,S are all distinct, and we are done.
 proposition (in affine_plane) four_points_necessary: 
   "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S 
   \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points"
-  sorry
+text \<open> \George \<close>
+proof -
+  obtain P Q R where h0a: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points" and h0b: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
+  have h1: "join Q R \<in> Lines \<and> Q \<lhd>  (join Q R)  \<and> R \<lhd>  (join Q R)" using a1a h0a h0b by auto
+  let ?l = "find_parallel (join Q R) P"
+  have h2a: "?l \<in> Lines" using a2a h1 h0a by auto
+  have h2b: "?l || join Q R" using a2b h1 h0a by auto
+  have h3: "join P Q \<in> Lines \<and> P \<lhd>  (join P Q)  \<and> Q \<lhd>  (join P Q)" using a1a h0a h0b by auto
+  let ?m = "find_parallel (join P Q) R"
+  have h4a: "?m \<in> Lines" using a2a h3 h0a by auto
+  have h4b: "?m || join P Q" using a2b h3 h0a by auto
+  consider (parallel) "?l || ?m" | (not_parallel) "\<not>(?l || ?m)" by auto
+  then show ?thesis
+  proof cases
+    case parallel
+    show ?thesis
+    proof (rule ccontr)
+      have c0: "join Q R || join P Q" using parallel parallel_transitive parallel_symmetric h2b h4b by blast
+      have c1: "Q \<lhd> join Q R" and "Q \<lhd> join P Q" using h1 h3 by auto
+      consider (equal) "join Q R = join P Q" | (not_equal) "join Q R \<noteq> join P Q" by auto
+      then have c2: "join Q R = join P Q" 
+      proof cases 
+        case equal
+        show ?thesis using equal by auto
+      next
+        case not_equal
+        show ?thesis
+        proof (rule ccontr)
+          show False using c0 c1 h2a h4a not_equal parallel_def h0a h3 by blast
+        qed
+      qed
+      show False using c2 h0b collinear_def h0a h1 h3 by auto
+    qed
+  next
+    case not_parallel
+    obtain S where "S \<in> Points" and "P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S" using a2c collinear_def h0a h0b h1 h2b h3 h4b not_parallel parallel_def by (smt (verit))
+    show ?thesis using \<open>P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S\<close> \<open>S \<in> Points\<close> h0a h0b by auto
+  qed
+qed
+text \<open> \done \<close>
 
 text \<open>We can amplify this slightly to show that not only are there four points, but that no 
 three are collinear; then we'll finally be able to show that every line contains at least two points!\<close>
@@ -1208,6 +1248,7 @@ next
 qed
 
 (* ======================Switch to talking about A2, real affine 2-space =================*)
+(* Team A2 = Jackson and Hadi *)
 
 text\<open>\spike Now we move on to showing that the real affine plane is in fact an affine plane. 
 Everything related to this plane has the prefix 'a2' or 'A2'.\done\<close>
@@ -1581,10 +1622,21 @@ lemma AB:
   assumes ap: "affine_plane Points Lines incid join find_parallel"
   defines "lp \<equiv> affine_plane_data.line_pencil Points Lines incid"
   assumes "P \<in> Points"
-  defines pp: "pPoints \<equiv>  {OrdinaryP R | R. (R \<in> Points)} \<union> {Ideal s | s k . (k \<in> Lines) \<and> s = lp k}" 
+  defines pp: "pPoints \<equiv> {OrdinaryP R | R. (R \<in> Points)} 
+    \<union> {Ideal s | s k. (k \<in> Lines) \<and> s = lp k}"
   assumes "Ideal t \<in> pPoints" 
-  shows "\<exists>!k \<in> Lines. k \<in> t \<and> P \<lhd> k"
-  sorry
+  shows "\<exists>!k \<in> Lines. k \<in> t \<and> P \<lhd> k"  
+proof -
+  obtain k where kdef: "k \<in> Lines \<and> t = lp k" using assms by auto
+  obtain l where ldef: "l \<in> Lines \<and> P \<lhd> l
+    \<and> affine_plane_data.parallel Points Lines incid l k" using assms ap kdef
+    affine_plane.a2b affine_plane.a2c affine_plane_data.parallel_def 
+    by (smt (verit))
+  have "l \<in> t" using kdef ldef affine_plane_data.line_pencil_def lp_def 
+    by fastforce
+  then show ?thesis by (smt (verit, ccfv_SIG) affine_plane.a2d assms kdef ldef
+    affine_plane_data.line_pencil_def ap lp_def mem_Collect_eq)
+qed
 
 
 fun mprojectivize :: "('a \<Rightarrow> 'b \<Rightarrow> bool) \<Rightarrow> (('a, 'b) projPoint \<Rightarrow> ('a, 'b) projLine \<Rightarrow> bool)" where
@@ -1614,12 +1666,12 @@ lemma Ap2:
   fixes Points Lines join find_parallel
   fixes incid (infix "\<lhd>" 60)
   assumes ap: "affine_plane Points Lines incid join find_parallel"
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k) )}"
-  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in> Lines)} \<union> {Infty}"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
   fixes pincid (infix "p\<lhd>" 60)
   assumes \<open>pincid =  mprojectivize (incid)\<close>
-  shows "\<lbrakk>k \<in> pLines; n \<in> pLines\<rbrakk> \<Longrightarrow> \<exists> P . (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)"
+  shows "\<lbrakk>k \<in> pLines; n \<in> pLines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)"
   sorry
 
 lemma Ap3:
@@ -1634,7 +1686,20 @@ lemma Ap3:
   (* defines "pincid \<equiv>  mprojectivize (incid) (infix "\<lhd>" 60)"*)
   shows "\<exists>P Q R. P \<in> pPoints \<and> Q \<in> pPoints \<and> R \<in> pPoints \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (projective_plane_data2.pcollinear pPoints pLines (pincid) P Q R)"
   text \<open>Idea: the three noncollinear points in the affine plane are noncollinear in the projectivization as well\<close>
-  sorry
+proof -
+  obtain P Q R where pqr: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q 
+    \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (affine_plane_data.collinear Points Lines incid P Q R)"
+    using ap affine_plane.a3 by blast
+  let ?pP = "OrdinaryP P" let ?pQ = "OrdinaryP Q" let ?pR = "OrdinaryP R"
+  have ppqrpts:"?pP \<in> pPoints \<and> ?pQ \<in> pPoints \<and> ?pR \<in> pPoints" 
+    using pqr ap pPdef by blast
+  have ppqrdist: "?pP \<noteq> ?pQ \<and> ?pP \<noteq> ?pR \<and> ?pQ \<noteq> ?pR" using pqr by blast
+  have ppqrnc: "\<not> (projective_plane_data2.pcollinear pPoints pLines (pincid) 
+    ?pP ?pQ ?pR)" by (smt (verit, ccfv_threshold) pqr assms affine_plane.a1b
+      affine_plane.parallel_to_collinear mprojectivize.elims(2)
+      mprojectivize.simps(1,3) ppqrpts projective_plane_data2.pcollinear_def)
+  show ?thesis using ppqrpts ppqrdist ppqrnc by auto
+qed
 
 lemma Ap41:   
   fixes k n
@@ -1672,7 +1737,76 @@ lemma Ap1a:
   assumes pq_pts: "P \<in> pPoints \<and> Q \<in> pPoints"
   assumes pq_diff:"P \<noteq> Q"
   shows "(\<exists>k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k)"
-  sorry
+text \<open> \George \<close>
+proof (cases P)
+  case Ordinary_P: (OrdinaryP x1)
+  then show ?thesis
+  proof (cases Q)
+    case Ordinary_Q: (OrdinaryP y1)
+    have xy_diff: "x1 \<noteq> y1" using pq_diff Ordinary_P Ordinary_Q by auto
+    (* Show join P Q \in affine_plane_data.lines using a1a
+    Show anything in lines must be in pLines
+    Show that pincid is induced by incid in a1a *)
+    let ?l = "join x1 y1"
+    thm emptyE
+    have h0: "?l \<in> Lines \<and> incid x1 ?l \<and> incid y1 ?l" using xy_diff affine_plane.a1a Ordinary_P Ordinary_Q ap pPdef pq_pts by fastforce
+    then show ?thesis using Ordinary_P Ordinary_Q Un_def assms(4) mem_Collect_eq pLdef by auto
+  next
+    case Ideal_Q: (Ideal y2)
+    obtain k0 where k0_props:
+      "k0 \<in> Lines" "y2 = affine_plane_data.line_pencil Points Lines (incid) k0"
+      using pq_pts pPdef Ordinary_P Ideal_Q by auto
+    obtain m where m_props: "m \<in> Lines" "incid x1 m" "m \<in> affine_plane_data.line_pencil Points Lines (incid) k0"
+      using ap by (smt (z3) Ordinary_P
+    Un_iff affine_plane.a2c
+    affine_plane_data.line_pencil_def
+    affine_plane_def
+    k0_props(1)
+    mem_Collect_eq pPdef
+    pq_pts
+    projPoint.distinct(1)
+    projPoint.inject(1))
+    have h0: "OrdinaryL m \<in> pLines" using pLdef m_props(1) by auto
+    have h1: "OrdinaryP x1 p\<lhd> OrdinaryL m" using m_props(2) assms(4) by (simp add: mprojectivize.simps)
+    have h2: "Ideal y2 p\<lhd> OrdinaryL m" using m_props(3) k0_props assms(4)
+      by auto
+    show ?thesis using Ideal_Q Ordinary_P h0 h1 h2 by auto
+  qed
+next
+  case Ideal_P: (Ideal x2)
+  then show ?thesis 
+  proof (cases Q)
+    case Ordinary_Q: (OrdinaryP y1)
+      obtain k0 where k0_props:
+        "k0 \<in> Lines" "x2 = affine_plane_data.line_pencil Points Lines (incid) k0"
+        using pq_pts pPdef Ideal_P Ordinary_Q by auto
+      obtain m where m_props: 
+        "m \<in> Lines" "incid y1 m" "m \<in> affine_plane_data.line_pencil Points Lines (incid) k0"
+        using ap by (smt (z3) Ordinary_Q
+          Un_iff affine_plane.a2c
+          affine_plane_data.line_pencil_def
+          affine_plane_def
+          k0_props(1)
+          mem_Collect_eq pPdef
+          pq_pts
+          projPoint.distinct(1)
+          projPoint.inject(1))
+      have h0: "OrdinaryL m \<in> pLines" using pLdef m_props(1) by auto
+      have h1: "OrdinaryP y1 p\<lhd> OrdinaryL m" 
+        using m_props(2) assms(4) by (simp add: mprojectivize.simps)
+      have h2: "Ideal x2 p\<lhd> OrdinaryL m" 
+        using m_props(3) k0_props assms(4) by auto
+      show ?thesis using Ideal_P Ordinary_Q h0 h1 h2 by auto
+  next
+    case Ideal_Q: (Ideal y2)
+    (* Any 2 ideal points are on the line at Infinity *)
+    have h0: "Infty \<in> pLines" using pLdef by auto
+    have h1: "Ideal y2 p\<lhd> Infty" using assms(4) by auto
+    have h1: "Ideal x2 p\<lhd> Infty" using assms(4) by auto
+    then show ?thesis using Ideal_P Ideal_Q assms(4) h0 by auto
+  qed
+qed
+text \<open> \done \<close>
 
 lemma disjoint_pencils:
   fixes s t k n
@@ -1681,7 +1815,16 @@ lemma disjoint_pencils:
   assumes sdef: "s = affine_plane_data.line_pencil Points Lines (incid) n"
   assumes kn_diff: "\<not> affine_plane_data.parallel Points Lines (incid) k n"
   shows "s \<inter> t = {}"
-  sorry
+text \<open> \George \<close>
+proof (rule ccontr)
+  assume contr_kn_diff: "\<not>(s \<inter> t = {})"
+  obtain p where p_in_s_t: "p \<in> (s \<inter> t)" using contr_kn_diff by auto
+  have h0: "affine_plane_data.parallel Points Lines (incid) p k" using affine_plane_data.line_pencil_def p_in_s_t tdef by force
+  have h1: "affine_plane_data.parallel Points Lines (incid) p n" using affine_plane_data.line_pencil_def p_in_s_t sdef by force
+  have h2: "affine_plane_data.parallel Points Lines (incid) k n" using h0 h1 affine_plane.parallel_transitive affine_plane_data.parallel_symmetric by (metis ap)
+  show "False" using h2 kn_diff by auto
+qed
+text \<open> \done \<close>
 
 lemma same_pencils:
   fixes s t k n
@@ -1691,16 +1834,28 @@ lemma same_pencils:
   assumes sdef: "s = affine_plane_data.line_pencil Points Lines (incid) n"
   assumes kn_par: "affine_plane_data.parallel Points Lines (incid) k n"
   shows "s = t"
-  sorry
+text \<open> \George \<close>
+proof (rule ccontr)
+  assume contr: "\<not>(s = t)"
+  show "False" using
+    affine_plane.parallel_transitive
+    affine_plane_data.line_pencil_def
+    affine_plane_data.parallel_symmetric
+    ap contr kn_par
+    mem_Collect_eq sdef
+    subsetI subset_antisym
+    tdef by metis
+qed
+text \<open> \done \<close>
 
 lemma two_ideal_is_infinite:
   fixes P Q k
   assumes pq_def: "P = Ideal s \<and> Q = Ideal t"
   assumes pq_diff:"P \<noteq> Q"
   assumes ap: "affine_plane Points Lines incid join find_parallel"
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k) )}"
-  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in> Lines)} \<union> {Infty}"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
   fixes pincid (infix "p\<lhd>" 60)
   assumes pm_def: \<open>pincid =  mprojectivize (incid)\<close>
   assumes pPoint: "P \<in> pPoints"
@@ -1720,7 +1875,7 @@ lemma any_ordinary_is_ordinary:
   defines pm_def: "pincid \<equiv>  mprojectivize (incid)"
   assumes pPoint: "P \<in> pPoints"
   assumes k_facts: "k \<in> pLines \<and> pincid P k" 
-  shows "\<exists>n. n \<in> Lines \<and> k = OrdinaryL n"
+  shows "\<exists>n. n \<in> Lines \<and> k = OrdinaryL n" 
   using k_facts pLdef p_def pm_def by auto
 (*proof (rule ccontr)
   assume cd: "\<not> (\<exists>n. n \<in> Lines \<and> k = OrdinaryL n)"
@@ -1739,12 +1894,13 @@ lemma (in affine_plane) equal_pencils:
   assumes "l || m"
   shows "line_pencil l = line_pencil m"
   using assms affine_plane_axioms same_pencils by metis
+  
 lemma (in affine_plane) in_pencil_parallel:
   fixes l m k
   assumes "l \<in> Lines \<and> m \<in> Lines \<and> k \<in> Lines"
   assumes "l \<in> (line_pencil k) \<and> m \<in> (line_pencil k)"
-  shows "l || m"
-  using assms line_pencil_def equal_pencils mem_Collect_eq by metis
+  shows "l || m" using assms line_pencil_def affine_plane_axioms 
+    same_pencils mem_Collect_eq by metis
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
@@ -1763,82 +1919,299 @@ lemma Ap1b:
   shows "k = n"
 proof (cases P)
   case PO: (OrdinaryP A)
-  obtain k0 where k0_facts: "k = OrdinaryL k0 \<and> k0 \<in> Lines" 
+  obtain k0 where k0def: "k = OrdinaryL k0 \<and> k0 \<in> Lines" 
     using k_facts pLdef pm PO by auto
-  obtain n0 where n0_facts: "n = OrdinaryL n0 \<and> n0 \<in> Lines" 
+  obtain n0 where n0def: "n = OrdinaryL n0 \<and> n0 \<in> Lines" 
     using n_facts pLdef pm PO by auto
   then show ?thesis
   proof (cases Q)
     case QO: (OrdinaryP B)
     have abk0: "incid A k0 \<and> incid B k0" 
-      using PO QO k0_facts k_facts pm by auto
+      using PO QO k0def k_facts pm by auto
     have abn0: "incid A n0 \<and> incid B n0" 
-      using PO QO n0_facts n_facts pm by auto
+      using PO QO n0def n_facts pm by auto
     have k0n0: "k0 = n0" using abn0 PO QO abk0 affine_plane.prop1P2 ap 
-      k0_facts n0_facts pPdef pq_diff pq_pts by fastforce
-    then show ?thesis using k0n0 k0_facts n0_facts by auto
+      k0def n0def pPdef pq_diff pq_pts by fastforce
+    then show ?thesis using k0n0 k0def n0def by auto
   next
     case QI: (Ideal C)
     have ak0n0: "incid A k0 \<and> incid A n0" 
-      using PO k0_facts k_facts n0_facts n_facts pm by auto
+      using PO k0def k_facts n0def n_facts pm by auto
     have k0n0C: "k0 \<in> C \<and> n0 \<in> C" 
-      using QI k0_facts k_facts n0_facts n_facts pm by auto
+      using QI k0def k_facts n0def n_facts pm by auto
     have k0parn0: "affine_plane_data.parallel Points Lines incid k0 n0"
-      using QI ap k0_facts k0n0C n0_facts pPdef pq_pts 
+      using QI ap k0def k0n0C n0def pPdef pq_pts 
       affine_plane.in_pencil_parallel by fastforce
     obtain R where rdef: "R \<in> Points \<and> incid R k0 \<and> incid R n0" 
       using PO ak0n0 pPdef pq_pts by blast
     have k0eqn0: "k0 = n0" 
       using rdef affine_plane_data.parallel_def k0parn0 by metis
-    show ?thesis using k0eqn0 k0_facts n0_facts by auto
+    show ?thesis using k0eqn0 k0def n0def by auto
   qed
 next
   case PI: (Ideal D)
   then show ?thesis
   proof (cases Q)
     case QO: (OrdinaryP E)
-    obtain k0 where k0_facts: "k = OrdinaryL k0 \<and> k0 \<in> Lines" 
+    obtain k0 where k0def: "k = OrdinaryL k0 \<and> k0 \<in> Lines" 
       using k_facts pLdef pm QO by auto
-    obtain n0 where n0_facts: "n = OrdinaryL n0 \<and> n0 \<in> Lines" 
+    obtain n0 where n0def: "n = OrdinaryL n0 \<and> n0 \<in> Lines" 
       using n_facts pLdef pm QO by auto
     have ek0n0: "incid E k0 \<and> incid E n0" 
-      using QO k0_facts k_facts n0_facts n_facts pm by auto
+      using QO k0def k_facts n0def n_facts pm by auto
     have k0n0D: "k0 \<in> D \<and> n0 \<in> D" 
-      using PI k0_facts k_facts n0_facts n_facts pm by auto
+      using PI k0def k_facts n0def n_facts pm by auto
     have k0parn0: "affine_plane_data.parallel Points Lines incid k0 n0"
-      using PI ap k0_facts k0n0D n0_facts pPdef pq_pts 
+      using PI ap k0def k0n0D n0def pPdef pq_pts 
       affine_plane.in_pencil_parallel by fastforce
     obtain R where rdef: "R \<in> Points \<and> incid R k0 \<and> incid R n0" 
       using QO ek0n0 pPdef pq_pts by blast
     have k0eqn0: "k0 = n0" 
       using rdef affine_plane_data.parallel_def k0parn0 by metis
-    show ?thesis using k0eqn0 k0_facts n0_facts by auto
+    show ?thesis using k0eqn0 k0def n0def by auto
   next
-    case QI: (Ideal F)
-    then have kinf: "k = Infty" using two_ideal_is_infinite Collect_cong PI ap 
-      k_facts pLdef pPdef pm pq_diff pq_pts by (smt (z3))
-    have "n = Infty" using two_ideal_is_infinite Collect_cong PI QI ap 
-      n_facts pLdef pPdef pm pq_diff pq_pts by (smt (z3))
-    then show ?thesis using kinf by auto
+    case (Ideal F)
+    then show ?thesis using PI assms two_ideal_is_infinite [of P] by blast
+(* sledgehammer: using PI assms two_ideal_is_infinite 
+    Collect_cong by (smt (z3)) *)
   qed
 qed
 text \<open>\done\<close>
 
+text \<open>\hadi\<close>
+lemma projectivization_p1:
+  fixes Points::"'p set" 
+  fixes Lines:: "'l set"
+  fixes incid::"'p \<Rightarrow> 'l \<Rightarrow> bool" 
+  fixes join::"'p \<Rightarrow> 'p \<Rightarrow> 'l"
+  fixes find_parallel::"'l \<Rightarrow> 'p \<Rightarrow> 'l"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
+  fixes pincid (infix "p\<lhd>" 60)
+  assumes pm: \<open>pincid = mprojectivize (incid)\<close>
+  assumes ap: "affine_plane Points Lines incid join find_parallel"
+  fixes P Q
+  assumes pq_facts: "P \<noteq> Q \<and> P \<in> pPoints \<and> Q \<in> pPoints"
+  shows "\<exists>!k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k"
+proof (cases P)
+  case PO: (OrdinaryP A)
+  then show ?thesis
+  proof (cases Q)
+    case QO: (OrdinaryP B)
+    then obtain l where ldef: "l \<in> Lines \<and> incid A l \<and> incid B l"
+      using PO ap affine_plane.a1a pPdef pq_facts by fastforce
+    let ?k = "OrdinaryL l"
+    have kexist: "?k \<in> pLines \<and> P p\<lhd> ?k \<and> Q p\<lhd> ?k" 
+      using PO QO pm pLdef ldef by auto
+    have "m \<in> pLines \<and> P p\<lhd> m \<and> Q p\<lhd> m \<longrightarrow> m = ?k" for m  using PO QO pm ap 
+      affine_plane.prop1P2 ldef pLdef pPdef pq_facts by fastforce
+    then show ?thesis using kexist by auto
+  next
+    case QI: (Ideal C)
+    then obtain l1 where ldef: "l1 \<in> Lines \<and> C = affine_plane_data.line_pencil 
+      Points Lines incid l1" using assms by auto
+    let ?l2 = "find_parallel l1 A"
+    have l2line: "?l2 \<in> Lines" 
+      using PO affine_plane.a2a ap ldef pPdef pq_facts by fastforce
+    have ainl2: "incid A ?l2" 
+      using PO ap affine_plane.a2c ldef pPdef pq_facts by fastforce
+    have l2pl1: "affine_plane_data.parallel Points Lines incid ?l2 l1" 
+      using PO ap affine_plane.a2b ldef pPdef pq_facts by fastforce 
+    have l2inC: "?l2 \<in> C" 
+      using affine_plane_data.line_pencil_def l2pl1 ldef by fastforce
+    let ?k = "OrdinaryL ?l2"
+    have kpline: "?k \<in> pLines" using l2line pLdef by auto
+    have pink: "P p\<lhd> ?k" using ainl2 PO pm by auto
+    have cink: "Q p\<lhd> ?k" using l2inC QI pm by auto
+    have "m \<in> pLines \<and> P p\<lhd> m \<and> Q p\<lhd> m \<longrightarrow> m = ?k" for m using ap cink pink
+      Ap1b [of _ _ P _ _ Q _ _ m ?k] kpline pLdef pPdef pq_facts pm by blast
+(* in the original contradiction proof, we obtained m0 such that m0 \<noteq> ?k*)
+(* sledgehammer: using m0def kpline pink cink pm ap Ap1b pLdef pPdef 
+     Un_iff mem_Collect_eq pq_facts by (smt (z3)) *)
+    then show ?thesis using kpline pink cink by auto
+  qed
+next
+  case PI: (Ideal D)
+  then show ?thesis
+  proof (cases Q)
+    case QO: (OrdinaryP E)
+    obtain l1 where ldef: "l1 \<in> Lines \<and> D = affine_plane_data.line_pencil 
+      Points Lines incid l1" using PI assms by auto
+    let ?l2 = "find_parallel l1 E"
+    have l2line: "?l2 \<in> Lines" 
+      using QO affine_plane.a2a ap ldef pPdef pq_facts by fastforce
+    have ainl2: "incid E ?l2" 
+      using QO ap affine_plane.a2c ldef pPdef pq_facts by fastforce
+    have l2pl1: "affine_plane_data.parallel Points Lines incid ?l2 l1" 
+      using QO ap affine_plane.a2b ldef pPdef pq_facts by fastforce 
+    have l2inC: "?l2 \<in> D" 
+      using affine_plane_data.line_pencil_def l2pl1 ldef by fastforce
+    let ?k = "OrdinaryL ?l2"
+    have kpline: "?k \<in> pLines" using l2line pLdef by auto
+    have pink: "P p\<lhd> ?k" using l2inC PI pm by auto
+    have cink: "Q p\<lhd> ?k" using ainl2 QO pm by auto
+    have "m \<in> pLines \<and> P p\<lhd> m \<and> Q p\<lhd> m \<longrightarrow> m = ?k" for m using ap cink pink
+      Ap1b [of _ _ P _ _ Q _ _ m ?k] kpline pLdef pPdef pq_facts pm by blast
+(* in the original contradiction proof, we obtained m0 such that m0 \<noteq> ?k*)
+(* sledgehammer: using m0def kpline pink cink pm ap Ap1b pLdef pPdef 
+     Un_iff mem_Collect_eq pq_facts by (smt (z3)) *)
+    then show ?thesis using kpline pink cink by auto
+  next
+    case QI: (Ideal F)
+    have oninf: "P p\<lhd> Infty \<and> Q p\<lhd> Infty" using PI QI pm by auto
+    have "m \<in> pLines \<and> P p\<lhd> m \<and> Q p\<lhd> m \<longrightarrow> m = Infty" for m using PI QI ap pm
+      two_ideal_is_infinite [of P] pLdef pPdef pq_facts by blast
+(* sledgehammer: using PI QI ap pm two_ideal_is_infinite pLdef pPdef pq_facts 
+      Collect_cong by (smt (z3)) *)
+    then show ?thesis using oninf pLdef by auto
+  qed
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma projectivization_p2:
+  fixes Points::"'p set" 
+  fixes Lines:: "'l set"
+  fixes incid::"'p \<Rightarrow> 'l \<Rightarrow> bool" 
+  fixes join::"'p \<Rightarrow> 'p \<Rightarrow> 'l"
+  fixes find_parallel::"'l \<Rightarrow> 'p \<Rightarrow> 'l"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
+  fixes pincid (infix "p\<lhd>" 60)
+  assumes pm: \<open>pincid = mprojectivize (incid)\<close>
+  assumes ap: "affine_plane Points Lines incid join find_parallel"
+  fixes k n
+  assumes kn_facts: "k \<in> pLines \<and> n \<in> pLines"
+  shows "\<exists>P. (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)"
+proof (cases k)
+  case Ok: (OrdinaryL a)
+  then show ?thesis
+  proof (cases n)
+    case On: (OrdinaryL b)
+    consider
+    (aparb) "affine_plane_data.parallel Points Lines incid a b"
+    | (aintb) "\<exists>Q. (Q \<in> Points \<and> incid Q a \<and> incid Q b)"
+      using affine_plane_data.parallel_def [of Points Lines incid a b] 
+      kn_facts pLdef On Ok by fastforce
+(* using affine_plane_data.parallel_def insert_iff empty_iff kn_facts pLdef On
+   Ok mem_Collect_eq projLine.distinct projLine.inject UnE by (smt (verit)) *)
+    then show ?thesis
+    proof (cases)
+      case aparb
+      let ?t = "affine_plane_data.line_pencil Points Lines (incid) b"
+      have aint: "a \<in> ?t" 
+        using affine_plane_data.line_pencil_def aparb by fastforce
+      let ?P = "Ideal ?t"
+      have pppoint: "?P \<in> pPoints" using ap aparb pPdef 
+        affine_plane_data.parallel_def [of _ _ _ a b] by fastforce
+      have ponk: "?P p\<lhd> k" using Ok pm aint by auto
+      have "?P p\<lhd> n" using On pm aint by (simp add: 
+        affine_plane_data.line_pencil_def affine_plane_data.parallel_def)
+      then show ?thesis using pppoint ponk by auto
+    next
+      case aintb
+      then obtain Q where qdef: "Q \<in> Points \<and> incid Q a \<and> incid Q b" by auto
+      let ?pQ = "OrdinaryP Q"
+      have "?pQ p\<lhd> k \<and> ?pQ p\<lhd> n" using Ok On pm qdef by auto
+      then show ?thesis using pPdef qdef by auto
+    qed
+  next
+    case In: Infty
+    let ?penk = "Ideal (affine_plane_data.line_pencil Points Lines incid a)"
+    have penkppt: "?penk \<in> pPoints" using pPdef Ok kn_facts pLdef by auto
+    have penkonn: "?penk p\<lhd> n" using In pm by auto
+    have "?penk p\<lhd> k" using Ok pm affine_plane_data.line_pencil_def 
+      affine_plane_data.parallel_reflexive kn_facts pLdef by fastforce
+    then show ?thesis using penkppt penkonn by auto
+  qed
+next
+  case Ik: Infty
+  then show ?thesis
+  proof (cases n)
+    case On: (OrdinaryL c)
+    let ?penc = "(affine_plane_data.line_pencil Points Lines incid c)"
+    let ?penn = "Ideal (affine_plane_data.line_pencil Points Lines incid c)"
+    have pennppt: "?penn \<in> pPoints" using pPdef On kn_facts pLdef by auto
+    have pennonk: "?penn p\<lhd> k" using Ik pm by auto
+    have "?penn p\<lhd> n" using Ik On pm affine_plane_data.line_pencil_def 
+      affine_plane_data.parallel_reflexive kn_facts pLdef by fastforce
+    then show ?thesis using pennppt pennonk by auto
+  next
+    case In: Infty
+    obtain l where ldef: "l \<in> Lines" 
+      using Ap3 affine_plane.containing_line ap by fastforce
+    let ?penl = "Ideal (affine_plane_data.line_pencil Points Lines incid l)"
+    have "?penl p\<lhd> k \<and> ?penl p\<lhd> n" using Ik In pm by auto
+    then show ?thesis using ldef pPdef by auto
+  qed
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma projectivization_p4:
+  fixes Points::"'p set" 
+  fixes Lines:: "'l set"
+  fixes incid::"'p \<Rightarrow> 'l \<Rightarrow> bool" 
+  fixes join::"'p \<Rightarrow> 'p \<Rightarrow> 'l"
+  fixes find_parallel::"'l \<Rightarrow> 'p \<Rightarrow> 'l"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
+  fixes pincid (infix "p\<lhd>" 60)
+  assumes pm: \<open>pincid = mprojectivize (incid)\<close>
+  assumes ap: "affine_plane Points Lines incid join find_parallel"
+  fixes k U
+  assumes ku_facts: "k \<in> pLines \<and> U = {P. (P \<in> pPoints \<and> P p\<lhd> k)}"
+  shows "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+proof (cases k)
+  case Ok: (OrdinaryL l)
+  then obtain QO RO  where QOROdef: 
+    "QO \<in> Points \<and> RO \<in> Points \<and> incid QO l \<and> incid RO l \<and> RO \<noteq> QO" 
+    using affine_plane.contained_points ap ku_facts pLdef by force
+(* interestingly, using contained_points [of l] here breaks it *)
+  let ?Q = "OrdinaryP QO" let ?R = "OrdinaryP RO"
+  have QOROonk: "?Q p\<lhd> k \<and> ?R p\<lhd> k" using QOROdef Ok pm by auto
+  let ?S = "Ideal (affine_plane_data.line_pencil Points Lines incid l)"
+  have "?S p\<lhd> k" using affine_plane_data.line_pencil_def Ok pm pLdef
+    affine_plane_data.parallel_reflexive ku_facts by fastforce
+  then show ?thesis using Ok QOROonk QOROdef ku_facts pLdef pPdef by auto
+next
+  case (Infty)
+  then show ?thesis using Ap4 ap ku_facts pPdef pm by fastforce
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
 theorem projectivization_is_projective:
   fixes Points::"'p set" 
   fixes Lines:: "'l set"
   fixes incid::"'p \<Rightarrow> 'l \<Rightarrow> bool" 
   fixes join::"'p \<Rightarrow> 'p \<Rightarrow> 'l"
   fixes find_parallel::"'l \<Rightarrow> 'p \<Rightarrow> 'l"
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k) )}"
-  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in> Lines)} \<union> {Infty}"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> Points)} \<union> {Ideal t | k t. 
+    ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
   fixes pincid (infix "p\<lhd>" 60)
-  assumes pm: \<open>pincid =  mprojectivize (incid)\<close>
+  assumes pm: \<open>pincid = mprojectivize (incid)\<close>
   assumes ap: "affine_plane Points Lines incid join find_parallel"
-  shows   "projective_plane2 pPoints pLines pincid"
-  sorry
-(* proof (unfold_locales) *)
+  shows "projective_plane2 pPoints pLines pincid"
+proof (unfold_locales)
+  show "\<lbrakk>P \<noteq> Q; P \<in> pPoints; Q \<in> pPoints\<rbrakk> 
+    \<Longrightarrow> (\<exists>!k. k \<in> pLines \<and> P p\<lhd> k  \<and> Q p\<lhd> k)" for P Q using assms pLdef pPdef
+    projectivization_p1 [of _ _ _ _ _ _ P Q] by auto
+  show "\<lbrakk>k \<in> pLines; n \<in> pLines\<rbrakk> 
+    \<Longrightarrow> \<exists>P. (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)" for k n using assms pLdef pPdef
+    projectivization_p2 [of _ _ _ _ _ _ k n] by auto
+  show "\<exists>P Q R. P \<in> pPoints \<and> Q \<in> pPoints \<and> R \<in> pPoints 
+    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
+    \<and> \<not> (projective_plane_data2.pcollinear pPoints pLines pincid P Q R)"
+    using Ap3 [of Points Lines] ap pLdef pPdef pm by blast
+(* sledgehammer: using Ap3 Collect_cong ap pLdef pPdef pm by (smt (z3)) *)
+  show "\<lbrakk>k \<in> pLines; U = {P. (P \<in> pPoints \<and> P p\<lhd> k)}\<rbrakk> 
+    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U
+    using assms pLdef pPdef projectivization_p4 [of _ _ _ _ _ _ k U] by auto
+qed
+text \<open>\done\<close>
 end
-
-
