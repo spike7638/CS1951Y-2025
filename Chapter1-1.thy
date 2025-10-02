@@ -561,13 +561,13 @@ find_parallel UV S = k
 find_parallel VW S = k
 That makes UV and VW parallel; because they both contain V, they're equal. That means that UV contains 
 U, V, and W, so they're collinear -- a contradiction. 
-Here's the theorem, with proof:
+Here's the theorem:
 
 lemma (in affine_plane) contained_points: 
   fixes k
   assumes "k \<in> Lines"
   shows "\<exists>S T. S \<in> Points \<and> T \<in> Points \<and> S \<noteq> T \<and> S \<lhd> k \<and> T \<lhd> k"
-  sorry
+  
 \<close>
 section  \<open> The real affine plane\<close>
 
@@ -1247,6 +1247,7 @@ next
 qed
 
 (* ======================Switch to talking about A2, real affine 2-space =================*)
+(* Team A2 = Jackson and Hadi *)
 
 text\<open>\spike Now we move on to showing that the real affine plane is in fact an affine plane. 
 Everything related to this plane has the prefix 'a2' or 'A2'.\done\<close>

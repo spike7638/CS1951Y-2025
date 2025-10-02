@@ -402,11 +402,9 @@ theorem (in affine_plane) parallel_alt:
   fixes m
   assumes "l \<noteq> m"
   assumes "l \<in> Lines" and "m \<in> Lines"
-  assumes "\<forall>P. (P \<in> Points) \<longrightarrow> (\<not>P \<lhd>  l) \<or> (\<not> P \<lhd>  m)"
+  assumes "\<forall>P. (\<not>P \<lhd>  l) \<or> (\<not> P \<lhd>  m)"
   shows "l || m"
-proof -
-  show ?thesis using assms by auto
-qed
+  sorry
 
 text  \<open>\begin{hartshorne}
 \prop[1.2] Two distinct lines have at most one point in common.
@@ -417,33 +415,7 @@ text  \<open>\begin{hartshorne}
 
 
 lemma (in affine_plane) prop1P2: "\<lbrakk>l \<noteq> m; l \<in> Lines; m \<in> Lines; P \<in> Points; Q \<in> Points; P \<lhd>  l; P \<lhd>  m; Q \<lhd>  l; Q \<lhd>  m\<rbrakk> \<Longrightarrow> P = Q"
-proof -
-  fix l m
-  fix P Q
-  assume assms1: "l \<noteq> m" and 
-         assms2: "l \<in> Lines" and  
-         assms3: "m \<in> Lines" and 
-         assms4: "P \<in> Points" and 
-         assms5: "Q \<in> Points" and 
-         assms6: "P \<lhd>  l" and 
-         assms7: "P \<lhd>  m" and 
-         assms8: "Q \<lhd>  l" and 
-         assms9: "Q \<lhd>  m"
-
-  show "P = Q"
-
-  proof (rule ccontr)
-    assume ch: "\<not>(P = Q)"
-    show False
-    proof -
-      have 0: "P \<noteq> Q" using ch by auto
-      have 1: "l = join P Q" using 0 a1b assms4 assms5 assms6 assms8 by auto
-      have 2: "m = join P Q" using 0 a1b assms4 assms5 assms7 assms9 by auto
-      have 3: "l = m" using 1 2 by auto
-      show ?thesis using 3 assms1 by auto
-    qed
-  qed
-qed
+  sorry
 
 text \<open>We can use find_theorems to show all the things that have been created in the background as a result of 
 defining the 'affine_plane' locale and proving all these small lemmas. Be sure to look at the last two in the list closely. \<close>
@@ -455,71 +427,14 @@ point lies on some line; for every line, there's \emph{some} point not on it; ev
 contains two points, although we'll delay that for a moment. \done\<close>
 
 lemma (in affine_plane) containing_line: "S \<in> Points \<Longrightarrow> (\<exists>l . (l \<in> Lines \<and>  S \<lhd> l))"
-proof -
-  fix S
-  assume assms: "S \<in> Points"
-  show "(\<exists>l . (l \<in> Lines \<and>  S \<lhd> l))"
-  proof -
-    have 0: "\<exists>Q. Q\<in>Points \<and> Q \<noteq> S" using assms a3 by auto
-    show ?thesis using 0 a1a assms by auto
-  qed
-qed
+sorre
 
-lemma (in affine_plane) missed_point: "k \<in> Lines \<Longrightarrow> (\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))"
-proof -
-  fix k
-  assume assms: "k \<in> Lines"
-  show "(\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))"
-  proof -
-    have 0: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
-    obtain P Q R where 1: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using 0 by auto
-    have 2: "( \<not> P \<lhd> k) \<or> ( \<not>  Q \<lhd> k) \<or> ( \<not> R \<lhd> k)" using 1 assms collinear_def by auto
-
-    show ?thesis using 1 2 by auto
-  qed
-qed
-
-
+lemma (in affine_plane) missed_point: "k \<in> Lines \<Longrightarrow> (\<exists>S . (S \<in> Points \<and> ( \<not>  S \<lhd> k)))" 
+  sorry
 lemma (in affine_plane) contained_point: 
   assumes "k \<in> Lines"
   shows "\<exists> S. S \<in> Points \<and>  S \<lhd> k"
-proof (rule ccontr)
-  assume ch: "\<not>(\<exists> S. S \<in> Points \<and>  S \<lhd> k)"
-  then show False
-  proof -
-    have 0: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
-    obtain P Q R where 1: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using 0 by auto
-    have 2: "join P Q \<in> Lines" using a1a 1 by auto
-    have 3: "join P R \<in> Lines" using a1a 1 by auto
-    have 4: "P \<lhd> join P Q" using a1a 1 by auto
-    have 5: "join P Q \<noteq> k" using 1 4 ch by auto
-    have 6: "\<not> (\<exists> T. T \<in> Points \<and> T \<lhd> k \<and> P \<lhd> join P Q)" using ch by auto
-
-    have 7: "join P Q || k" using assms 2 6 ch parallel_def by auto
-
-    have 10: "P \<lhd> join P R" using a1a 1 by auto
-    have 11: "join P R \<noteq> k" using 1 10 ch by auto
-    have 12: "\<not> (\<exists> T. T \<in> Points \<and> T \<lhd> k \<and> P \<lhd> join P R)" using ch by auto
-
-    have 13: "join P R || k" using assms 3 12 ch parallel_def by auto
-    have 14: "join P Q || join P R" using 7 13 parallel_transitive2[of "join P Q" k "join P R"] by auto
- 
-    have 15: "\<not> collinear P Q R" using 1 by auto
-    have 16: "Q \<lhd> join P Q" using a1a 1 by auto
-    have 17: "\<not> (R \<lhd> join P Q)" using  1 2 4 16 collinear_def by auto
-    have 18: "R \<lhd> join P R" using a1a 1 by auto
-
-    have 19: "join P Q \<noteq> join P R" using 17 18 by auto
-    have 20: "(\<exists> T. T \<in> Points \<and> T \<lhd> join P Q \<and> T \<lhd> join P R)" using 1 4 10 by auto
-
-    have 21: "\<not>(join P Q || join P R)" using 19  20 parallel_def by auto
-
-    show ?thesis using 14 21 by auto
-  qed
-qed
-
-
-
+  sorry
 
 text  \<open>\begin{hartshorne}
 Example. An affine plane has at least four points. There is an affine plane with four points.
@@ -640,13 +555,14 @@ ix.  Hence S != P, S != Q.
 x. Similar (arguing about l), we get  S != R. 
 
 xi. Hence the four points P,Q,R,S are all distinct, and we are done. 
-\<close>
+\caleb \seiji\<close>
 
 proposition (in affine_plane) four_points_necessary: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
       P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points"
   sorry
 
-text \<open>We can amplify this slightly to show that not only are there four points, but that no 
+    text\<open>\done \done\<close>
+    text \<open>We can amplify this slightly to show that not only are there four points, but that no 
 three are collinear; then we'll finally be able to show that every line contains at least two points!\<close>
 
 proposition (in affine_plane) four_points_noncollinear_triples: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
