@@ -387,12 +387,12 @@ definition join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<tim
   "join \<equiv> \<lambda>P Q . (if cross P Q  = (0,0,0) then (0,0,1) else cross P Q)"
 
 
-lift_definition Join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> rp2"
-  is "\<lambda>P Q. join P Q"
+lift_definition Join :: "rp2 \<Rightarrow> rp2 \<Rightarrow> rp2"
+  is "\<lambda>P Q. join (Rep_Proj P) (Rep_Proj Q)"
 proof -
   fix P Q
-  show "projrel (join P Q)
-        (join P Q)" unfolding projrel_def join_def
+  show "projrel (join (Rep_Proj P) (Rep_Proj Q))
+        (join (Rep_Proj P) (Rep_Proj Q))" unfolding projrel_def join_def
   by (smt (verit) prod.inject smult_ident)
 qed
 
