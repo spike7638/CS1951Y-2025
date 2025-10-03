@@ -1405,7 +1405,7 @@ proof -
   have 1: "n\<in>(affine_plane_data.line_pencil Points Lines (incid) k)" using assms 0 affine_plane.parallel_refl affine_plane_data.line_pencil_def mem_Collect_eq
       reflp_on_def by metis
   show ?thesis using 1 0 assms affine_plane_data.line_pencil_def by force
-
+qed
 
 
 lemma Ap4:
