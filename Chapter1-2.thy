@@ -8,8 +8,11 @@ linear-algebra-like operations; smult is "scalar multiplication", dot and cross
 are dot product and cross product. vplus is vector addition.
 
 Chances are that all this is pointless once you include HOL-Analysis.Cross3, 
-except that it wants to work with "real^3" (which is a somewhat arcane type), while we 
-have real \<times> real \<times> real. 
+except that it wants to work with "real^3" (which is a type with 
+a fancy definition that seems not to be amenable to quotients), while we 
+have real \<times> real \<times> real.  It may help to look at Cross3 regardless,
+as it shows how to prove some facts that we may need, and mimicking those proofs
+may be feasible even if using them direectly is not. 
 
 \<close>
 definition punctured_r_3 where
