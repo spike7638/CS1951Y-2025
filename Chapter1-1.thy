@@ -176,7 +176,7 @@ lemma parallel_symmetric [iff]:
   fixes l m
   assumes "parallel l m"
   shows "parallel m l"
-  sorry
+  using assms parallel_def by auto
 (* We can't prove parallel is transitive yet, because it 
 actually requires axiom 2 of a projective plane *)
 
