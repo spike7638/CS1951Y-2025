@@ -1848,6 +1848,7 @@ proof (rule ccontr)
 qed
 text \<open> \done \<close>
 
+text \<open>\nick\<close>
 lemma two_ideal_is_infinite:
   fixes P Q k
   assumes pq_def: "P = Ideal s \<and> Q = Ideal t"
@@ -1862,9 +1863,26 @@ lemma two_ideal_is_infinite:
   assumes qPoint: "Q \<in> pPoints"
   assumes k_facts: "k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k" 
   shows "k = Infty"
-  sorry
+proof (rule ccontr)
+  assume ch: "\<not> k = Infty"
+  obtain n where hn: "n \<in> Lines \<and> k = OrdinaryL n" using ch k_facts projLine.exhaust pLdef by auto
+  have h1: "n \<in> s \<and> n \<in> t" using pq_def k_facts hn pm_def by auto
+  obtain k1 where hk1: "k1 \<in> Lines \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k1)"
+    using pPdef pq_def qPoint by blast
+  obtain k2 where hk2: "k2 \<in> Lines \<and> (s = affine_plane_data.line_pencil Points Lines (incid) k2)"
+    using pPdef pq_def pPoint by blast
+  have h2: "affine_plane_data.parallel Points Lines incid n k1" 
+    using hk1 affine_plane_data.line_pencil_def h1 by fastforce
+  have h3: "affine_plane_data.parallel Points Lines incid n k2" 
+    using hk2 affine_plane_data.line_pencil_def h1 by fastforce
+  have h4: "affine_plane_data.parallel Points Lines incid k1 k2" 
+    using h2 h3 affine_plane.parallel_transitive affine_plane_data.parallel_symmetric ap by metis
+  have h5: "P = Q" using h4 ap hk1 hk2 same_pencils pq_def by metis
+  show False using h5 pq_diff by auto
+qed
+text \<open>\done\<close>
 
-text \<open>\hadi\<close>
+text \<open>\hadi\nick\<close>
 lemma any_ordinary_is_ordinary:
   fixes P k
   assumes p_def: "P = OrdinaryP A"
@@ -1877,7 +1895,8 @@ lemma any_ordinary_is_ordinary:
   assumes k_facts: "k \<in> pLines \<and> pincid P k" 
   shows "\<exists>n. n \<in> Lines \<and> k = OrdinaryL n" 
   using k_facts pLdef p_def pm_def by auto
-(*proof (rule ccontr)
+(*Nick's original solution:
+  proof (rule ccontr)
   assume cd: "\<not> (\<exists>n. n \<in> Lines \<and> k = OrdinaryL n)"
   show False
   proof -
