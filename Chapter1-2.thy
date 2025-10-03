@@ -145,7 +145,7 @@ lemma cs2:
   shows "\<forall>s . s * s * dot v v + s * 2 *  (dot u   v) + (dot  u u) \<ge> 0"
   sorry
 
-thm discriminant_iff [of "(dot v v)" t "2* (dot u v)" "(dot u u)"]
+(*thm discriminant_iff [of "(dot v v)" t "2* (dot u v)" "(dot u u)"]*)
 
 (* re=quoted from the discriminant theory *)
 lemma discriminant_nonneg_ex:
@@ -155,7 +155,7 @@ lemma discriminant_nonneg_ex:
   shows "\<exists> x. a * x\<^sup>2 + b * x + c = 0"
   by (auto simp: discriminant_nonneg assms)
 
-thm discriminant_pos_ex
+(*thm discriminant_pos_ex*)
 
 lemma discriminant_pos_cross_axis:
   fixes a b c :: real
@@ -327,6 +327,12 @@ quotient_type rp2 = "real \<times> real \<times> real" / partial: "projrel"
 lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp pcr_rp2 = (\<lambda>x .( (x \<noteq> (0,0,0)) \<and> projrel x x))"
   by (simp add: projrel_def rp2.domain_eq)
 
+lemma rep_P_nz:
+  fixes P
+  assumes a1: "P \<in> rp2_Points" 
+  shows "Rep_Proj P \<noteq> (0, 0, 0)" 
+using projrel_def Quotient_rel_rep Quotient_rp2 by metis
+
 thm rp2.domain_eq
 thm Abs_Proj_def
 
@@ -387,12 +393,12 @@ definition join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<tim
   "join \<equiv> \<lambda>P Q . (if cross P Q  = (0,0,0) then (0,0,1) else cross P Q)"
 
 
-lift_definition Join :: "rp2 \<Rightarrow> rp2 \<Rightarrow> rp2"
-  is "\<lambda>P Q. join (Rep_Proj P) (Rep_Proj Q)"
+lift_definition Join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> rp2"
+  is "\<lambda>P Q. join P Q"
 proof -
   fix P Q
-  show "projrel (join (Rep_Proj P) (Rep_Proj Q))
-        (join (Rep_Proj P) (Rep_Proj Q))" unfolding projrel_def join_def
+  show "projrel (join P Q)
+        (join P Q)" unfolding projrel_def join_def
   by (smt (verit) prod.inject smult_ident)
 qed
 
@@ -417,6 +423,8 @@ lemma rp2_P1b_helper:
   shows "\<exists>c . (c \<noteq> 0) \<and> k = smult c n"
   sorry
 
+
+
 lemma rp2_P1b:
   fixes P Q k n
   assumes a1: "P \<in> rp2_Points" 
@@ -427,7 +435,9 @@ lemma rp2_P1b:
   assumes k_facts: "rp2_incid P k  \<and> rp2_incid Q k" 
   assumes n_facts: "rp2_incid P n  \<and> rp2_incid Q n" 
   shows "k = n"
-  sorry
+proof -
+  obtain Px Py Pz where "(Px, Py, Pz) = Rep_Proj P \<and> (Px, Py, Pz) \<noteq> (0, 0, 0)" 
+    using projrel_def Quotient_rel_rep Quotient_rp2 prod_cases3 by metis
 
 lemma ar: "Abs_Proj (Rep_Proj x) = x"
   by (meson Quotient_abs_rep Quotient_rp2)
