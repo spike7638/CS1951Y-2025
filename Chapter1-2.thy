@@ -1,0 +1,490 @@
+theory "Chapter1-2"
+  imports Complex_Main  "Chapter1-1" "HOL-Analysis.Cross3"
+
+begin
+(* Team RP2-quotient:  Jiayi, Luke, George, Nick, Oliver *)
+text\<open> Start out by defining RP2 as a quotient of R3 - {origin}. I'll need various 
+linear-algebra-like operations; smult is "scalar multiplication", dot and cross
+are dot product and cross product. vplus is vector addition.
+
+Chances are that all this is pointless once you include HOL-Analysis.Cross3, 
+except that it wants to work with "real^3" (which is a type with 
+a fancy definition that seems not to be amenable to quotients), while we 
+have real \<times> real \<times> real.  It may help to look at Cross3 regardless,
+as it shows how to prove some facts that we may need, and mimicking those proofs
+may be feasible even if using them direectly is not. 
+
+\<close>
+definition punctured_r_3 where
+"punctured_r_3 = (UNIV::((real \<times> real \<times> real) set)) - {(0::real,0::real,0::real)}"
+
+definition cross::"(real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real)"  where
+"cross =  (\<lambda> (x1, x2, x3) (y1, y2, y3) . (x2*y3 - x3 * y2, x3 * y1  - x1 * y3, x1 * y2 - x2* y1))"
+
+(* Idea: show that |u x v|^2 = |u|^2 |v|^2 sin^2 theta = |u|^2 |v|^2 (1 - cos^2theta)
+ = |u|^2 |v|^2 (1 - dot(u,v)^2/ |u|^2 |v|^2 ) = |u|^2 |v|^2 - dot(u,v)^2 > 0 for some reason...
+*) 
+definition squared_length::"(real \<times> real \<times> real) \<Rightarrow>real" where
+"squared_length =  (\<lambda> (x1, x2, x3) . (x1*x1 + x2*x2 + x3 * x3))"
+
+definition dot::"(real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real) \<Rightarrow> real" where
+"dot =  (\<lambda> (x1, x2, x3) (y1, y2, y3) . (x1 * y1 + x2 * y2 + x3 * y3))"
+
+definition vplus::"(real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real)"  where
+"vplus =  (\<lambda> (x1, x2, x3) (y1, y2, y3) . (x1+y1, x2+y2, x3+y3))"
+
+definition smult::"real \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real)"  where
+"smult =  (\<lambda> s (x1, x2, x3). (s*x1, s* x2, s* x3))"
+
+(* many, if not most, of these should be added to [simp] *)
+lemma smult_assoc: 
+  "smult a (smult b v) = smult (a * b) v"
+  unfolding smult_def
+  sorry
+
+lemma smult_ident: 
+  "smult 1 v =  v"
+  unfolding smult_def by simp
+
+lemma vplus_comm:
+  shows "vplus u v = vplus v u"  
+  sorry
+
+lemma squared_length_is_self_dot:
+  fixes x1 x2 x3::real
+  shows "squared_length (x1, x2, x3)  = dot (x1, x2, x3) (x1, x2, x3)"
+  sorry
+
+lemma nonzero_vector_implies_nonzero_square_length:
+  assumes "(x1, x2, x3) \<in> punctured_r_3"
+  shows "squared_length (x1, x2, x3) > 0"
+  sorry
+
+lemma nonzero_square_length_implies_nonzero_vector:
+  fixes x1 x2 x3
+  assumes "squared_length (x1, x2, x3) > 0"
+  shows "(x1, x2, x3) \<noteq> (0,0,0)"
+  sorry
+
+
+lemma sq_diff: 
+  shows "((a::real) - b)*(a-b) = a*a - 2 * a * b + b * b"
+  by algebra
+
+lemma abcpqr:
+  shows "((a::real) + b + c) * (p + q + r) = a*p + a*q + a * r + b *p + b*q + b*r + c*p + c*q + c*r" by argo 
+
+thm abcpqr [of "x1*y1" "x2*y2" "x3*y3"  "x1*y1" "x2*y2" "x3*y3"]
+
+lemma cross_prod_length:
+  fixes x1 x2 x3::real
+  fixes y1 y2 y3::real
+  shows "squared_length (cross (x1, x2, x3) (y1, y2, y3)) = 
+    (squared_length (x1, x2, x3) ) * (squared_length (y1, y2, y3) ) - 
+  (dot (x1, x2, x3) (y1, y2, y3)) *  (dot (x1, x2, x3) (y1, y2, y3))"
+  sorry
+
+lemma cross_prod_length2:
+  fixes u v
+  shows "squared_length (cross u v) = 
+    (squared_length u ) * (squared_length v ) - 
+  (dot u v) *  (dot u v)"
+  sorry
+
+lemma dot_commute:
+  fixes u v
+  shows "dot u v = dot v u"
+  sorry
+
+lemma dot_distrib [simp]:
+  fixes u v w
+  shows "dot (vplus u v) w = dot u w + dot v w"
+  sorry
+
+lemma dot_scalar [simp]:
+  fixes u v s
+  shows "dot u (smult s v) = s * dot u v"
+  sorry
+
+lemma dot_pos:
+  fixes u
+  shows "(dot u u \<ge> 0)"
+  sorry
+
+(* prove dot(u,u) = 0 only if u = 0 *)
+lemma dot_non_degenerate:
+  fixes u
+  shows "(dot u u = 0) \<longleftrightarrow> (u = (0,0,0))"
+  sorry
+
+lemma pythag_setup:
+  fixes u v
+  assumes "v \<noteq> (0,0,0)"
+  defines "s \<equiv> smult ((dot u v)/(dot v v)) v"
+  defines "t \<equiv> vplus u (smult (-1) s)"
+  shows "dot s t = 0"
+  sorry
+
+lemma pythag:
+  fixes u v w
+  assumes "dot v w = 0"
+  assumes "u = vplus v w"
+  shows "(dot u u) = (dot v v) + (dot w w)"
+  sorry
+
+
+lemma cs1: (* cauchy-schwartz, step 1 *)
+  fixes u v s
+  assumes "(dot v v)  \<noteq> 0"
+  shows "s * s * (dot v v) + s * 2 *  (dot u   v) + (dot  u u) \<ge> 0"
+  sorry
+
+lemma cs2:
+  fixes u v s
+  assumes "(dot v v)  \<noteq> 0"
+  shows "\<forall>s . s * s * dot v v + s * 2 *  (dot u   v) + (dot  u u) \<ge> 0"
+  sorry
+
+thm discriminant_iff [of "(dot v v)" t "2* (dot u v)" "(dot u u)"]
+
+(* re=quoted from the discriminant theory *)
+lemma discriminant_nonneg_ex:
+  fixes a b c :: real
+  assumes "a \<noteq> 0"
+    and "discrim a b c \<ge> 0"
+  shows "\<exists> x. a * x\<^sup>2 + b * x + c = 0"
+  by (auto simp: discriminant_nonneg assms)
+
+thm discriminant_pos_ex
+
+lemma discriminant_pos_cross_axis:
+  fixes a b c :: real
+  assumes "a \<noteq> 0"
+    and "discrim a b c > 0"
+  shows "\<exists> x. (a * x\<^sup>2 + b * x + c) * a  < 0"
+  sorry
+
+lemma no_solutions_discrim_neg:
+  fixes a b c :: real
+  assumes "a \<noteq> 0"
+  assumes "\<forall> x. a * x\<^sup>2 + b * x + c \<noteq> 0"
+  shows "discrim a b c < 0"
+  sorry
+
+lemma cauchy_schwartz:
+  fixes u v
+  shows "(dot u v)^2 \<le> ( dot u u)* (dot v v)"
+  sorry
+
+(* Prove squared-cauchy-schwartz by expanding dot(u+v, u+v) \ge 0 *)
+(* Prove equality in dot^2(u,v) = dot^2(u,u) dot^2(v,v) iff v = -cu for some c. Idea: look at dot(v + cu, v+cu).  *)
+lemma q:
+  fixes u v
+  shows "vplus (vplus u (smult (-1) v)) v = u"
+  sorry
+
+lemma cs_equality:
+  fixes u v w
+  assumes "v \<noteq> (0,0,0)"
+  assumes "(dot u v)^2  = (dot u u) *  (dot v v)"
+  defines "s \<equiv> smult ((dot u v)/(dot v v)) v"
+  defines tdef: "t \<equiv> vplus u (smult (-1) s)"
+  shows "\<exists> c . u = smult c v"
+  sorry
+
+lemma dot_cross_zero: 
+  fixes ux uy uz vx vy vz::"real"
+  assumes "u = (ux, uy, uz)"
+  assumes "v = (vx, vy, vz)"
+  assumes "n = (nx, ny, nz)"
+  assumes "n = cross u v"
+  shows "(dot u n = 0)" and "(dot v n = 0)"
+  sorry
+
+section \<open>Homogeneous Coordinates in the real projective plane\<close>
+text\<open>
+\hartshorne
+
+{\textbf} Homogeneous coordinates in the real projective plane
+
+We can give an analytic definition of the real projective plane
+as follows. We consider the example given above of lines in $\mathbb R^33$.
+
+A point of $S$ is a line through $O$.
+We will represent the point $P$ of
+$S$ corresponding to the line $l$ by
+choosing any point $(x1, x2, x3)$ on
+$l$ different from the point $(0, 0, 0)$.
+The numbers $x1, x2, x3$ are ho-
+mogeneous coordinates of $P$ . Any 
+other point of $l$ has the coordinates
+$(\<lambda>x1, \<lambda>x2, \<lambda>x3)$, where $\<lambda> \in \mathbb R, \<lambda> \ne 0$. 
+Thus $S$ is the collection of triples $(x1, x2, x3)$ of real numbers, not all zero, 
+and two triples $(x1, x2, x3)$ and $(x\<Zprime>1, x\<Zprime>2, x\<Zprime>3)$
+represent the same point \<Leftrightarrow> \<exists>\<lambda> \<in> R such that
+$x\<Zprime>i =\<lambda>xi$ for $i=1,2,3$.
+
+Since the equation of a plane in $\mathbb R^3$ passing through $O$ is of the form $a1x1+a2x2+a3x3 =0$, $ ai$ not all $0$,
+we see that this is also the equation of a line in $S$, in terms of the homogeneous coordinates.
+
+subsection \<open>Isomorphism of projective planes\<close>
+\textbf{Definition.} Two projective planes $S$ and $S\<Zprime>$ are isomorphic if there exists 
+a one-to-one transformation $T : S \to S\<Zprime>$ which takes collinear points into collinear points.
+\done
+\spike
+At this point you might be asking 'is that definition enough to show that if $k$ is a line of $S$, 
+then $h = \{T(P) \mid P \in k \}$ is a line in $S'$? Couldn't $h$ potentially be just a \emph{subset} 
+of some line in $S'$? If $S$ and $S'$ are finite sets, that can't happen, but if they're infinite, 
+it certainly seems like a possibility. 
+
+If $h$ really has to be a line, then this definition is a sweet one: in proving something's an isomorphism,
+we need only show collinear points map to collinear points, not that whole lines map to whole lines. 
+
+Anyhow, if you're asking this question, you're not alone. Not only did I wonder about this as I read 
+it, but Zichen Gao did too: https://math.stackexchange.com/questions/3481844/is-isomorphic-between-projective-planes-actually-equivalence-relation
+And Zichen provided an answer: yes, this definition really \emph{is} enough to guarantee lines are sent to lines. It goes like
+this:
+
+Suppose $f$ is a bijective mapping that takes collinear points in $S$ to collinear points in $S'$, 
+we wish to prove that $f^{-1}$ also has this property, i.e. if $f$ takes $A, B, C$ to 
+$A',B',C'$ which are collinear, then $A,B,C$ must be collinear:
+
+If not, then the lines $AB$ and $BC$ intersect in only the point $B$. For any point 
+$D$ on $AB$, since $A,B,D$ are collinear, the image of $D$ must lie on the line 
+$A'B'C'$. For the same reason, so is the image of each point lying on the line $BC$. 
+Since we know that the image of every point on $AB$ and $BC$ is on $A'B'C'$, we can 
+use the property of $f$ again to see that the image of every line that intersects 
+$AB$ and $BC$ at different points must also be on $A'B'C'$. However, through any point 
+in $S$ except $A,B,C$, such a line exists. Hence we know that $f$ takes all the points 
+in $S$ into the line $A'B'C'$, which is a contradiction to the fact that $f$ is a 
+bijection, since every projective plane (here we indicate $S'$) must have  points 
+which are not collinear.
+
+We'll leave the formalization of that proof as a homework problem.
+\done
+\<close>
+subsection \<open>Defining a quotient space for RP2\<close>
+
+(* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
+axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
+
+definition pfirst:: "(real \<times> real \<times> real) \<Rightarrow> real" where
+  "pfirst = (\<lambda> x . fst x)"
+
+definition psecond:: "(real \<times> real \<times> real) \<Rightarrow> real" where
+  "psecond = (\<lambda> x . fst (snd x))"
+
+definition pthird:: "(real \<times> real \<times> real) \<Rightarrow> real" where
+  "pthird = (\<lambda> x . snd (snd x))"
+
+
+    (* Define a type representing the cartesian product *)
+definition projrel :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> bool"
+  where "projrel = (\<lambda>x y. (x \<noteq> (0,0,0) \<and> y \<noteq> (0,0,0)) \<and>  (\<exists> (c::real) . c \<noteq> 0 \<and> (x = smult c y)))"
+
+lemma exists_projrel_refl: "\<exists>x. projrel x x" 
+proof -
+  have "(1,0,0) = smult 1 (1,0,0)"  by (simp add: smult_def)
+  then show ?thesis by (metis old.prod.inject one_neq_zero projrel_def)
+qed
+
+lemma nonzero_inverse: "((c::real) \<noteq> 0) \<Longrightarrow> ((1/c) \<noteq> 0)" by simp
+
+lemma divide_through: "((c::real) \<noteq> 0) \<Longrightarrow> (a = c*q) \<Longrightarrow> ((1/c)*a = q)" by simp
+
+lemma symp_projrel: "symp projrel"
+proof -
+  show ?thesis  unfolding symp_def sorry
+(*
+  proof (clarify) 
+    ...
+  qed
+*)
+qed
+
+lemma transp_projrel: "transp projrel"
+proof (rule transpI, unfold split_paired_all)
+  fix x y z
+  assume 1: "projrel x y"
+  obtain c where a1:"(x \<noteq> (0,0,0) \<and> x \<noteq> (0,0,0)) \<and>   c \<noteq> 0 \<and>
+         (x = smult c y)" using 1 projrel_def by meson
+  assume 2: "projrel y z"
+  obtain d where a2:"(y \<noteq> (0,0,0) \<and> z \<noteq> (0,0,0)) \<and>   d \<noteq> 0 \<and>
+         (y = smult d z)" using 2 projrel_def by meson
+  have p1: "c*d \<noteq> 0" using a1 a2 by auto
+  have a3: "(x \<noteq> (0,0,0) \<and> z \<noteq> (0,0,0)) \<and>  (c*d) \<noteq> 0 \<and>
+         x = smult (c*d) z" using a1 a2 p1 smult_assoc by blast
+  show  "projrel x z" using a3  projrel_def by metis
+qed
+
+lemma part_equivp_projrel: "part_equivp projrel"
+  by (rule part_equivpI [OF exists_projrel_refl symp_projrel transp_projrel])
+
+quotient_type rp2 = "real \<times> real \<times> real" / partial: "projrel"
+  morphisms Rep_Proj Abs_Proj
+  using part_equivp_projrel .
+
+lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp pcr_rp2 = (\<lambda>x .( (x \<noteq> (0,0,0)) \<and> projrel x x))"
+  by (simp add: projrel_def rp2.domain_eq)
+
+thm rp2.domain_eq
+thm Abs_Proj_def
+
+(* a remaining theorem from the "warmup" section, one that needs "projrel": *)
+
+lemma cross_nz:
+  assumes "u \<in> punctured_r_3"
+  assumes "v \<in> punctured_r_3"
+  assumes "\<not> projrel u v"
+  defines s_def: "s \<equiv> cross u v"
+  shows "s \<in> punctured_r_3"
+  sorry
+
+
+(* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
+axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
+
+(* RP2 is a projective plane *)
+
+lemma projrel_scalar: 
+  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P = smult s Q" 
+    sorry
+  
+definition rp2_Points where
+"rp2_Points = (UNIV::rp2 set)" 
+
+definition rp2_Lines where
+"rp2_Lines = (UNIV::rp2 set)"
+
+lemma good_lift1:
+  fixes x
+  assumes "x \<in> punctured_r_3"
+  shows "\<not> (projrel x (0,0,0))" 
+  sorry
+
+definition rp2_incid_rep where
+"rp2_incid_rep P k = (dot P k = 0)"
+
+lift_definition rp2_incid::"rp2 \<Rightarrow> rp2 \<Rightarrow> bool"
+is "\<lambda> P k . (dot P k = 0)"
+proof -
+  fix P1 P2 k1 k2
+  assume a1: "projrel P1 P2"
+  assume a2: "projrel k1 k2"
+  show "(dot P1 k1 = 0) = (dot P2 k2 = 0)"
+    sorry
+  qed
+
+(*
+    p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k . k \<in> Lines \<and> P \<lhd> k  \<and> Q \<lhd>  k)" and
+    p2: "\<lbrakk>k \<in> Lines; n \<in> Lines\<rbrakk> \<Longrightarrow> \<exists> P . (P \<in> Points \<and> P \<lhd> k \<and> P \<lhd> n)" and
+    p3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (pcollinear P Q R)" and
+    p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+*)
+
+definition join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real)"
+  where
+  "join \<equiv> \<lambda>P Q . (if cross P Q  = (0,0,0) then (0,0,1) else cross P Q)"
+
+
+lift_definition Join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> rp2"
+  is "\<lambda>P Q. join P Q"
+proof -
+  fix P Q
+  show "projrel (join P Q)
+        (join P Q)" unfolding projrel_def join_def
+  by (smt (verit) prod.inject smult_ident)
+qed
+
+lemma rp2_P1a:
+  fixes P Q
+  assumes a1: "P \<in> rp2_Points" 
+  assumes a2: "Q \<in> rp2_Points"
+  assumes a3: "P \<noteq> Q"
+  shows "(\<exists>k . k \<in> rp2_Lines \<and> rp2_incid P  k  \<and>  rp2_incid Q  k)"
+  sorry
+
+(* TO DO: To show uniqueness, we have to show (for P,Q in punctured_r_3 and P and Q not proj_rel, 
+that if h is orthog to P and Q, then h is a nonzero multiple of the cross product. Ugh. Ugly algebra ahead *)
+lemma rp2_P1b_helper:
+  fixes P Q k n
+  assumes a1: "P \<in> punctured_r_3" 
+  assumes a2: "Q \<in>  punctured_r_3"
+  assumes a3: "\<not> projrel P Q"
+  assumes a4: "n = cross P Q"
+  assumes a5: "k \<in>  punctured_r_3"
+  assumes k_facts: "(dot P k = 0)  \<and> (dot Q k = 0)" 
+  shows "\<exists>c . (c \<noteq> 0) \<and> k = smult c n"
+  sorry
+
+lemma rp2_P1b:
+  fixes P Q k n
+  assumes a1: "P \<in> rp2_Points" 
+  assumes a2: "Q \<in> rp2_Points"
+  assumes a3: "k \<in> rp2_Lines"
+  assumes a4: "n \<in> rp2_Lines"
+  assumes a5: "P \<noteq> Q"
+  assumes k_facts: "rp2_incid P k  \<and> rp2_incid Q k" 
+  assumes n_facts: "rp2_incid P n  \<and> rp2_incid Q n" 
+  shows "k = n"
+  sorry
+
+lemma ar: "Abs_Proj (Rep_Proj x) = x"
+  by (meson Quotient_abs_rep Quotient_rp2)
+
+lemma ra: 
+  fixes x
+  assumes "(x \<noteq> (0,0,0)) \<and> projrel x x"
+  shows "projrel (Rep_Proj (Abs_Proj x)) x" 
+  by (simp add: Quotient3_rp2 assms rep_abs_rsp_left) 
+
+lemma rp2_P2:
+  fixes m k 
+  assumes a1: "m \<in> rp2_Lines" 
+  assumes a2: "k \<in> rp2_Lines"
+  assumes a3: "m \<noteq> k"
+  shows "(\<exists>P . P \<in> rp2_Points \<and> rp2_incid P  m  \<and>  rp2_incid P  k)"
+  sorry
+
+lemma rp2_P3:
+  shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in>  rp2_Points \<and> R \<in>  rp2_Points \<and> 
+          P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
+          \<not> (\<exists>k \<in> rp2_Lines . rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
+  sorry
+
+lemma rp2_P4:
+  fixes k
+  fixes U
+  assumes "k \<in> rp2_Lines"
+  assumes "U = {X . X \<in> rp2_Points \<and> rp2_incid X k}"
+  shows "\<exists>P Q R. P \<in> U \<and> Q \<in> U \<and> R \<in> U \<and> distinct [P,Q,R]"
+  sorry
+
+(*
+    p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k . k \<in> Lines \<and> P \<lhd> k  \<and> Q \<lhd>  k)" and
+    p2: "\<lbrakk>k \<in> Lines; n \<in> Lines\<rbrakk> \<Longrightarrow> \<exists> P . (P \<in> Points \<and> P \<lhd> k \<and> P \<lhd> n)" and
+    p3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (pcollinear P Q R)" and
+    p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+*)
+
+theorem analytic_rp2:
+  shows "projective_plane2 rp2_Points rp2_Lines rp2_incid"
+  sorry
+(*
+proof (unfold_locales)
+  ...
+*)
+
+theorem projectivisation_of_A2:
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> A2Points)} \<union> {Ideal t | k t . 
+                  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil  A2Points  A2Lines ( a2incid) k) )}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in>  A2Lines)} \<union> {Infty}"
+  fixes pincid (infix "p\<lhd>" 60)
+  assumes pm: \<open>pincid =  mprojectivize (a2incid)\<close>
+  assumes ap: "affine_plane  A2Points  A2Lines a2incid a2join a2find_parallel"
+  shows   "projective_plane2 pPoints pLines pincid"
+  using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
+
+end
+
+
