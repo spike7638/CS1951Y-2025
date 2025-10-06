@@ -424,7 +424,6 @@ lemma rp2_P1b_helper:
   sorry
 
 
-
 lemma rp2_P1b:
   fixes P Q k n
   assumes a1: "P \<in> rp2_Points" 
@@ -436,8 +435,30 @@ lemma rp2_P1b:
   assumes n_facts: "rp2_incid P n  \<and> rp2_incid Q n" 
   shows "k = n"
 proof -
-  obtain Px Py Pz where "(Px, Py, Pz) = Rep_Proj P \<and> (Px, Py, Pz) \<noteq> (0, 0, 0)" 
-    using projrel_def Quotient_rel_rep Quotient_rp2 prod_cases3 by metis
+  obtain Px Py Pz where hPrep: "(Px, Py, Pz) = Rep_Proj P \<and> (Px, Py, Pz) \<noteq> (0, 0, 0)" 
+    using rep_P_nz a1 prod_cases3 by metis
+  obtain Qx Qy Qz where hQrep: "(Qx, Qy, Qz) = Rep_Proj Q \<and> (Qx, Qy, Qz) \<noteq> (0, 0, 0)" 
+    using rep_P_nz a2 prod_cases3 by metis
+  have h1: "\<not> projrel (Px, Py, Pz) (Qx, Qy, Qz)" 
+    using hPrep hQrep Quotient_rel_rep Quotient_rp2 a5 by metis
+  let ?crossPQ = "cross (Px, Py, Pz) (Qx, Qy, Qz)"
+  obtain kx ky kz where hkrep: "(kx, ky, kz) = Rep_Proj k \<and> (kx, ky, kz) \<noteq> (0, 0, 0)" 
+    using rep_P_nz a3 prod_cases3 by metis
+  obtain nx ny nz where hnrep: "(nx, ny, nz) = Rep_Proj n \<and> (nx, ny, nz) \<noteq> (0, 0, 0)" 
+    using rep_P_nz a4 prod_cases3 by metis
+  have h2: "(dot (Px, Py, Pz) (kx, ky, kz) = 0) \<and> (dot (Qx, Qy, Qz) (kx, ky, kz) = 0)"
+    using hPrep hQrep hkrep k_facts rp2_incid.rep_eq by auto
+  have h3: "(dot (Px, Py, Pz) (nx, ny, nz) = 0) \<and> (dot (Qx, Qy, Qz) (nx, ny, nz) = 0)"
+    using hPrep hQrep hnrep n_facts rp2_incid.rep_eq by auto
+  let ?Pxyz = "(Px, Py, Pz)" let ?Qxyz = "(Qx, Qy, Qz)" let ?kxyz = "(kx, ky, kz)" let ?nxyz = "(nx, ny, nz)"
+  obtain c_k where hck: "(c_k \<noteq> 0) \<and> ?kxyz = smult c_k ?crossPQ"
+    using h2 rp2_P1b_helper[of ?Pxyz ?Qxyz ?crossPQ ?kxyz] Diff_iff UNIV_I empty_iff h1 hPrep hQrep 
+      hkrep insert_iff punctured_r_3_def by metis (*change this*)
+  obtain c_n where hcn: "(c_n \<noteq> 0) \<and> ?nxyz = smult c_n ?crossPQ"
+    using h3 rp2_P1b_helper[of ?Pxyz ?Qxyz ?crossPQ ?nxyz] Diff_iff UNIV_I empty_iff h1 hPrep hQrep 
+      hkrep insert_iff punctured_r_3_def hnrep rp2_P1b_helper by (metis (no_types, lifting))
+  have "(() \<noteq> 0) \<and> k = smult c n"
+  
 
 lemma ar: "Abs_Proj (Rep_Proj x) = x"
   by (meson Quotient_abs_rep Quotient_rp2)
