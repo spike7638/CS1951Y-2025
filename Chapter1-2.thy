@@ -207,9 +207,10 @@ proof -
     have f1: "x = (x/a) * a" using zs ainv False by simp
     have "[x, y, z] = [(x/a)*a, (x/a)*b, (x/a)*c]" using f1 f2 f3 by presburger
     fix s
-    have "vector[s*a, s*b, s*c] = (s::real)  *\<^sub>R vector[a, b, c]" by sledgehammer
+    have "vector[s*a, s*b, s*c] = (s::real)  *\<^sub>R vector[a, b, c]" sorry
     then show ?thesis sorry
   qed
+  
 
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
