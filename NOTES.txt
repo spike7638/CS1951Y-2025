@@ -1,16 +1,11 @@
 NOTES
 Chapter 1-1
-parallel_symmetric (anyone)
-four_points_noncollinear_triples (anyone)
-A4affine_plane_a2  (JiaYi and Luke)
-fpp (JiaYi and Luke)
+
 
 everything about A2: Jackson and Hadi
 
 projectivization of an affine plane:
 lemma Ap2  (anyone? Or did someone specific own this?)
-Ap41  (anyone? Or did someone specific own this?)
-Ap4  (anyone? Or did someone specific own this?)
 two_ideal_is_infinite (anyone)
 
 

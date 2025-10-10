@@ -1,0 +1,74 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{isabelle,isabellesym}
+
+% further packages required for unusual symbols (see also
+% isabellesym.sty), use only when needed
+
+%\usepackage{amssymb}
+  %for \<leadsto>, \<box>, \<diamond>, \<sqsupset>, \<mho>, \<Join>,
+  %\<lhd>, \<lesssim>, \<greatersim>, \<lessapprox>, \<greaterapprox>,
+  %\<triangleq>, \<yen>, \<lozenge>
+
+%\usepackage{eurosym}
+  %for \<euro>
+
+%\usepackage[only,bigsqcap,bigparallel,fatsemi,interleave,sslash]{stmaryrd}
+  %for \<Sqinter>, \<Parallel>, \<Zsemi>, \<Parallel>, \<sslash>
+
+%\usepackage{eufrak}
+  %for \<AA> ... \<ZZ>, \<aa> ... \<zz> (also included in amssymb)
+
+%\usepackage{textcomp}
+  %for \<onequarter>, \<onehalf>, \<threequarters>, \<degree>, \<cent>,
+  %\<currency>
+
+% this should be the last package used
+\usepackage{pdfsetup}
+
+% urls in roman style, theory text in math-similar italics
+\urlstyle{rm}
+\isabellestyle{it}
+
+% for uniform font size
+%\renewcommand{\isastyle}{\isastyleminor}
+
+
+\newcommand{\term}[1]{{\textbf \emph{#1} }}%
+
+
+\newcommand{\spike}  {{~\newline \color{red}\rule{1cm}{0.2cm} }}
+\newcommand{\robert}    {{~\\ \color{green}\rule{1cm}{0.2cm} }}
+\newcommand{\jackson}{{~\\ \color{lime}\rule{1cm}{0.2cm} }}
+\newcommand{\hadi} {{~\newline \color{magenta}\rule{1cm}{0.2cm} }}
+\newcommand{\george}   {{~\\ \color{violet}\rule{1cm}{0.2cm} }}
+\newcommand{\nick} {{~\\ \color{red}\rule{1cm}{0.2cm} }}
+\newcommand{\oliver}  {{~\\ \color{LightSalmon}\rule{1cm}{0.2cm} }}
+\newcommand{\jiayi}  {{~\\ \color{DeepSkyBlue}\rule{1cm}{0.2cm} }}
+\newcommand{\luke}  {{~\\ \color{BlueViolet}\rule{1cm}{0.2cm} }}
+\newcommand{\done}   {{~\newline \color{black}\rule{1cm}{0.2cm} }}
+
+\begin{document}
+
+\title{CS1951Y-2025}
+\author{jhughes}
+\maketitle
+
+\tableofcontents
+
+% sane default for proof documents
+\parindent 0pt\parskip 0.5ex
+
+% generated text of all theories
+\input{session}
+
+% optional bibliography
+%\bibliographystyle{abbrv}
+%\bibliography{root}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

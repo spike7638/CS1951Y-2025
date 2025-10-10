@@ -24,10 +24,10 @@ next
   then show ?thesis sorry
   oops
 
-  text \<open>The format above is what Isar offers as an automatic completion once you put in "x \<ge> 0" as the argument
-for 'cases'. In general, cases takes its argument and makes one case for each constructor; booleans have 
-two constructors, True and False, and 'cases' uses these as the names for the two cases. Often that's not a 
-great choice. You can rename them like this:\<close>
+  text \<open>The format above is what Isar offers as an automatic completion once you put in "x \<ge> 0" as
+the argument for 'cases'. In general, cases takes its argument and makes one case for each 
+constructor; booleans have two constructors, True and False, and 'cases' uses these as the names 
+for the two cases. Often that's not a great choice. You can rename them like this:\<close>
 
 lemma case_example:
   fixes x
@@ -41,13 +41,11 @@ next
 qed
 
 text\<open>and 'using nonneg' reads better than 'using True'. 
-This approach to writing cases also works 
-for lists, where the 
+This approach to writing cases also works for lists, where the 
 two constructors are Nil and Cons (for which "#" is an infix notation). 
-This small example doesn't 
-need to use the Case conditions, but if it did, you might write 
-"show ?thesis using Nil by simp", for
-example. Or, as before, you could assign new labels to the cases.  \<close>
+This small example doesn't need to use the Case conditions, but if it did, you might write 
+"show ?thesis using Nil by simp", for example. 
+Or, as before, you could assign new labels to the cases.  \<close>
 
 lemma case_example2:
   fixes x::"real list"
@@ -60,7 +58,6 @@ next
   case (Cons a list)
   then show ?thesis by simp
 qed
-
 
 lemma case_example2a:
   fixes x::"real list"
@@ -75,16 +72,18 @@ next
 qed
 
 text\<open> In both "show" steps above I've used the label for the case, even 
-though it wasn't needed, just to show how it'd be done. \<close>
+though it wasn't needed, just to show how it'd be done. 
+
+The label wasn't needed because the "then" in "then show" remembers the previosly-stated fact 
+as a starting point for showing/having the next fact\<close>
+
 text\<open>There's yet another approach to case-based proofs that I really like,
 and which matches my typical usage: you first define your own 
-  case-alternatives (each with a name that you choose!), and then work through them one by one. You say "here
+case-alternatives (each with a name that you choose!), and then work through them one by one. You say "here
 are several cases", and are instantly obliged to show that these cover all
 possibilities. Then you write a case-proof by starting with "proof cases" and 
-isabelle somehow determines that the splitting of cases is the one you just made,
-and lets you fill in proofs for each case. A typical proof of the absolute
-value theorem might start like this:
-
+isabelle uses the splitting of cases that you just made, and lets you fill in proofs 
+for each case. A typical proof of the absolute value theorem might start like this:
 \<close>
 lemma case_example:
   fixes x
@@ -101,16 +100,18 @@ provides you with a template for the rest of the proof. The list of cases
 is used because of the "then", which says "use the preceding fact in handling
 this next thing.\<close>
 
+    text\<open>The offered form is:
   case nonneg
   then show ?thesis sorry
 next
   case neg
   then show ?thesis sorry
 qed
+\<close>
   
 
 text\<open>You can then fill in the template. If you choose your cases wrong, like this:\<close>
-lemma case_example:
+lemma case_example2:
   fixes x
   shows "x \<le> (abs x)"
 proof -
@@ -165,7 +166,7 @@ goal (1 subgoal):
 
 which indicates that "0 \<le> x is a fact you can use in your proof that x \<le> abs x. \<close>
 
-text \<open>Cases can be more complex that just values of some variable. Suppose you have
+text \<open>Cases can be more complex than just values of some variable. Suppose you have
 a couple of predicates, A and B, which are mutually exhaustive. You can write a proof
 based on that like this:\<close>
 
@@ -198,7 +199,11 @@ next
   then show ?thesis sorry
 qed
 
-text\<open>Of course, you're welcome to choose better names thatn "fact1" or "fact2" \<close>
+text\<open>Of course, you're welcome to choose better names than "fact1" or "fact2" 
+
+Also: adding those facts isn't really necessary -- the only reason to do so is for the names. 
+If you place your cursor just after "case a", you'll see that the current state 
+contains the fact "A x" already!\<close>
   
 section \<open>Goal reduction, or 'backwards proofs'\<close>
 

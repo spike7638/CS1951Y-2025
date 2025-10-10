@@ -1,0 +1,6 @@
+session Rosetta = HOL +
+  options [document = pdf, document_output = "Rosetta", quick_and_dirty=true]
+  theories
+    Rosetta
+  document_files
+    "root.tex"
