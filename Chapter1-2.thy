@@ -444,7 +444,8 @@ proof -
   fix P Q
   show "projrel (join P Q)
         (join P Q)" unfolding projrel_def join_def
-  by (smt (verit) prod.inject smult_ident)
+  by (metis (no_types, lifting) cross3_def cross_zero_left mult.commute vector_3(3) zero_index
+      zero_neq_one)
 qed
 
 lemma rp2_P1a:
@@ -459,11 +460,11 @@ lemma rp2_P1a:
 that if h is orthog to P and Q, then h is a nonzero multiple of the cross product. Ugh. Ugly algebra ahead *)
 lemma rp2_P1b_helper:
   fixes P Q k n
-  assumes a1: "P \<in> punctured_r_3" 
-  assumes a2: "Q \<in>  punctured_r_3"
-  assumes a3: "\<not> projrel P Q"
-  assumes a4: "n = P \<times> Q"
-  assumes a5: "k \<in>  punctured_r_3"
+  assumes P_def: "P \<in> punctured_r_3" 
+  assumes Q_def: "Q \<in>  punctured_r_3"
+  assumes PQ_nprojrel: "\<not> projrel P Q"
+  assumes n_def: "n = P \<times> Q"
+  assumes k_def: "k \<in> punctured_r_3"
   assumes k_facts: "(P \<bullet> k = 0)  \<and> (Q \<bullet> k = 0)" 
   shows "\<exists>c . (c \<noteq> 0) \<and> k = c *\<^sub>R n"
   sorry
