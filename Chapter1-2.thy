@@ -357,7 +357,7 @@ axioms 1 - 4. Then we can move on to isomorphism with the completion of the affi
 (* RP2 is a projective plane *)
 
 lemma projrel_scalar: 
-  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P =  s Q"
+  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P = s *\<^sub>R Q"
     sorry
   
 definition rp2_Points where
@@ -369,7 +369,7 @@ definition rp2_Lines where
 lemma good_lift1:
   fixes x
   assumes "x \<in> punctured_r_3"
-  shows "\<not> (projrel x (0,0,0))" 
+  shows "\<not> (projrel x 0)" 
   sorry
 
 definition rp2_incid_rep where
@@ -394,7 +394,7 @@ proof -
 
 definition join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> real^3"
   where
-  "join \<equiv> \<lambda>P Q . (if P \<times> Q  = (0,0,0) then (0,0,1) else P \<times> Q)"
+  "join \<equiv> \<lambda>P Q . (if P \<times> Q = 0 then vector[0,0,1] else P \<times> Q)"
 
 
 lift_definition Join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> rp2"
@@ -440,14 +440,10 @@ lemma rp2_P1b:
   assumes n_facts: "rp2_incid P n  \<and> rp2_incid Q n" 
   shows "k = n"
 proof -
-  obtain Pvec where hPrep: "Pvec = Rep_Proj P"
-    and hPnz: "Pvec \<noteq> (0, 0, 0)" 
-    and hPpr3: "(Px, Py, Pz) \<in> punctured_r_3" 
-    using rep_P_nz a1 prod_cases3 Diff_iff UNIV_I empty_iff insert_iff punctured_r_3_def by metis
-  obtain Qx Qy Qz where hQrep: "(Qx, Qy, Qz) = Rep_Proj Q"
-    and hQnz: "(Qx, Qy, Qz) \<noteq> (0, 0, 0)" 
-    and hQpr3: "(Qx, Qy, Qz) \<in> punctured_r_3"
-    using rep_P_nz a2 prod_cases3 Diff_iff UNIV_I empty_iff insert_iff punctured_r_3_def by metis
+  obtain Pvec where hPrep: "Pvec = Rep_Proj P" and hPpr3: "Pvec \<in> punctured_r_3" and hPnz: "Pvec \<noteq> 0" 
+    using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
+   obtain Qvec where hPrep: "Qvec = Rep_Proj Q" and hPpr3: "Qvec \<in> punctured_r_3" and hPnz: "Qvec \<noteq> 0" 
+    using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
   have h1: "\<not> projrel (Px, Py, Pz) (Qx, Qy, Qz)" 
     using hPrep hQrep Quotient_rel_rep Quotient_rp2 a5 by metis
   let ?crossPQ = "(Px, Py, Pz) \<times> (Qx, Qy, Qz)"
