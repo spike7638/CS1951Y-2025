@@ -350,13 +350,34 @@ lemma rp2_P3:
           \<not> (\<exists>k \<in> rp2_Lines . rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
   sorry
 
+text \<open>\Jiayi\Luke\<close>
 lemma rp2_P4:
   fixes k
   fixes U
   assumes "k \<in> rp2_Lines"
   assumes "U = {X . X \<in> rp2_Points \<and> rp2_incid X k}"
   shows "\<exists>P Q R. P \<in> U \<and> Q \<in> U \<and> R \<in> U \<and> distinct [P,Q,R]"
-  sorry
+proof - 
+  obtain P Q where pq: "P \<in> U \<and> Q \<in> U" using assms 
+      mem_Collect_eq rp2_P1a rp2_P2 rp2_P3 by metis
+  obtain a b c :: real where abc: "Rep_Proj P = vector[a, b, c]" 
+    using forall_vector_3 by fastforce
+  obtain d e f :: real where def: "Rep_Proj Q = vector[d, e, f]" 
+    using forall_vector_3 by fastforce
+  obtain g h i :: real where ghi: "g=(a+b)/2 \<and> h= (b+e)/2 \<and> i=(c+f)/2" 
+    by blast
+
+  have 0: "Abs_Proj (vector[g, h, i]) \<in> rp2_Points" using rp2_Points_def by auto 
+
+  obtain R where r: " R = Abs_Proj (vector[g, h, i])" using 0 by auto
+  then have r_rep: "projrel((Rep_Proj R)) (vector[g, h, i])" using ra
+    sorry
+  then have 0: "distinct[P,Q,R]" using num1_eq1 vt sorry
+  then have 1: "R \<in> U" using num1_eq1 vt sorry
+  then show ?thesis using pq r 0 1 by auto
+qed
+
+text \<open>\done\done\<close>
 
 (*
     p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k . k \<in> Lines \<and> P \<lhd> k  \<and> Q \<lhd>  k)" and
