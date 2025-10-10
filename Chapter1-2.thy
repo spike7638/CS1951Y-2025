@@ -22,199 +22,8 @@ definition punctured_r_3 where
 text\<open>
 (* STUDENTS: click on the Cross3.thy file that's imported above to see that cross and dot product
 are defined already, with infix notation ready to use! *)
-
-(*
-definition cross::"(real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real)"  where
-"cross =  (\<lambda> (x1, x2, x3) (y1, y2, y3) . (x2*y3 - x3 * y2, x3 * y1  - x1 * y3, x1 * y2 - x2* y1))"
-*)
-(* Idea: show that |u x v|^2 = |u|^2 |v|^2 sin^2 theta = |u|^2 |v|^2 (1 - cos^2theta)
- = |u|^2 |v|^2 (1 - dot(u,v)^2/ |u|^2 |v|^2 ) = |u|^2 |v|^2 - dot(u,v)^2 > 0 for some reason...
-*)
-(*
-definition squared_length::"(real \<times> real \<times> real) \<Rightarrow>real" where
-"squared_length =  (\<lambda> (x1, x2, x3) . (x1*x1 + x2*x2 + x3 * x3))"
-
-definition dot::"(real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real) \<Rightarrow> real" where
-"dot =  (\<lambda> (x1, x2, x3) (y1, y2, y3) . (x1 * y1 + x2 * y2 + x3 * y3))"
-
-definition vplus::"(real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real)"  where
-"vplus =  (\<lambda> (x1, x2, x3) (y1, y2, y3) . (x1+y1, x2+y2, x3+y3))"
-
-definition smult::"real \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real)"  where
-"smult =  (\<lambda> s (x1, x2, x3). (s*x1, s* x2, s* x3))"
-*)
-(* already included via Cross3 in various forms
-lemma smult_assoc: 
-  "smult a (smult b v) = smult (a * b) v"
-  unfolding smult_def
-  sorry
-
-lemma smult_ident: 
-  "smult 1 v =  v"
-  unfolding smult_def by simp
-
-lemma vplus_comm:
-  shows "vplus u v = vplus v u"  
-  sorry
-
-lemma squared_length_is_self_dot:
-  fixes x1 x2 x3::real
-  shows "squared_length (x1, x2, x3)  = dot (x1, x2, x3) (x1, x2, x3)"
-  sorry
-
-lemma nonzero_vector_implies_nonzero_square_length:
-  assumes "(x1, x2, x3) \<in> punctured_r_3"
-  shows "squared_length (x1, x2, x3) > 0"
-  sorry
-
-lemma nonzero_square_length_implies_nonzero_vector:
-  fixes x1 x2 x3
-  assumes "squared_length (x1, x2, x3) > 0"
-  shows "(x1, x2, x3) \<noteq> (0,0,0)"
-  sorry
-
-
-lemma sq_diff: 
-  shows "((a::real) - b)*(a-b) = a*a - 2 * a * b + b * b"
-  by algebra
-
-lemma abcpqr:
-  shows "((a::real) + b + c) * (p + q + r) = a*p + a*q + a * r + b *p + b*q + b*r + c*p + c*q + c*r" by argo 
-
-thm abcpqr [of "x1*y1" "x2*y2" "x3*y3"  "x1*y1" "x2*y2" "x3*y3"]
-
-lemma cross_prod_length:
-  fixes x1 x2 x3::real
-  fixes y1 y2 y3::real
-  shows "squared_length (cross (x1, x2, x3) (y1, y2, y3)) = 
-    (squared_length (x1, x2, x3) ) * (squared_length (y1, y2, y3) ) - 
-  (dot (x1, x2, x3) (y1, y2, y3)) *  (dot (x1, x2, x3) (y1, y2, y3))"
-  sorry
-
-lemma cross_prod_length2:
-  fixes u v
-  shows "squared_length (cross u v) = 
-    (squared_length u ) * (squared_length v ) - 
-  (dot u v) *  (dot u v)"
-  sorry
-
-lemma dot_commute:
-  fixes u v
-  shows "dot u v = dot v u"
-  sorry
-
-lemma dot_distrib [simp]:
-  fixes u v w
-  shows "dot (vplus u v) w = dot u w + dot v w"
-  sorry
-
-lemma dot_scalar [simp]:
-  fixes u v s
-  shows "dot u (smult s v) = s * dot u v"
-  sorry
-
-lemma dot_pos:
-  fixes u
-  shows "(dot u u \<ge> 0)"
-  sorry
-
-(* prove dot(u,u) = 0 only if u = 0 *)
-lemma dot_non_degenerate:
-  fixes u
-  shows "(dot u u = 0) \<longleftrightarrow> (u = (0,0,0))"
-  sorry
-
-lemma pythag_setup:
-  fixes u v
-  assumes "v \<noteq> (0,0,0)"
-  defines "s \<equiv> smult ((dot u v)/(dot v v)) v"
-  defines "t \<equiv> vplus u (smult (-1) s)"
-  shows "dot s t = 0"
-  sorry
-
-lemma pythag:
-  fixes u v w
-  assumes "dot v w = 0"
-  assumes "u = vplus v w"
-  shows "(dot u u) = (dot v v) + (dot w w)"
-  sorry
-
-
-lemma cs1: (* cauchy-schwartz, step 1 *)
-  fixes u v s
-  assumes "(dot v v)  \<noteq> 0"
-  shows "s * s * (dot v v) + s * 2 *  (dot u   v) + (dot  u u) \<ge> 0"
-  sorry
-
-lemma cs2:
-  fixes u v s
-  assumes "(dot v v)  \<noteq> 0"
-  shows "\<forall>s . s * s * dot v v + s * 2 *  (dot u   v) + (dot  u u) \<ge> 0"
-  sorry
-*)
-
-(* These, too, may be irrelevant !*)
-(*thm discriminant_iff [of "(dot v v)" t "2* (dot u v)" "(dot u u)"]*)
-
-(* re=quoted from the discriminant theory *)
-lemma discriminant_nonneg_ex:
-  fixes a b c :: real
-  assumes "a \<noteq> 0"
-    and "discrim a b c \<ge> 0"
-  shows "\<exists> x. a * x\<^sup>2 + b * x + c = 0"
-  by (auto simp: discriminant_nonneg assms)
-
-(*thm discriminant_pos_ex*)
-
-lemma discriminant_pos_cross_axis:
-  fixes a b c :: real
-  assumes "a \<noteq> 0"
-    and "discrim a b c > 0"
-  shows "\<exists> x. (a * x\<^sup>2 + b * x + c) * a  < 0"
-  sorry
-
-lemma no_solutions_discrim_neg:
-  fixes a b c :: real
-  assumes "a \<noteq> 0"
-  assumes "\<forall> x. a * x\<^sup>2 + b * x + c \<noteq> 0"
-  shows "discrim a b c < 0"
-  sorry
-
-(* we should really grab these from  Inner_Product.real_inner.norm_cauchy_schwarz *)
-(*
-find_theorems name: "cauchy_sch"
-lemma cauchy_schwartz:
-  fixes u v
-  shows "(dot u v)^2 \<le> ( dot u u)* (dot v v)"
-  sorry
-*)
-(* Prove squared-cauchy-schwartz by expanding dot(u+v, u+v) \ge 0 *)
-(* Prove equality in dot^2(u,v) = dot^2(u,u) dot^2(v,v) iff v = -cu for some c. Idea: look at dot(v + cu, v+cu).  *)
-(*
-lemma q:
-  fixes u v
-  shows "vplus (vplus u (smult (-1) v)) v = u"
-  sorry
-
-lemma cs_equality:
-  fixes u v w
-  assumes "v \<noteq> (0,0,0)"
-  assumes "(dot u v)^2  = (dot u u) *  (dot v v)"
-  defines "s \<equiv> smult ((dot u v)/(dot v v)) v"
-  defines tdef: "t \<equiv> vplus u (smult (-1) s)"
-  shows "\<exists> c . u = smult c v"
-  sorry
-
-lemma dot_cross_zero: 
-  fixes ux uy uz vx vy vz::"real"
-  assumes "u = (ux, uy, uz)"
-  assumes "v = (vx, vy, vz)"
-  assumes "n = (nx, ny, nz)"
-  assumes "n = cross u v"
-  shows "(dot u n = 0)" and "(dot v n = 0)"
-  sorry
-*)
 \<close>
+
 section \<open>Homogeneous Coordinates in the real projective plane\<close>
 text\<open>
 \hartshorne
@@ -379,18 +188,29 @@ lemma old_projrel:
   shows "(projrel u v) \<longleftrightarrow> (\<exists> t::real . u =  t *\<^sub>R  v)"
 proof -
   assume ah: "projrel u v"
+  obtain a b c where fu: "u = (vector[(a::real), b, c]::v3)"   using forall_vector_3 by fastforce
+  obtain x y z where fv: "v = (vector[(x::real), y, z]::v3)"   using forall_vector_3 by fastforce
   have "\<exists>t. u = t *\<^sub>R v"
-  proof (cases "v$1 = 0")
+  proof (cases "a = 0")
     case True
     then show ?thesis sorry
   next
     case False
-    have "u$1 * v$2 = u$2 * v$1" using assms projrel_def ah by simp
-    then have "v$2 = (u$2/u$1) * v$1" using False 
-    by (smt (verit) ah divide_eq_0_iff exhaust_3 nonzero_mult_div_cancel_left projrel_def
-        times_divide_eq_left vec_eq_iff vector_3(1,2,3))
+    have zs: "(a*z - c*x, a*y - b*x, b*z - c*y) = (0,0,0)" using assms projrel_def ah fu fv by simp
+    have ainv: "(1/a) * a = 1" using False by simp
+    have "z = (1/a)*c * x" using zs ainv
+      by (smt (verit, ccfv_SIG) mult_cancel_right2 prod.inject times_divide_eq_left)
+    then have f3: "z = (x/a) * c" by argo
+    have f2: "y = (x/a) * b"
+      by (smt (verit, best) False Pair_inject mult.commute nonzero_mult_div_cancel_left
+        times_divide_eq_left zs)
+    have f1: "x = (x/a) * a" using zs ainv False by simp
+    have "[x, y, z] = [(x/a)*a, (x/a)*b, (x/a)*c]" using f1 f2 f3 by presburger
+    fix s
+    have "vector[s*a, s*b, s*c] = (s::real)  *\<^sub>R vector[a, b, c]" sorry
     then show ?thesis sorry
   qed
+  
 
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
