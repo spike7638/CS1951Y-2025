@@ -2118,7 +2118,91 @@ lemma Ap2:
   fixes pincid (infix "p\<lhd>" 60)
   assumes \<open>pincid =  mprojectivize (incid)\<close>
   shows "\<lbrakk>k \<in> pLines; n \<in> pLines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)"
-  sorry
+proof -
+  fix k n
+  assume assms1: "k \<in> pLines" and
+         assms2: "n \<in> pLines"
+  show "\<exists> P . (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)"
+
+  proof (cases k)
+    case k_ord: (OrdinaryL ko)
+    then show ?thesis 
+
+    proof(cases n)
+      case n_ord: (OrdinaryL no) (*ord, ord*)
+
+      have 0: "ko \<in> Lines" using assms1 k_ord pLdef by auto
+      have 1: "no \<in> Lines" using assms2 n_ord pLdef by auto
+
+      consider 
+        (parallel) "affine_plane_data.parallel Points Lines incid ko no"
+        | (not_parallel) "\<not>(affine_plane_data.parallel Points Lines incid ko no)" by blast
+
+      then show ?thesis
+      proof cases
+        case parallel
+
+          obtain t where 2: "t = affine_plane_data.line_pencil Points Lines (incid) ko" by auto
+          have 3: "Ideal t \<in> pPoints" using assms 0 2 by blast
+          have 4: "Ideal t p\<lhd> k" using 3 2 0 assms by (simp add: affine_plane_data.line_pencil_def affine_plane_data.parallel_reflexive k_ord)
+  
+          have 5: "no \<in> t" using parallel affine_plane_data.line_pencil_def affine_plane_data.parallel_symmetric mem_Collect_eq 2 by metis
+  
+          have 6: "Ideal t p\<lhd> n" by (simp add: 5 assms(4) n_ord)
+  
+          show ?thesis using 3 4 6 by auto
+
+        next 
+          case not_parallel
+          have 2: "\<not>((ko \<in> Lines) \<and> (no \<in> Lines) \<and> ((ko = no) \<or> ((\<not> (\<exists> P. P \<in> Points \<and> P \<lhd> ko \<and> P \<lhd> no)))))"
+            using 0 1 not_parallel by (simp add: affine_plane_data.parallel_def)
+
+          have 3: "\<exists> P. P \<in> Points \<and> P \<lhd> ko \<and> P \<lhd> no" using 0 1 2 by auto
+
+          obtain P where 4: "P \<in> Points \<and> P \<lhd> ko \<and> P \<lhd> no" using 3 by auto
+
+          show ?thesis using 4 assms(4) k_ord n_ord pPdef by auto
+        qed
+    next
+      case Infty (*ord, inf*)
+       have 0: "ko \<in> Lines" using assms1 k_ord pLdef by auto
+       obtain t where 1: "t = affine_plane_data.line_pencil Points Lines (incid) ko" by auto
+       have 2: "Ideal t \<in> pPoints" using assms 0 1 by auto
+       have 3: "Ideal t p\<lhd> k" using 2 1 0 assms by (simp add: affine_plane_data.line_pencil_def affine_plane_data.parallel_reflexive k_ord)
+      
+       show ?thesis using assms(4) Infty 2 3 by auto
+     qed
+  next
+    case Infty
+    then show ?thesis 
+    proof (cases n)
+      case n_ord: (OrdinaryL no) (*inf, ord*)
+       have 0: "no \<in> Lines" using assms2 n_ord pLdef by auto
+       obtain t where 1: "t = affine_plane_data.line_pencil Points Lines (incid) no" by auto
+       have 2: "Ideal t \<in> pPoints" using assms 0 1 by auto
+       have 3: "Ideal t p\<lhd> n" using 2 1 0 assms by (simp add: affine_plane_data.line_pencil_def affine_plane_data.parallel_reflexive n_ord)
+      
+       show ?thesis using assms(4) Infty 2 3 by auto
+      
+    next
+      case Infty1: Infty (*inf, inf*)
+
+      obtain P Q where 0: "P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q" using affine_plane.a3 ap by blast
+
+      obtain l where 1: "l = (join P Q) \<and> l \<in> Lines" using 0 affine_plane.a1a ap by metis
+
+      have 2: "l \<in> Lines" using 1 by auto
+
+      obtain t where 3: "t = affine_plane_data.line_pencil Points Lines (incid) l" by auto
+
+      have 4: "Ideal t \<in> pPoints" using assms 0 1 3 by auto
+      have 5: "Ideal t p\<lhd> n" by (simp add: Infty1 assms(4))
+      have 6: "Ideal t p\<lhd> k" using 5 Infty Infty1 by auto
+
+      show ?thesis using 4 5 6 by auto
+    qed
+  qed
+qed
 
 lemma Ap3:
   fixes Points Lines join find_parallel
