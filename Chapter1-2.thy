@@ -15,15 +15,21 @@ as it shows how to prove some facts that we may need, and mimicking those proofs
 may be feasible even if using them direectly is not. 
 
 \<close>
+type_synonym v3 = "real^3"
 definition punctured_r_3 where
-"punctured_r_3 = (UNIV::((real \<times> real \<times> real) set)) - {(0::real,0::real,0::real)}"
+"punctured_r_3 = (UNIV::(v3 set)) - {0::v3}"
 
+(* STUDENTS: click on the Cross3.thy file that's imported above to see that cross and dot product
+are defined already, with infix notation ready to use! *)
+
+(*
 definition cross::"(real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real)"  where
 "cross =  (\<lambda> (x1, x2, x3) (y1, y2, y3) . (x2*y3 - x3 * y2, x3 * y1  - x1 * y3, x1 * y2 - x2* y1))"
-
+*)
 (* Idea: show that |u x v|^2 = |u|^2 |v|^2 sin^2 theta = |u|^2 |v|^2 (1 - cos^2theta)
  = |u|^2 |v|^2 (1 - dot(u,v)^2/ |u|^2 |v|^2 ) = |u|^2 |v|^2 - dot(u,v)^2 > 0 for some reason...
-*) 
+*)
+(*
 definition squared_length::"(real \<times> real \<times> real) \<Rightarrow>real" where
 "squared_length =  (\<lambda> (x1, x2, x3) . (x1*x1 + x2*x2 + x3 * x3))"
 
@@ -35,8 +41,8 @@ definition vplus::"(real \<times> real \<times> real) \<Rightarrow>(real \<times
 
 definition smult::"real \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow>(real \<times> real \<times> real)"  where
 "smult =  (\<lambda> s (x1, x2, x3). (s*x1, s* x2, s* x3))"
-
-(* many, if not most, of these should be added to [simp] *)
+*)
+(* already included via Cross3 in various forms
 lemma smult_assoc: 
   "smult a (smult b v) = smult (a * b) v"
   unfolding smult_def
@@ -144,7 +150,9 @@ lemma cs2:
   assumes "(dot v v)  \<noteq> 0"
   shows "\<forall>s . s * s * dot v v + s * 2 *  (dot u   v) + (dot  u u) \<ge> 0"
   sorry
+*)
 
+(* These, too, may be irrelevant !*)
 (*thm discriminant_iff [of "(dot v v)" t "2* (dot u v)" "(dot u u)"]*)
 
 (* re=quoted from the discriminant theory *)
@@ -171,13 +179,17 @@ lemma no_solutions_discrim_neg:
   shows "discrim a b c < 0"
   sorry
 
+(* we should really grab these from  Inner_Product.real_inner.norm_cauchy_schwarz *)
+(*
+find_theorems name: "cauchy_sch"
 lemma cauchy_schwartz:
   fixes u v
   shows "(dot u v)^2 \<le> ( dot u u)* (dot v v)"
   sorry
-
+*)
 (* Prove squared-cauchy-schwartz by expanding dot(u+v, u+v) \ge 0 *)
 (* Prove equality in dot^2(u,v) = dot^2(u,u) dot^2(v,v) iff v = -cu for some c. Idea: look at dot(v + cu, v+cu).  *)
+(*
 lemma q:
   fixes u v
   shows "vplus (vplus u (smult (-1) v)) v = u"
@@ -200,7 +212,7 @@ lemma dot_cross_zero:
   assumes "n = cross u v"
   shows "(dot u n = 0)" and "(dot v n = 0)"
   sorry
-
+*)
 section \<open>Homogeneous Coordinates in the real projective plane\<close>
 text\<open>
 \hartshorne
@@ -279,64 +291,55 @@ definition pthird:: "(real \<times> real \<times> real) \<Rightarrow> real" wher
 
 
     (* Define a type representing the cartesian product *)
-definition projrel :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> bool"
-  where "projrel = (\<lambda>x y. (x \<noteq> (0,0,0) \<and> y \<noteq> (0,0,0)) \<and>  (\<exists> (c::real) . c \<noteq> 0 \<and> (x = smult c y)))"
+definition projrel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
+  where "projrel x y \<longleftrightarrow> (x \<noteq> vector [0,0,0]) \<and> (y \<noteq> vector [0,0,0]) \<and> x$2 * y$1 = x$1 * y$2 \<and> x$3 * y$1 = y$3 * x$1 \<and> x$2 * y$3 = x$3 * y$2" 
+
+lemma vt: "vector[1,0,0] \<noteq> vector[0,0,0]" sorry
 
 lemma exists_projrel_refl: "\<exists>x. projrel x x" 
 proof -
-  have "(1,0,0) = smult 1 (1,0,0)"  by (simp add: smult_def)
-  then show ?thesis by (metis old.prod.inject one_neq_zero projrel_def)
+  have "projrel (vector [1,0,0]) (vector [1,0,0])"  by (simp add: projrel_def vt)
+  then show ?thesis by blast
 qed
-
-lemma nonzero_inverse: "((c::real) \<noteq> 0) \<Longrightarrow> ((1/c) \<noteq> 0)" by simp
-
-lemma divide_through: "((c::real) \<noteq> 0) \<Longrightarrow> (a = c*q) \<Longrightarrow> ((1/c)*a = q)" by simp
 
 lemma symp_projrel: "symp projrel"
 proof -
-  show ?thesis  unfolding symp_def sorry
-(*
-  proof (clarify) 
-    ...
-  qed
-*)
+  show ?thesis  unfolding symp_def projrel_def by (simp add: mult.commute)
 qed
 
 lemma transp_projrel: "transp projrel"
-proof (rule transpI, unfold split_paired_all)
+proof (rule transpI)
   fix x y z
   assume 1: "projrel x y"
-  obtain c where a1:"(x \<noteq> (0,0,0) \<and> x \<noteq> (0,0,0)) \<and>   c \<noteq> 0 \<and>
-         (x = smult c y)" using 1 projrel_def by meson
   assume 2: "projrel y z"
-  obtain d where a2:"(y \<noteq> (0,0,0) \<and> z \<noteq> (0,0,0)) \<and>   d \<noteq> 0 \<and>
-         (y = smult d z)" using 2 projrel_def by meson
-  have p1: "c*d \<noteq> 0" using a1 a2 by auto
-  have a3: "(x \<noteq> (0,0,0) \<and> z \<noteq> (0,0,0)) \<and>  (c*d) \<noteq> 0 \<and>
-         x = smult (c*d) z" using a1 a2 p1 smult_assoc by blast
-  show  "projrel x z" using a3  projrel_def by metis
+  show  "projrel x z" sorry
 qed
 
 lemma part_equivp_projrel: "part_equivp projrel"
   by (rule part_equivpI [OF exists_projrel_refl symp_projrel transp_projrel])
 
-quotient_type rp2 = "real \<times> real \<times> real" / partial: "projrel"
+quotient_type rp2 = "v3" / partial: "projrel"
   morphisms Rep_Proj Abs_Proj
   using part_equivp_projrel .
 
-lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp pcr_rp2 = (\<lambda>x .( (x \<noteq> (0,0,0)) \<and> projrel x x))"
-  by (simp add: projrel_def rp2.domain_eq)
+find_theorems name: "rp2"
+find_theorems name: "Quotient3_rp2"
+(*
+lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .( (x \<noteq> vector [0,0,0]) \<and> projrel x x))"
+  by sledgehammer
+*)
+
+lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .( (x \<noteq> vector [0,0,0]) \<and> projrel x x))"
+  using projrel_def rp2.domain by presburger
 
 lemma rep_P_nz:
   fixes P
   assumes a1: "P \<in> rp2_Points" 
-  shows "Rep_Proj P \<noteq> (0, 0, 0)" 
+  shows "Rep_Proj P \<noteq> vector [0, 0, 0]" 
 using projrel_def Quotient_rel_rep Quotient_rp2 by metis
 
-thm rp2.domain_eq
-thm Abs_Proj_def
-
-(* a remaining theorem from the "warmup" section, one that needs "projrel": *)
+(* a remaining theorem from the "warmup" section, one that needs "projrel", and
+needs rewriting using Cross3 rather than our (now-delete) version of 'cross' *)
 
 lemma cross_nz:
   assumes "u \<in> punctured_r_3"
@@ -353,7 +356,7 @@ axioms 1 - 4. Then we can move on to isomorphism with the completion of the affi
 (* RP2 is a projective plane *)
 
 lemma projrel_scalar: 
-  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P = smult s Q" 
+  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P =  s Q" 
     sorry
   
 definition rp2_Points where
@@ -423,6 +426,7 @@ lemma rp2_P1b_helper:
   shows "\<exists>c . (c \<noteq> 0) \<and> k = smult c n"
   sorry
 
+(* sorry I've broken your proof, Nick -- Spike *)
 text \<open>\nick\<close>
 lemma rp2_P1b:
   fixes P Q k n
@@ -512,6 +516,9 @@ lemma rp2_P4:
 theorem analytic_rp2:
   shows "projective_plane2 rp2_Points rp2_Lines rp2_incid"
   sorry
+
+(* also needed: an interpretation claim like those for A4 and A2 *)
+
 (*
 proof (unfold_locales)
   ...

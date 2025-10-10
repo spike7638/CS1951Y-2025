@@ -994,18 +994,18 @@ text \<open>\spike Now we move on to showing that the four-point plane is indeed
 This is surprisingly messy. A first step is setting up the points and lines of the plane. 
 Everything starting with a4 or A4 refers to this particular plane. 
 \<close>
-datatype a4pt = Pa | Qa | Ra | Sa
-definition "A4Points = {Pa, Qa, Ra, Sa}"
-definition "A4PQ = {Pa, Qa}"
-definition "A4PR = {Pa, Ra}"
-definition "A4PS = {Pa, Sa}"
-definition "A4QR = {Qa, Ra}"
-definition "A4QS = {Qa, Sa}"
-definition "A4RS = {Ra, Sa}"
+ datatype a4pt = Pa | Qa | Ra | Sa
+ definition "A4Points = {Pa, Qa, Ra, Sa}"
+ definition "A4PQ = {Pa, Qa}"
+ definition "A4PR = {Pa, Ra}"
+ definition "A4PS = {Pa, Sa}"
+ definition "A4QR = {Qa, Ra}"
+ definition "A4QS = {Qa, Sa}"
+ definition "A4RS = {Ra, Sa}"
 
-definition "A4Lines = {A4PQ, A4PR, A4PS, A4QR, A4QS, A4RS}"
+ definition "A4Lines = {A4PQ, A4PR, A4PS, A4QR, A4QS, A4RS}"
 
-fun A4join::"a4pt \<Rightarrow> a4pt \<Rightarrow> a4pt set"  where 
+ fun A4join::"a4pt \<Rightarrow> a4pt \<Rightarrow> a4pt set"  where 
 "A4join x y = (if (x = y) then undefined else {x, y})"
 
 fun A4incid::"a4pt \<Rightarrow> a4pt set \<Rightarrow> bool" where
@@ -1135,8 +1135,6 @@ theorem
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
   shows "A4incid Q (A4join P Q)"
   using assms all_pairs by auto
-
-find_theorems name: collinear
 
 text \<open>\Luke\<close>
 theorem  A4affine_plane_a3_lemma:
@@ -1286,6 +1284,7 @@ theorem A4affine_plane_a2:
   shows "A4find_parallel l P \<in> A4Lines" and
      "affine_plane_data.parallel A4Points A4Lines A4incid  (A4find_parallel l P) l" and
      "A4incid P (A4find_parallel l P)"
+
 proof - 
   show "A4find_parallel l P \<in> A4Lines" using A4find_parallel.simps A4line_complement assms A4Lines_def by auto
   show "affine_plane_data.parallel A4Points A4Lines A4incid  (A4find_parallel l P) l"
@@ -1519,6 +1518,14 @@ next
     using A4affine_plane_a3 by blast
 qed
 
+text \<open>\jfh\<close>
+interpretation A4: affine_plane A4Points A4Lines A4incid  A4join A4find_parallel
+  using A4affine_plane by auto
+
+find_theorems name: "A4." 
+text \<open>\done\<close>
+
+find_theorems name: "A4." 
 (* ======================Switch to talking about A2, real affine 2-space =================*)
 (* Team A2 = Jackson and Hadi *)
 
@@ -1821,10 +1828,7 @@ lemma A2_a2abc:
   using assms A2_a2a A2_a2b A2_a2c by auto
 text \<open>\done\<close>
 
-(*
-    a2: "\<lbrakk>\<not> P \<lhd> l; P \<in> Points; l \<in> Lines\<rbrakk> \<Longrightarrow> find_parallel l P \<in> Lines \<and> ( find_parallel l P) || l \<and> P \<lhd>  (find_parallel l P)" and
-    a3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
-*)
+
 text\<open>\hadi,\jackson\<close>
 lemma A2_a3:
   shows  "\<exists>P Q R. P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
@@ -1884,7 +1888,13 @@ proof (unfold_locales)
     unfolding affine_plane_data.collinear_def A2Points_def A2Lines_def by auto
 qed
 text \<open>\done\<close>
+text  \<open> 
+\spike Let's go ahead and make an interpretation so that we can use "A2" in the rest of the book 
+to refer to this affine plane\<close>
+interpretation A2: affine_plane A2Points A2Lines a2incid  a2join a2find_parallel 
+  by (rule A2_affine)
 
+text \<open>\done\<close>
 text  \<open> 
 \spike
 Completion of an affine plane to a projective plane 
@@ -2097,16 +2107,6 @@ affine plane. Goals are:
     p3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" and
     p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> incid P k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> S \<noteq> Q \<and> Q \<noteq> R \<and> R \<noteq> S"
 \<close>
-
-(* Notation problem:
-lemma Ap2:
-  assumes ap: "affine_plane Points Lines incid join find_parallel"
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k) )}"
-  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in> Lines)} \<union> {Infty}"
-  defines \<open>pincid \<equiv>  mprojectivize (incid) (infix "\<lhd>" 60)\<close>
-  shows "\<lbrakk>k \<in> pLines; n \<in> pLines\<rbrakk> \<Longrightarrow> \<exists> P . (P \<in> pPoints \<and> P \<lhd> k \<and> P \<lhd> n)"
-*)
 
 lemma Ap2:
   fixes Points Lines join find_parallel
