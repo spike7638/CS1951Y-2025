@@ -125,6 +125,24 @@ qed
 lemma part_equivp_projrel: "part_equivp projrel"
   by (rule part_equivpI [OF exists_projrel_refl symp_projrel transp_projrel])
 
+text \<open>\nick\jackson\<close>
+lemma smult_projrel: 
+  fixes x y c
+  assumes x_def: "x \<in> punctured_r_3"
+  assumes y_def: "y \<in> punctured_r_3"
+  assumes c_def: "c \<noteq> 0"
+  assumes smult: "x = c *\<^sub>R y"
+  shows "projrel x y"
+proof -
+  have h1: "x \<noteq> 0" using x_def punctured_r_3_def by auto
+  have h2: "y \<noteq> 0" using y_def punctured_r_3_def by auto
+  have h3: "x$2 * y$1 = x$1 * y$2" using assms by auto
+  have h4: "x$3 * y$1 = y$3 * x$1" using assms by auto
+  have h5: "x$2 * y$3 = x$3 * y$2" using assms by auto
+  show "?thesis" using h1 h2 h3 h4 h5 projrel_def cross3_def cross_eq_self(2) by fastforce
+qed
+text \<open>\done\<close>
+
 quotient_type rp2 = "v3" / partial: "projrel"
   morphisms Rep_Proj Abs_Proj
   using part_equivp_projrel .
@@ -266,11 +284,10 @@ lemma rp2_P1b_helper:
   assumes a4: "n = P \<times> Q"
   assumes a5: "k \<in>  punctured_r_3"
   assumes k_facts: "(P \<bullet> k = 0)  \<and> (Q \<bullet> k = 0)" 
-  shows "\<exists>c . (c \<noteq> 0) \<and> k = scalar_mult c n"
+  shows "\<exists>c . (c \<noteq> 0) \<and> k = c *\<^sub>R n"
   sorry
 
-(* sorry I've broken your proof, Nick -- Spike *)
-text \<open>\nick\<close>
+text \<open>\nick\jackson\<close>
 lemma rp2_P1b:
   fixes P Q k n
   assumes a1: "P \<in> rp2_Points" 
@@ -284,33 +301,27 @@ lemma rp2_P1b:
 proof -
   obtain Pvec where hPrep: "Pvec = Rep_Proj P" and hPpr3: "Pvec \<in> punctured_r_3" and hPnz: "Pvec \<noteq> 0" 
     using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
-   obtain Qvec where hPrep: "Qvec = Rep_Proj Q" and hPpr3: "Qvec \<in> punctured_r_3" and hPnz: "Qvec \<noteq> 0" 
+  obtain Qvec where hQrep: "Qvec = Rep_Proj Q" and hQpr3: "Qvec \<in> punctured_r_3" and hQnz: "Qvec \<noteq> 0" 
     using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
-  have h1: "\<not> projrel (Px, Py, Pz) (Qx, Qy, Qz)" 
+  have h1: "\<not> projrel Pvec Qvec" 
     using hPrep hQrep Quotient_rel_rep Quotient_rp2 a5 by metis
-  let ?crossPQ = "(Px, Py, Pz) \<times> (Qx, Qy, Qz)"
-  obtain kx ky kz where hkrep: "(kx, ky, kz) = Rep_Proj k" 
-    and hknz: "(kx, ky, kz) \<noteq> (0, 0, 0)" 
-    and hkpr3: "(kx, ky, kz) \<in> punctured_r_3" 
-    using rep_P_nz a3 prod_cases3 Diff_iff UNIV_I empty_iff insert_iff punctured_r_3_def by metis
-  obtain nx ny nz where hnrep: "(nx, ny, nz) = Rep_Proj n"
-    and hknz: "(nx, ny, nz) \<noteq> (0, 0, 0)" 
-    and hnpr3: "(nx, ny, nz) \<in> punctured_r_3" 
-    using rep_P_nz a4 prod_cases3 Diff_iff UNIV_I empty_iff insert_iff punctured_r_3_def by metis
-  have h2: "(dot (Px, Py, Pz) (kx, ky, kz) = 0) \<and> (dot (Qx, Qy, Qz) (kx, ky, kz) = 0)"
+  let ?crossPQ = "Pvec \<times> Qvec"
+  obtain kvec where hkrep: "kvec = Rep_Proj k" and hkpr3: "kvec \<in> punctured_r_3" and hknz: "kvec \<noteq> 0" 
+    using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
+  obtain nvec where hnrep: "nvec = Rep_Proj n" and hnpr3: "nvec \<in> punctured_r_3" and hknz: "nvec \<noteq> 0" 
+    using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
+  have h2: "(Pvec \<bullet> kvec = 0) \<and> (Qvec \<bullet> kvec = 0)"
     using hPrep hQrep hkrep k_facts rp2_incid.rep_eq by auto
-  have h3: "(dot (Px, Py, Pz) (nx, ny, nz) = 0) \<and> (dot (Qx, Qy, Qz) (nx, ny, nz) = 0)"
+  have h3: "(Pvec \<bullet> nvec = 0) \<and> (Qvec \<bullet> nvec = 0)"
     using hPrep hQrep hnrep n_facts rp2_incid.rep_eq by auto
-  let ?Pxyz = "(Px, Py, Pz)" let ?Qxyz = "(Qx, Qy, Qz)" let ?kxyz = "(kx, ky, kz)" let ?nxyz = "(nx, ny, nz)"
-  obtain c_k where hck: "(c_k \<noteq> 0) \<and> ?crossPQ = scalar_mult c_k ?kxyz"
-    using h1 h2 rp2_P1b_helper[of ?Pxyz ?Qxyz ?crossPQ ?kxyz] hPpr3 hQpr3 hkpr3 Quotient3_rel Quotient3_rp2 dot_non_degenerate dot_scalar hknz mult_zero_left projrel_def 
-     by (smt (verit, del_insts) Diff_iff cross_nz insert_iff punctured_r_3_def) (*why is this so complicated?*)
-  obtain c_n where hcn: "(c_n \<noteq> 0) \<and> ?crossPQ = scalar_mult c_n ?nxyz"
-    using h1 h3 rp2_P1b_helper[of ?Pxyz ?Qxyz ?crossPQ ?nxyz] hPpr3 hQpr3 hnpr3 Quotient3_rel Quotient3_rp2 dot_non_degenerate dot_scalar hknz mult_zero_left projrel_def 
-    by (smt (verit, del_insts) Diff_iff cross_nz insert_iff punctured_r_3_def) (*why is this so complicated?*)
-  have h4: "((c_n/c_k) \<noteq> 0) \<and> ?kxyz = scalar_mult (c_n/c_k) ?nxyz" using hck hcn by (smt (verit) divide_eq_0_iff divide_self_if mult.commute scalar_mult_assoc scalar_mult_ident
-      times_divide_eq_left)
-  show ?thesis using h4 Quotient3_rel_rep Quotient3_rp2 hkrep hnrep projrel_def by (metis (no_types, lifting))
+  obtain c_k where hck: "(c_k \<noteq> 0) \<and> kvec = c_k *\<^sub>R ?crossPQ"
+    using h1 h2 hPpr3 hQpr3 hkpr3 rp2_P1b_helper[of Pvec Qvec ?crossPQ kvec] by blast
+  obtain c_n where hcn: "(c_n \<noteq> 0) \<and> nvec = c_n *\<^sub>R ?crossPQ"
+    using h1 h3 hPpr3 hQpr3 hnpr3 rp2_P1b_helper[of Pvec Qvec ?crossPQ nvec] by blast
+  have h4: "((c_k/c_n) \<noteq> 0) \<and> kvec = (c_k/c_n) *\<^sub>R nvec" using hck hcn by auto
+  show ?thesis 
+    using h4 Quotient3_rel_rep Quotient3_rp2 hkrep hnrep projrel_def hkpr3 hnpr3 smult_projrel
+    by metis
 qed
 text \<open>\done\<close>
 
