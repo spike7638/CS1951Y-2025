@@ -333,20 +333,31 @@ lemma cross_nz:
   assumes "u \<in> punctured_r_3"
   assumes "v \<in> punctured_r_3"
   assumes "\<not> projrel u v"
-  defines s_def: "s \<equiv>  u \<times> v"
+  defines s_def: "s \<equiv> u \<times> v"
   shows "s \<in> punctured_r_3"
-  by sledgehammer
   sorry
+(*proof (rule ccontr)
+  assume "\<not> s \<in> punctured_r_3"
+  then consider (snotr3) "s \<notin> (UNIV::(v3 set))" | (sz) "s \<in> {0::v3}" 
+    using punctured_r_3_def by auto
+  then show False
+  proof cases
+    case snotr3 
+    then show False using assms s_def cross3_def by auto
+  next
+    case sz
+    then show False using assms s_def
+  sorry*)
 
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
- plane, i.e., demonstrate 
+ (*plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
 
 (* RP2 is a projective plane *)
 
 lemma projrel_scalar: 
-  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P =  s Q" 
+  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P =  s Q"
     sorry
   
 definition rp2_Points where
@@ -362,15 +373,15 @@ lemma good_lift1:
   sorry
 
 definition rp2_incid_rep where
-"rp2_incid_rep P k = (dot P k = 0)"
+"rp2_incid_rep P k = (P \<bullet> k = 0)"
 
 lift_definition rp2_incid::"rp2 \<Rightarrow> rp2 \<Rightarrow> bool"
-is "\<lambda> P k . (dot P k = 0)"
+is "\<lambda> P k . (P \<bullet> k = 0)"
 proof -
   fix P1 P2 k1 k2
   assume a1: "projrel P1 P2"
   assume a2: "projrel k1 k2"
-  show "(dot P1 k1 = 0) = (dot P2 k2 = 0)"
+  show "(P1 \<bullet> k1 = 0) = (P2 \<bullet> k2 = 0)"
     sorry
   qed
 
@@ -381,12 +392,12 @@ proof -
     p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
 *)
 
-definition join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real)"
+definition join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> real^3"
   where
-  "join \<equiv> \<lambda>P Q . (if cross P Q  = (0,0,0) then (0,0,1) else cross P Q)"
+  "join \<equiv> \<lambda>P Q . (if P \<times> Q  = (0,0,0) then (0,0,1) else P \<times> Q)"
 
 
-lift_definition Join :: "(real \<times> real \<times> real) \<Rightarrow> (real \<times> real \<times> real) \<Rightarrow> rp2"
+lift_definition Join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> rp2"
   is "\<lambda>P Q. join P Q"
 proof -
   fix P Q
@@ -410,10 +421,10 @@ lemma rp2_P1b_helper:
   assumes a1: "P \<in> punctured_r_3" 
   assumes a2: "Q \<in>  punctured_r_3"
   assumes a3: "\<not> projrel P Q"
-  assumes a4: "n = cross P Q"
+  assumes a4: "n = P \<times> Q"
   assumes a5: "k \<in>  punctured_r_3"
-  assumes k_facts: "(dot P k = 0)  \<and> (dot Q k = 0)" 
-  shows "\<exists>c . (c \<noteq> 0) \<and> k = smult c n"
+  assumes k_facts: "(P \<bullet> k = 0)  \<and> (Q \<bullet> k = 0)" 
+  shows "\<exists>c . (c \<noteq> 0) \<and> k = scalar_mult c n"
   sorry
 
 (* sorry I've broken your proof, Nick -- Spike *)
@@ -429,8 +440,8 @@ lemma rp2_P1b:
   assumes n_facts: "rp2_incid P n  \<and> rp2_incid Q n" 
   shows "k = n"
 proof -
-  obtain Px Py Pz where hPrep: "(Px, Py, Pz) = Rep_Proj P"
-    and hPnz: "(Px, Py, Pz) \<noteq> (0, 0, 0)" 
+  obtain Pvec where hPrep: "Pvec = Rep_Proj P"
+    and hPnz: "Pvec \<noteq> (0, 0, 0)" 
     and hPpr3: "(Px, Py, Pz) \<in> punctured_r_3" 
     using rep_P_nz a1 prod_cases3 Diff_iff UNIV_I empty_iff insert_iff punctured_r_3_def by metis
   obtain Qx Qy Qz where hQrep: "(Qx, Qy, Qz) = Rep_Proj Q"
@@ -439,7 +450,7 @@ proof -
     using rep_P_nz a2 prod_cases3 Diff_iff UNIV_I empty_iff insert_iff punctured_r_3_def by metis
   have h1: "\<not> projrel (Px, Py, Pz) (Qx, Qy, Qz)" 
     using hPrep hQrep Quotient_rel_rep Quotient_rp2 a5 by metis
-  let ?crossPQ = "cross (Px, Py, Pz) (Qx, Qy, Qz)"
+  let ?crossPQ = "(Px, Py, Pz) \<times> (Qx, Qy, Qz)"
   obtain kx ky kz where hkrep: "(kx, ky, kz) = Rep_Proj k" 
     and hknz: "(kx, ky, kz) \<noteq> (0, 0, 0)" 
     and hkpr3: "(kx, ky, kz) \<in> punctured_r_3" 
@@ -453,13 +464,13 @@ proof -
   have h3: "(dot (Px, Py, Pz) (nx, ny, nz) = 0) \<and> (dot (Qx, Qy, Qz) (nx, ny, nz) = 0)"
     using hPrep hQrep hnrep n_facts rp2_incid.rep_eq by auto
   let ?Pxyz = "(Px, Py, Pz)" let ?Qxyz = "(Qx, Qy, Qz)" let ?kxyz = "(kx, ky, kz)" let ?nxyz = "(nx, ny, nz)"
-  obtain c_k where hck: "(c_k \<noteq> 0) \<and> ?crossPQ = smult c_k ?kxyz"
+  obtain c_k where hck: "(c_k \<noteq> 0) \<and> ?crossPQ = scalar_mult c_k ?kxyz"
     using h1 h2 rp2_P1b_helper[of ?Pxyz ?Qxyz ?crossPQ ?kxyz] hPpr3 hQpr3 hkpr3 Quotient3_rel Quotient3_rp2 dot_non_degenerate dot_scalar hknz mult_zero_left projrel_def 
      by (smt (verit, del_insts) Diff_iff cross_nz insert_iff punctured_r_3_def) (*why is this so complicated?*)
-  obtain c_n where hcn: "(c_n \<noteq> 0) \<and> ?crossPQ = smult c_n ?nxyz"
+  obtain c_n where hcn: "(c_n \<noteq> 0) \<and> ?crossPQ = scalar_mult c_n ?nxyz"
     using h1 h3 rp2_P1b_helper[of ?Pxyz ?Qxyz ?crossPQ ?nxyz] hPpr3 hQpr3 hnpr3 Quotient3_rel Quotient3_rp2 dot_non_degenerate dot_scalar hknz mult_zero_left projrel_def 
     by (smt (verit, del_insts) Diff_iff cross_nz insert_iff punctured_r_3_def) (*why is this so complicated?*)
-  have h4: "((c_n/c_k) \<noteq> 0) \<and> ?kxyz = smult (c_n/c_k) ?nxyz" using hck hcn by (smt (verit) divide_eq_0_iff divide_self_if mult.commute smult_assoc smult_ident
+  have h4: "((c_n/c_k) \<noteq> 0) \<and> ?kxyz = scalar_mult (c_n/c_k) ?nxyz" using hck hcn by (smt (verit) divide_eq_0_iff divide_self_if mult.commute scalar_mult_assoc scalar_mult_ident
       times_divide_eq_left)
   show ?thesis using h4 Quotient3_rel_rep Quotient3_rp2 hkrep hnrep projrel_def by (metis (no_types, lifting))
 qed
