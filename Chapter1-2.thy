@@ -19,6 +19,7 @@ type_synonym v3 = "real^3"
 definition punctured_r_3 where
 "punctured_r_3 = (UNIV::(v3 set)) - {0::v3}"
 
+text\<open>
 (* STUDENTS: click on the Cross3.thy file that's imported above to see that cross and dot product
 are defined already, with infix notation ready to use! *)
 
@@ -213,6 +214,7 @@ lemma dot_cross_zero:
   shows "(dot u n = 0)" and "(dot v n = 0)"
   sorry
 *)
+\<close>
 section \<open>Homogeneous Coordinates in the real projective plane\<close>
 text\<open>
 \hartshorne
@@ -280,16 +282,6 @@ subsection \<open>Defining a quotient space for RP2\<close>
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
 
-definition pfirst:: "(real \<times> real \<times> real) \<Rightarrow> real" where
-  "pfirst = (\<lambda> x . fst x)"
-
-definition psecond:: "(real \<times> real \<times> real) \<Rightarrow> real" where
-  "psecond = (\<lambda> x . fst (snd x))"
-
-definition pthird:: "(real \<times> real \<times> real) \<Rightarrow> real" where
-  "pthird = (\<lambda> x . snd (snd x))"
-
-
     (* Define a type representing the cartesian product *)
 definition projrel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
   where "projrel x y \<longleftrightarrow> (x \<noteq> vector [0,0,0]) \<and> (y \<noteq> vector [0,0,0]) \<and> x$2 * y$1 = x$1 * y$2 \<and> x$3 * y$1 = y$3 * x$1 \<and> x$2 * y$3 = x$3 * y$2" 
@@ -324,10 +316,6 @@ quotient_type rp2 = "v3" / partial: "projrel"
 
 find_theorems name: "rp2"
 find_theorems name: "Quotient3_rp2"
-(*
-lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .( (x \<noteq> vector [0,0,0]) \<and> projrel x x))"
-  by sledgehammer
-*)
 
 lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .( (x \<noteq> vector [0,0,0]) \<and> projrel x x))"
   using projrel_def rp2.domain by presburger
@@ -340,17 +328,19 @@ using projrel_def Quotient_rel_rep Quotient_rp2 by metis
 
 (* a remaining theorem from the "warmup" section, one that needs "projrel", and
 needs rewriting using Cross3 rather than our (now-delete) version of 'cross' *)
-
+unbundle cross3_syntax
 lemma cross_nz:
   assumes "u \<in> punctured_r_3"
   assumes "v \<in> punctured_r_3"
   assumes "\<not> projrel u v"
-  defines s_def: "s \<equiv> cross u v"
+  defines s_def: "s \<equiv>  u \<times> v"
   shows "s \<in> punctured_r_3"
+  by sledgehammer
   sorry
 
-
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
+axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
+ plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
 
 (* RP2 is a projective plane *)
