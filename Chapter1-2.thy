@@ -286,11 +286,17 @@ axioms 1 - 4. Then we can move on to isomorphism with the completion of the affi
 definition projrel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
   where "projrel x y \<longleftrightarrow> (x \<noteq> vector [0,0,0]) \<and> (y \<noteq> vector [0,0,0]) \<and> x$2 * y$1 = x$1 * y$2 \<and> x$3 * y$1 = y$3 * x$1 \<and> x$2 * y$3 = x$3 * y$2" 
 
-lemma vt: "vector[1,0,0] \<noteq> vector[0,0,0]" sorry
+find_theorems name: "vector_space"
+lemma vt: 
+  shows "(vector[1,0,0]::real^3) \<noteq> vector[0,0,0]" 
+proof-
+  show ?thesis 
+  by (metis vector_3(1) zero_neq_one)
+qed
 
 lemma exists_projrel_refl: "\<exists>x. projrel x x" 
 proof -
-  have "projrel (vector [1,0,0]) (vector [1,0,0])"  by (simp add: projrel_def vt)
+  have "projrel (vector [1,0,0]::real^3) (vector [1,0,0])"  by (simp add: projrel_def vt)
   then show ?thesis by blast
 qed
 
@@ -367,9 +373,26 @@ lemma cross_nz:
     then show False using assms s_def
   sorry*)
 
+lemma old_projrel:
+  assumes "u \<in> punctured_r_3"
+  assumes "v \<in> punctured_r_3"
+  shows "(projrel u v) \<longleftrightarrow> (\<exists> t::real . u =  t *\<^sub>R  v)"
+proof -
+  assume ah: "projrel u v"
+  have "\<exists>t. u = t *\<^sub>R v"
+  proof (cases "v$1 = 0")
+    case True
+    then show ?thesis sorry
+  next
+    case False
+    have "u$1 * v$2 = u$2 * v$1" using assms projrel_def ah by simp
+    then have "v$2 = (u$2/u$1) * v$1" using False 
+    by (smt (verit) ah divide_eq_0_iff exhaust_3 nonzero_mult_div_cancel_left projrel_def
+        times_divide_eq_left vec_eq_iff vector_3(1,2,3))
+    then show ?thesis sorry
+  qed
+
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
-axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
- (*plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
 
 (* RP2 is a projective plane *)
