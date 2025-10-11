@@ -91,12 +91,44 @@ subsection \<open>Defining a quotient space for RP2\<close>
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
 
-    (* Define a type representing the cartesian product *)
-definition projrel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
-  where "projrel x y \<longleftrightarrow> (x \<noteq> vector [0,0,0]) \<and> (y \<noteq> vector [0,0,0]) \<and> x$2 * y$1 = x$1 * y$2 \<and> x$3 * y$1 = y$3 * x$1 \<and> x$2 * y$3 = x$3 * y$2" 
+(* We're going to need cross and dot-products *)
+unbundle cross3_syntax
 
-find_theorems name: "vector_space"
-lemma vt: 
+definition projrel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
+  where "projrel x y \<longleftrightarrow> (x \<noteq> vector [0::real,0,0]) \<and> (y \<noteq> vector [0::real,0,0]) \<and> (x \<times> y) = (0::v3)" 
+
+text\<open>\spike Current definition of projective relation is that the cross product is zero; 
+former definition was that there's a nonzero constant c such that u = cv. Let's start
+with the big theorem that these two things are equivalent\<close>
+lemma alt_projrel:
+  assumes "u \<in> punctured_r_3"
+  assumes "v \<in> punctured_r_3"
+  shows "(projrel u v) \<longleftrightarrow> (\<exists> t::real . u =  t *\<^sub>R  v)"
+proof 
+  assume ah1: "(\<exists> t::real . u =  t *\<^sub>R  v)"
+  show "projrel u v"
+  proof -
+    have "projrel u v = (u \<times> v = (0::v3))" using assms projrel_def punctured_r_3_def cross3_def by auto
+    also have "... = True" using ah1 cross_mult_left by auto
+    finally show ?thesis by auto
+  qed
+  next
+    assume ah2: "projrel u v"
+    have "u \<times> v = (0::v3)" using ah2 assms projrel_def punctured_r_3_def cross3_def by auto
+    then have "collinear {0, u, v}" using cross_eq_0 by auto
+    then obtain w where col_fact: "\<forall>x\<in>{0, u, v}. \<forall>y\<in>{0, u, v}. \<exists>c. x - y = c *\<^sub>R w" 
+      using collinear_def by blast
+    then obtain r where rf: "u - 0 = r *\<^sub>R w" by blast
+    obtain s where sf: "v - 0 = s *\<^sub>R w" using col_fact by blast
+    have uw: "u = r *\<^sub>R w" using rf by simp
+    have vw: "v = s *\<^sub>R w" using sf by simp
+    have "s \<noteq> 0" using vw assms by (simp add:punctured_r_3_def)
+    then have "u = (r/s) *\<^sub>R v" using uw vw by simp
+    then show "(\<exists> t::real . u =  t *\<^sub>R  v)" by blast
+  qed
+text \<open>\done\<close>
+
+lemma vt:
   shows "(vector[1,0,0]::real^3) \<noteq> vector[0,0,0]" 
 proof-
   show ?thesis 
@@ -105,13 +137,13 @@ qed
 
 lemma exists_projrel_refl: "\<exists>x. projrel x x" 
 proof -
-  have "projrel (vector [1,0,0]::real^3) (vector [1,0,0])"  by (simp add: projrel_def vt)
+  have "projrel (vector [1,0,0]::real^3) (vector [1,0,0])" by (simp add: projrel_def vt)
   then show ?thesis by blast
 qed
 
 lemma symp_projrel: "symp projrel"
 proof -
-  show ?thesis  unfolding symp_def projrel_def by (simp add: mult.commute)
+  show ?thesis  unfolding symp_def projrel_def  by (metis cross_refl cross_skew)
 qed
 
 lemma transp_projrel: "transp projrel"
@@ -161,7 +193,7 @@ using projrel_def Quotient_rel_rep Quotient_rp2 by metis
 
 (* a remaining theorem from the "warmup" section, one that needs "projrel", and
 needs rewriting using Cross3 rather than our (now-delete) version of 'cross' *)
-unbundle cross3_syntax
+
 lemma cross_nz:
   assumes "u \<in> punctured_r_3"
   assumes "v \<in> punctured_r_3"
@@ -182,56 +214,18 @@ lemma cross_nz:
     then show False using assms s_def
   sorry*)
 
-lemma old_projrel:
-  assumes "u \<in> punctured_r_3"
-  assumes "v \<in> punctured_r_3"
-  shows "(projrel u v) \<longleftrightarrow> (\<exists> t::real . u =  t *\<^sub>R  v)"
-proof -
-  assume ah: "projrel u v"
-  obtain a b c where fu: "u = (vector[(a::real), b, c]::v3)"   using forall_vector_3 by fastforce
-  obtain x y z where fv: "v = (vector[(x::real), y, z]::v3)"   using forall_vector_3 by fastforce
-  have "\<exists>t. u = t *\<^sub>R v"
-  proof (cases "a = 0")
-    case True
-    then show ?thesis sorry
-  next
-    case False
-    have zs: "(a*z - c*x, a*y - b*x, b*z - c*y) = (0,0,0)" using assms projrel_def ah fu fv by simp
-    have ainv: "(1/a) * a = 1" using False by simp
-    have "z = (1/a)*c * x" using zs ainv
-      by (smt (verit, ccfv_SIG) mult_cancel_right2 prod.inject times_divide_eq_left)
-    then have f3: "z = (x/a) * c" by argo
-    have f2: "y = (x/a) * b"
-      by (smt (verit, best) False Pair_inject mult.commute nonzero_mult_div_cancel_left
-        times_divide_eq_left zs)
-    have f1: "x = (x/a) * a" using zs ainv False by simp
-    have "[x, y, z] = [(x/a)*a, (x/a)*b, (x/a)*c]" using f1 f2 f3 by presburger
-    fix s
-    have "vector[s*a, s*b, s*c] = (s::real)  *\<^sub>R vector[a, b, c]" sorry
-    then show ?thesis sorry
-  qed
-  
+
 
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
 
 (* RP2 is a projective plane *)
 
-lemma projrel_scalar: 
-  shows "\<lbrakk>projrel P Q\<rbrakk> \<Longrightarrow> \<exists> s . s \<noteq> (0::real) \<and> P = s *\<^sub>R Q"
-    sorry
-  
 definition rp2_Points where
 "rp2_Points = (UNIV::rp2 set)" 
 
 definition rp2_Lines where
 "rp2_Lines = (UNIV::rp2 set)"
-
-lemma good_lift1:
-  fixes x
-  assumes "x \<in> punctured_r_3"
-  shows "\<not> (projrel x 0)" 
-  sorry
 
 definition rp2_incid_rep where
 "rp2_incid_rep P k = (P \<bullet> k = 0)"
@@ -256,7 +250,6 @@ proof -
 definition join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> real^3"
   where
   "join \<equiv> \<lambda>P Q . (if P \<times> Q = 0 then vector[0,0,1] else P \<times> Q)"
-
 
 lift_definition Join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> rp2"
   is "\<lambda>P Q. join P Q"
@@ -327,15 +320,6 @@ proof -
 qed
 text \<open>\done\<close>
 
-lemma ar: "Abs_Proj (Rep_Proj x) = x"
-  by (meson Quotient_abs_rep Quotient_rp2)
-
-lemma ra: 
-  fixes x
-  assumes "(x \<noteq> (0,0,0)) \<and> projrel x x"
-  shows "projrel (Rep_Proj (Abs_Proj x)) x" 
-  by (simp add: Quotient3_rp2 assms rep_abs_rsp_left) 
-
 lemma rp2_P2:
   fixes m k 
   assumes a1: "m \<in> rp2_Lines" 
@@ -379,13 +363,6 @@ qed
 
 text \<open>\done\done\<close>
 
-(*
-    p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k . k \<in> Lines \<and> P \<lhd> k  \<and> Q \<lhd>  k)" and
-    p2: "\<lbrakk>k \<in> Lines; n \<in> Lines\<rbrakk> \<Longrightarrow> \<exists> P . (P \<in> Points \<and> P \<lhd> k \<and> P \<lhd> n)" and
-    p3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (pcollinear P Q R)" and
-    p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
-*)
-
 theorem analytic_rp2:
   shows "projective_plane2 rp2_Points rp2_Lines rp2_incid"
   sorry
@@ -406,6 +383,10 @@ theorem projectivisation_of_A2:
   assumes ap: "affine_plane  A2Points  A2Lines a2incid a2join a2find_parallel"
   shows   "projective_plane2 pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
+
+
+(* need definition of isomorphism, and proof that RP2A is isomorphism to RP2P; 
+place these Chapter 1-3. *)
 
 end
 
