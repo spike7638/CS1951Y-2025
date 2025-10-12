@@ -1,5 +1,5 @@
 theory "Chapter1-2"
-  imports Complex_Main  "Chapter1-1" "HOL-Analysis.Cross3"
+  imports Complex_Main "Chapter1-1" "HOL-Analysis.Cross3"
 
 begin
 (* Team RP2-quotient:  Jiayi, Luke, George, Nick, Oliver *)
@@ -16,8 +16,7 @@ may be feasible even if using them direectly is not.
 
 \<close>
 type_synonym v3 = "real^3"
-definition punctured_r_3 where
-"punctured_r_3 = (UNIV::(v3 set)) - {0::v3}"
+definition punctured_r_3 where "punctured_r_3 = (UNIV::(v3 set)) - {0::v3}"
 
 text\<open>
 (* STUDENTS: click on the Cross3.thy file that's imported above to see that cross and dot product
@@ -122,9 +121,9 @@ proof
     obtain s where sf: "v - 0 = s *\<^sub>R w" using col_fact by blast
     have uw: "u = r *\<^sub>R w" using rf by simp
     have vw: "v = s *\<^sub>R w" using sf by simp
-    have "s \<noteq> 0" using vw assms by (simp add:punctured_r_3_def)
+    have "s \<noteq> 0" using vw assms by (simp add: punctured_r_3_def)
     then have "u = (r/s) *\<^sub>R v" using uw vw by simp
-    then show "(\<exists> t::real . u =  t *\<^sub>R  v)" by blast
+    then show "(\<exists>t::real. u = t *\<^sub>R v)" by blast
   qed
 text \<open>\done\<close>
 
@@ -194,27 +193,39 @@ using projrel_def Quotient_rel_rep Quotient_rp2 by metis
 (* a remaining theorem from the "warmup" section, one that needs "projrel", and
 needs rewriting using Cross3 rather than our (now-delete) version of 'cross' *)
 
+text \<open>\hadi\<close>
 lemma cross_nz:
   assumes "u \<in> punctured_r_3"
   assumes "v \<in> punctured_r_3"
   assumes "\<not> projrel u v"
   defines s_def: "s \<equiv> u \<times> v"
   shows "s \<in> punctured_r_3"
-  sorry
+  using assms cross3_def projrel_def punctured_r_3_def s_def by auto
 (*proof (rule ccontr)
-  assume "\<not> s \<in> punctured_r_3"
-  then consider (snotr3) "s \<notin> (UNIV::(v3 set))" | (sz) "s \<in> {0::v3}" 
-    using punctured_r_3_def by auto
-  then show False
-  proof cases
-    case snotr3 
-    then show False using assms s_def cross3_def by auto
-  next
-    case sz
-    then show False using assms s_def
-  sorry*)
-
-
+  assume cd: "\<not> (s \<in> punctured_r_3)"
+  show False
+  proof -
+    obtain x1 x2 x3 y1 y2 y3 where uv_coords: "u = vector[x1,x2,x3] 
+      \<and> v = vector[y1,y2,y3]" using forall_vector_3 by fastforce
+    have sz: "s = vector[0,0,0]" 
+      using cd punctured_r_3_def cross3_def cross_zero_right by auto
+    have "vector[x1,x2,x3] \<noteq> c *\<^sub>R vector[y1,y2,y3]" for c 
+      using assms cd sz projrel_def cross3_def cross_zero_right by fastforce
+    consider 
+    (uz) "(x1,x2,x3) = (0,0,0)" 
+    | (vz) "(y1,y2,y3) = (0,0,0)" 
+      using assms sz cd projrel_def DiffI UNIV_I punctured_r_3_def singletonD by metis
+    then show ?thesis
+    proof (cases)
+      case uz
+      then show ?thesis using assms cd sz uv_coords by auto
+    next
+      case vz
+      then show ?thesis using assms cd sz uv_coords by auto
+    qed
+  qed
+qed*)
+text \<open>\done\<close>
 
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
 axioms 1 - 4. Then we can move on to isomorphism with the completion of the affine plane. *)
@@ -230,15 +241,44 @@ definition rp2_Lines where
 definition rp2_incid_rep where
 "rp2_incid_rep P k = (P \<bullet> k = 0)"
 
+text \<open>\hadi\<close>
 lift_definition rp2_incid::"rp2 \<Rightarrow> rp2 \<Rightarrow> bool"
-is "\<lambda> P k . (P \<bullet> k = 0)"
+is "\<lambda>P k. (P \<bullet> k = 0)"
 proof -
   fix P1 P2 k1 k2
   assume a1: "projrel P1 P2"
   assume a2: "projrel k1 k2"
   show "(P1 \<bullet> k1 = 0) = (P2 \<bullet> k2 = 0)"
-    sorry
+  proof
+    have p1p2rel: "(P1 \<noteq> vector [0::real,0,0]) \<and> (P2 \<noteq> vector [0::real,0,0]) 
+      \<and> (P1 \<times> P2) = (0::v3)" using a1 projrel_def by auto
+    have k1k2rel: "(k1 \<noteq> vector [0::real,0,0]) \<and> (k2 \<noteq> vector [0::real,0,0]) 
+      \<and> (k1 \<times> k2) = (0::v3)" using a2 projrel_def by auto
+    show "(P1 \<bullet> k1 = 0) \<Longrightarrow> (P2 \<bullet> k2 = 0)" 
+    proof -
+      assume b1: "P1 \<bullet> k1 = 0"
+      show "P2 \<bullet> k2 = 0"
+      proof -
+        have "P2 \<bullet> k1 = 0" using b1 p1p2rel Lagrange cross3_def diff_zero inner_commute 
+          mult_zero_right scaleR_eq_0_iff zero_index by (metis (no_types))
+        then show ?thesis using Lagrange cross3_def diff_zero k1k2rel
+          mult_not_zero scaleR_eq_0_iff vector_3 by (metis (no_types))
+      qed
+    qed
+    show "(P2 \<bullet> k2 = 0) \<Longrightarrow> (P1 \<bullet> k1 = 0)" 
+    proof -
+      assume b2: "P2 \<bullet> k2 = 0"
+      show "P1 \<bullet> k1 = 0"
+      proof -
+        have "P1 \<bullet> k2 = 0" using b2 p1p2rel Lagrange cross3_def diff_zero inner_commute 
+          mult_zero_right scaleR_eq_0_iff zero_index cross_skew by (metis (no_types))
+        then show ?thesis using Lagrange cross3_def diff_zero k1k2rel cross_skew
+          mult_not_zero scaleR_eq_0_iff vector_3 by (metis (no_types))
+      qed
+    qed
   qed
+qed
+text \<open>\done\<close>
 
 (*
     p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k . k \<in> Lines \<and> P \<lhd> k  \<and> Q \<lhd>  k)" and
@@ -248,26 +288,69 @@ proof -
 *)
 
 definition join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> real^3"
-  where
-  "join \<equiv> \<lambda>P Q . (if P \<times> Q = 0 then vector[0,0,1] else P \<times> Q)"
+  where "join \<equiv> \<lambda>P Q. (if P \<times> Q = 0 then vector[0,0,1] else P \<times> Q)"
 
-lift_definition Join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> rp2"
-  is "\<lambda>P Q. join P Q"
+text \<open>\hadi\<close>
+lift_definition Join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> rp2" is "\<lambda>P Q. join P Q" 
+  using cross3_def cross_refl vector_3(3) zero_index zero_neq_one 
+  unfolding projrel_def join_def by (metis (no_types))
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma obtain_coords:
+  fixes P
+  assumes "P \<in> rp2_Points"
+  shows "\<exists>Px Py Pz. vector[Px, Py, Pz] = Rep_Proj P 
+    \<and> vector[Px, Py, Pz] \<noteq> ((vector[0,0,0])::v3)" 
 proof -
-  fix P Q
-  show "projrel (join P Q)
-        (join P Q)" unfolding projrel_def join_def
-  by (metis (no_types, lifting) cross3_def cross_zero_left mult.commute vector_3(3) zero_index
-      zero_neq_one)
+  obtain v::v3 where vdef: "v \<in> punctured_r_3 \<and> Rep_Proj P = v" using cross3_def 
+    exists_projrel_refl projrel_def punctured_r_3_def rep_P_nz by fastforce
+  have vnz: "v \<noteq> ((vector[0,0,0])::v3)" 
+    using vdef cross3_def cross_zero_right punctured_r_3_def by auto
+  obtain Px Py Pz where "v = vector[Px, Py, Pz]" using forall_vector_3 by fastforce
+  then show ?thesis using vdef vnz by auto
 qed
+text \<open>\done\<close>
 
+text \<open>\hadi\<close>
 lemma rp2_P1a:
   fixes P Q
   assumes a1: "P \<in> rp2_Points" 
   assumes a2: "Q \<in> rp2_Points"
   assumes a3: "P \<noteq> Q"
-  shows "(\<exists>k . k \<in> rp2_Lines \<and> rp2_incid P  k  \<and>  rp2_incid Q  k)"
-  sorry
+  shows "(\<exists>k. k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k)"
+proof -
+  obtain Px Py Pz Qx Qy Qz where pq_coords: "vector[Px, Py, Pz] = Rep_Proj P 
+    \<and> vector[Px, Py, Pz] \<noteq> ((vector[0,0,0])::v3) \<and> vector[Qx, Qy, Qz] = Rep_Proj Q 
+    \<and> vector[Qx, Qy, Qz] \<noteq> ((vector[0,0,0])::v3)" using assms obtain_coords by blast
+  let ?k = "Join (vector[Px, Py, Pz]) (vector[Qx, Qy, Qz])"
+  let ?n = "join (vector[Px, Py, Pz]) (vector[Qx, Qy, Qz])"
+  have nneqz: "vector[Px, Py, Pz] \<times> vector[Qx, Qy, Qz] \<noteq> vector[0,0,0]" using a3 
+    Quotient_rel_rep [of projrel] Quotient_rp2 cross3_def cross_refl projrel_def 
+    vector_3 pq_coords by (smt (verit))
+(*proof -
+    obtain f :: "rp2 \<Rightarrow> real" and g :: "rp2 \<Rightarrow> real" 
+      and h :: "rp2 \<Rightarrow> real" where f1: "\<forall>x. (vector[0, 0, 0]::(real, 3) vec) 
+      \<noteq> vector[f x, g x, h x] \<and> Rep_Proj x = vector [f x, g x, h x] 
+      \<or> x \<notin> rp2_Points" using obtain_coords by metis
+    have f2: "vector[0, 0, 0] = (0::v3)" 
+      using cross3_def cross_zero_right by auto
+    have f3: "\<forall>v. (v::(real, 3) vec) \<in> UNIV" by auto
+    then have f4: "Rep_Proj Q \<in> punctured_r_3" using f1 f2 a2 punctured_r_3_def 
+      insert_Diff_single insert_iff by metis
+    have "Rep_Proj P \<in> punctured_r_3" using f1 f2 f3 a1 insert_Diff_single 
+      insert_iff punctured_r_3_def by metis
+    then show ?thesis using a3 f2 f4 Quotient_rel_rep Quotient_rp2 cross_nz
+      p_coords q_coords punctured_r_3_def insert_iff Diff_iff by metis
+  qed*)
+  then have "?n = vector[Px, Py, Pz] \<times> vector[Qx, Qy, Qz]" using join_def 
+    cross3_def cross_zero_right zero_index by (smt (verit))
+  then have "rp2_incid P ?k \<and> rp2_incid Q ?k" using nneqz pq_coords 
+    Quotient3_def Quotient3_rp2 cross_refl projrel_def
+    by (smt (verit) Join.abs_eq rp2_incid.abs_eq dot_cross_self)
+  then show ?thesis using rp2_Lines_def by auto
+qed
+text \<open>\done\<close>
 
 (* TO DO: To show uniqueness, we have to show (for P,Q in punctured_r_3 and P and Q not proj_rel, 
 that if h is orthog to P and Q, then h is a nonzero multiple of the cross product. Ugh. Ugly algebra ahead *)
@@ -383,11 +466,6 @@ theorem projectivisation_of_A2:
   assumes ap: "affine_plane  A2Points  A2Lines a2incid a2join a2find_parallel"
   shows   "projective_plane2 pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
-
-
 (* need definition of isomorphism, and proof that RP2A is isomorphism to RP2P; 
 place these Chapter 1-3. *)
-
 end
-
-
