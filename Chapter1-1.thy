@@ -1970,10 +1970,10 @@ locale projective_plane2 = projective_plane_data2 Points Lines incid
      Lines :: "'l set" and
      incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"  (infix "\<lhd>" 60)  + 
 assumes
-    p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k . k \<in> Lines \<and> P \<lhd> k  \<and> Q \<lhd>  k)" and
-    p2: "\<lbrakk>k \<in> Lines; n \<in> Lines\<rbrakk> \<Longrightarrow> \<exists> P . (P \<in> Points \<and> P \<lhd> k \<and> P \<lhd> n)" and
+    p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k. k \<in> Lines \<and> P \<lhd> k \<and> Q \<lhd> k)" and
+    p2: "\<lbrakk>k \<in> Lines; n \<in> Lines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> Points \<and> P \<lhd> k \<and> P \<lhd> n)" and
     p3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (pcollinear P Q R)" and
-    p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+    p4: "\<lbrakk>k \<in> Lines; U = {P. (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
 (*    p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> S \<noteq> Q \<and> Q \<noteq> R \<and> R \<noteq> S" *)
 begin
 
@@ -2116,7 +2116,7 @@ lemma Ap2:
     ((k \<in> Lines) \<and> (t = affine_plane_data.line_pencil Points Lines (incid) k))}"
   defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in> Lines)} \<union> {Infty}"
   fixes pincid (infix "p\<lhd>" 60)
-  assumes \<open>pincid =  mprojectivize (incid)\<close>
+  assumes \<open>pincid = mprojectivize (incid)\<close>
   shows "\<lbrakk>k \<in> pLines; n \<in> pLines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)"
 proof -
   fix k n
@@ -2561,7 +2561,7 @@ qed
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
-lemma projectivization_p1:
+lemma Ap1:
   fixes Points::"'p set" 
   fixes Lines:: "'l set"
   fixes incid::"'p \<Rightarrow> 'l \<Rightarrow> bool" 
@@ -2643,7 +2643,7 @@ next
 qed
 text \<open>\done\<close>
 
-text \<open>\hadi\<close>
+(* text \<open>\hadi\<close>
 lemma projectivization_p2:
   fixes Points::"'p set" 
   fixes Lines:: "'l set"
@@ -2752,7 +2752,7 @@ next
   case (Infty)
   then show ?thesis using Ap4 ap ku_facts pPdef pm by fastforce
 qed
-text \<open>\done\<close>
+text \<open>\done\<close> *)
 
 text \<open>\hadi\<close>
 theorem projectivization_is_projective:
@@ -2770,18 +2770,18 @@ theorem projectivization_is_projective:
   shows "projective_plane2 pPoints pLines pincid"
 proof (unfold_locales)
   show "\<lbrakk>P \<noteq> Q; P \<in> pPoints; Q \<in> pPoints\<rbrakk> 
-    \<Longrightarrow> (\<exists>!k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k)" for P Q using assms pLdef pPdef
-    projectivization_p1 [of _ _ _ _ _ _ P Q] by auto
+    \<Longrightarrow> (\<exists>!k. k \<in> pLines \<and> P p\<lhd> k \<and> Q p\<lhd> k)" for P Q 
+    using assms pLdef pPdef Ap1 [of pincid] by auto
   show "\<lbrakk>k \<in> pLines; n \<in> pLines\<rbrakk> 
-    \<Longrightarrow> \<exists>P. (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)" for k n using assms pLdef pPdef
-    projectivization_p2 [of _ _ _ _ _ _ k n] by auto
+    \<Longrightarrow> \<exists>P. (P \<in> pPoints \<and> P p\<lhd> k \<and> P p\<lhd> n)" for k n 
+    using assms Ap2 [of Points Lines] by auto
   show "\<exists>P Q R. P \<in> pPoints \<and> Q \<in> pPoints \<and> R \<in> pPoints 
     \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R  
     \<and> \<not> (projective_plane_data2.pcollinear pPoints pLines pincid P Q R)"
-    using Ap3 [of Points Lines] ap pLdef pPdef pm by blast
+    using Ap3 [of Points Lines] pLdef pPdef ap pm by auto
   show "\<lbrakk>k \<in> pLines; U = {P. (P \<in> pPoints \<and> P p\<lhd> k)}\<rbrakk> 
     \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U
-    using assms pLdef pPdef projectivization_p4 [of _ _ _ _ _ _ k U] by auto
+    using assms Ap4 [of Points Lines] by auto
 qed 
 text \<open>\done\<close>
 end
