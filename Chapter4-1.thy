@@ -5,8 +5,8 @@ begin
 text \<open>Everything up to the Principle of Duality and the remarks after it. 
 (You don't need to prove remark 2!)\<close>
 
-fun mdualize :: "('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('l \<Rightarrow> ('l set \<times> 'p) \<Rightarrow> bool)" 
-  where "mdualize (incid) (l::'l) (_, P) = incid P l"
+fun mdualize :: "('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('l \<Rightarrow> 'p \<Rightarrow> bool)" 
+  where "mdualize (incid) (l::'l) (P::'p) = incid P l"
 
 text \<open>\hadi\<close>
 lemma dp_p1:
@@ -15,8 +15,8 @@ lemma dp_p1:
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   assumes pp: "projective_plane2 Points Lines incid"
   defines dPdef: "dPoints \<equiv> Lines"
-  defines dLdef: "dLines \<equiv> {({n::'l . (n \<in> Lines) \<and> incid P n}, P) | P. (P \<in> Points)}"
-  fixes dincid :: "'l \<Rightarrow> ('l set \<times> 'p) \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
   assumes dm: \<open>dincid = mdualize incid\<close>
   fixes P Q
   assumes pq_facts: "P \<noteq> Q \<and> P \<in> dPoints \<and> Q \<in> dPoints"
@@ -24,12 +24,9 @@ lemma dp_p1:
 proof -
   obtain R where rdef: "R \<in> Points \<and> incid R P \<and> incid R Q" 
     using pq_facts pp projective_plane2.p2 unfolding dPdef by fastforce
-  then have runique: "\<lbrakk>S \<in> Points; incid S P; incid S Q\<rbrakk> \<Longrightarrow> R = S" for S 
+  then have "\<lbrakk>S \<in> Points; incid S P; incid S Q\<rbrakk> \<Longrightarrow> R = S" for S 
     using pq_facts pp projective_plane2.p1 unfolding dPdef by fastforce
-  let ?k = "({n::'l . (n \<in> Lines) \<and> incid R n}, R)"
-  have k_facts: "?k \<in> dLines \<and> P d\<lhd> ?k \<and> Q d\<lhd> ?k" using rdef dm dLdef by auto
-  have "\<lbrakk>n \<in> dLines; P d\<lhd> n \<and> Q d\<lhd> n\<rbrakk> \<Longrightarrow> ?k = n" for n using dLdef dm runique by auto
-  then show ?thesis using k_facts by auto
+  then show ?thesis using rdef dLdef dm by auto
 qed
 text \<open>\done\<close>
 
@@ -40,27 +37,22 @@ lemma dp_p2:
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   assumes pp: "projective_plane2 Points Lines incid"
   defines dPdef: "dPoints \<equiv> Lines"
-  defines dLdef: "dLines \<equiv> {({n::'l . (n \<in> Lines) \<and> incid P n}, P) | P. (P \<in> Points)}"
-  fixes dincid :: "'l \<Rightarrow> ('l set \<times> 'p) \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
   assumes dm: \<open>dincid = mdualize incid\<close>
   fixes k n
   assumes kn_facts: "k \<in> dLines \<and> n \<in> dLines"
   shows "\<exists>P. (P \<in> dPoints \<and> P d\<lhd> k \<and> P d\<lhd> n)"
 proof (cases "k = n")
   case 1: True
-  obtain R where rdef: "R \<in> Points \<and> k = ({l::'l . (l \<in> Lines) \<and> incid R l}, R)" 
-    using dLdef kn_facts by auto
-  then obtain m where "m \<in> Lines \<and> incid R m" 
-    using pp projective_plane2_def by (metis (lifting))
-  then show ?thesis using 1 rdef dm dPdef by auto
+  then obtain m where "m \<in> Lines \<and> incid k m" 
+    using kn_facts pp projective_plane2_def dLdef by (metis (lifting))
+  then show ?thesis using 1 dm dPdef by auto
 next
   case False
-  then obtain P Q where pqdef: "P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q 
-    \<and> k = ({l::'l . (l \<in> Lines) \<and> incid P l}, P) 
-    \<and> n = ({l::'l . (l \<in> Lines) \<and> incid Q l}, Q)" using dLdef kn_facts by auto
-  obtain m where "m \<in> Lines \<and> incid P m \<and> incid Q m" 
-    using pqdef pp projective_plane2.p1 by fastforce
-  then show ?thesis using pqdef dm dPdef by auto
+  then obtain m where "m \<in> Lines \<and> incid k m \<and> incid n m" 
+    using kn_facts pp projective_plane2.p1 [of Points] dLdef by blast
+  then show ?thesis using dPdef dm by auto
 qed
 text \<open>\done\<close>
 
@@ -71,8 +63,8 @@ lemma dp_p3:
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   assumes pp: "projective_plane2 Points Lines incid"
   defines dPdef: "dPoints \<equiv> Lines"
-  defines dLdef: "dLines \<equiv> {({n::'l . (n \<in> Lines) \<and> incid P n}, P) | P. (P \<in> Points)}"
-  fixes dincid :: "'l \<Rightarrow> ('l set \<times> 'p) \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
   assumes dm: \<open>dincid = mdualize incid\<close>
   shows "\<exists>P Q R. P \<in> dPoints \<and> Q \<in> dPoints \<and> R \<in> dPoints \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
     \<and> \<not> (projective_plane_data2.pcollinear dPoints dLines dincid P Q R)"
@@ -90,9 +82,8 @@ proof -
     using pqdef qrdef prdef dPdef by auto
   have alldist: "pq \<noteq> qr \<and> pq \<noteq> pr \<and> qr \<noteq> pr" using pqr pqdef qrdef prdef 
     projective_plane_data2.pcollinear_def by fastforce
-  have "\<not> (incid Q pr)" using pqr prdef 
+  have qnot: "\<not> (incid Q pr)" using pqr prdef 
     projective_plane_data2.pcollinear_def [of Points Lines] by auto
-  then have prnot: "\<not> pr d\<lhd> ({m::'l. (m \<in> Lines) \<and> incid Q m}, Q)" using dm by auto
   have "\<not> (projective_plane_data2.pcollinear dPoints dLines dincid pq qr pr)"
   proof (rule ccontr)
     assume cd: "\<not> (\<not> (projective_plane_data2.pcollinear dPoints dLines dincid pq qr pr))"
@@ -100,11 +91,9 @@ proof -
     proof -
       obtain L where ldef: "L \<in> dLines \<and> pq d\<lhd> L \<and> qr d\<lhd> L \<and> pr d\<lhd> L" using cd 
         alldp projective_plane_data2.pcollinear_def [of dPoints dLines] by auto
-      obtain G where gdef: "G \<in> Points \<and> L = ({m::'l. (m \<in> Lines) \<and> incid G m}, G)" 
-        using dLdef ldef by auto
-      then have "G = Q" using alldist pqr ldef pqdef qrdef dm mdualize.simps
-        pp projective_plane2.p1 [of _ _ incid] by (metis (lifting))
-      then show False using gdef ldef prnot by blast
+      then have "L = Q" using pp projective_plane2.p1 [of Points Lines incid] 
+        alldist pqr pqdef qrdef dLdef dm by auto
+      then show False using qnot dm ldef by auto
     qed
   qed
   then show ?thesis using alldist alldp by auto
@@ -126,28 +115,26 @@ lemma dp_p4:
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   assumes pp: "projective_plane2 Points Lines incid"
   defines dPdef: "dPoints \<equiv> Lines"
-  defines dLdef: "dLines \<equiv> {({n::'l . (n \<in> Lines) \<and> incid P n}, P) | P. (P \<in> Points)}"
-  fixes dincid :: "'l \<Rightarrow> ('l set \<times> 'p) \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
   assumes dm: \<open>dincid = mdualize incid\<close>
   fixes k U
   assumes ku_facts: "k \<in> dLines \<and> U = {P. (P \<in> dPoints \<and> P d\<lhd> k)}"
   shows "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
 proof -
-  obtain P where sdef: "P \<in> Points \<and> k = ({n::'l. (n \<in> Lines) \<and> incid P n}, P)"
-    using ku_facts dLdef by auto
-  obtain l where ldef: "l \<in> Lines \<and> (\<not> incid P l)" using sdef pp
-    projective_plane2.non_containing_line by metis
-  obtain A B C where abcdef: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points 
+  obtain l where ldef: "l \<in> Lines \<and> (\<not> incid k l)" using ku_facts pp
+    projective_plane2.non_containing_line dLdef by metis
+  obtain A B C where "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points 
     \<and> incid A l \<and> incid B l \<and> incid C l \<and> distinct[A, B, C]" 
     using ldef pp projective_plane2.p4 [of Points Lines incid l] by auto
-  then obtain Q R S where "Q \<in> Lines \<and> R \<in> Lines \<and> S \<in> Lines \<and> incid P Q 
-    \<and> incid A Q \<and> incid P R \<and> incid B R \<and> incid P S \<and> incid C S \<and> distinct[Q, R, S]" 
-    using sdef ldef distinct_length_2_or_more distinct_singleton pp
-    projective_plane2.p1 [of Points Lines incid P]
+  then obtain Q R S where "Q \<in> Lines \<and> R \<in> Lines \<and> S \<in> Lines \<and> incid k Q 
+    \<and> incid A Q \<and> incid k R \<and> incid B R \<and> incid k S \<and> incid C S \<and> distinct[Q, R, S]" 
+    using ku_facts ldef distinct_length_2_or_more distinct_singleton dLdef pp
+    projective_plane2.p1 [of Points Lines incid k]
     projective_plane2.p1 [of Points Lines _ A B]
     projective_plane2.p1 [of Points Lines _ A C]
     projective_plane2.p1 [of Points Lines _ B C] by (metis (lifting))
-  then show ?thesis using sdef dm ku_facts dPdef by auto
+  then show ?thesis using ku_facts dPdef dm by auto
 qed
 text \<open>\done\<close>
 
@@ -158,8 +145,8 @@ theorem dual_plane_is_projective:
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   assumes pp: "projective_plane2 Points Lines incid"
   defines dPdef: "dPoints \<equiv> Lines"
-  defines dLdef: "dLines \<equiv> {({n::'l . (n \<in> Lines) \<and> incid P n}, P) | P. (P \<in> Points)}"
-  fixes dincid :: "'l \<Rightarrow> ('l set \<times> 'p) \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
   assumes dm: \<open>dincid = mdualize incid\<close>
   shows "projective_plane2 dPoints dLines dincid"
 proof (unfold_locales)
@@ -170,12 +157,55 @@ proof (unfold_locales)
     \<Longrightarrow> \<exists>P. (P \<in> dPoints \<and> P d\<lhd> k \<and> P d\<lhd> n)" for k n 
     using assms dp_p2 [of Points Lines] by simp
   show "\<exists>P Q R. P \<in> dPoints \<and> Q \<in> dPoints \<and> R \<in> dPoints 
-    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R  
+    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
     \<and> \<not> (projective_plane_data2.pcollinear dPoints dLines dincid P Q R)"
     using assms dp_p3 [of Points Lines] by simp
   show "\<lbrakk>k \<in> dLines; U = {P. (P \<in> dPoints \<and> P d\<lhd> k)}\<rbrakk> 
     \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U
     using assms dp_p4 [of Points Lines] by simp
 qed
+text \<open>\done\<close>
+
+typedecl "statement" 
+  consts Statement :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool"
+
+proposition proj_statement: 
+  fixes Points :: "'p set"
+  fixes Lines :: "'l set"
+  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  shows "Statement Points Lines incid = projective_plane2 Points Lines incid"
+  sorry
+
+text \<open>\hadi\<close>
+theorem principle_of_duality:
+  fixes Points :: "'p set"
+  fixes Lines :: "'l set"
+  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  assumes pp: "projective_plane2 Points Lines incid"
+  defines dPdef: "dPoints \<equiv> Lines"
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  assumes dm: "dincid = mdualize incid"
+  assumes s_facts: "Statement Points Lines incid = True"
+  shows "Statement dPoints dLines dincid"
+  using assms proj_statement dual_plane_is_projective by blast
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+theorem double_dual_iso:
+  fixes Points :: "'p set"
+  fixes Lines :: "'l set"
+  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  assumes pp: "projective_plane2 Points Lines incid"
+  defines dPdef: "dPoints \<equiv> Lines"
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool"
+  assumes dm: \<open>dincid = mdualize incid\<close>
+  defines ddPdef: "ddPoints \<equiv> dLines"
+  defines ddLdef: "ddLines \<equiv> dPoints"
+  fixes ddincid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  assumes ddm: \<open>ddincid = mdualize dincid\<close>
+  shows "Points = ddPoints \<and> Lines = ddLines \<and> incid = ddincid" 
+  using assms by fastforce
 text \<open>\done\<close>
 end
