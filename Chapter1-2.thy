@@ -339,6 +339,7 @@ lemma rp2_P3:
           P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
           \<not> (\<exists>k \<in> rp2_Lines . rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
   sorry
+  text \<open>\George\<close>
 
 text \<open>\Jiayi\Luke\<close>
 lemma rp2_P4:
