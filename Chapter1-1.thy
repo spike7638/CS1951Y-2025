@@ -2108,6 +2108,7 @@ affine plane. Goals are:
     p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> incid P k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> S \<noteq> Q \<and> Q \<noteq> R \<and> R \<noteq> S"
 \<close>
 
+text \<open>\Jackson\<close>
 lemma Ap2:
   fixes Points Lines join find_parallel
   fixes incid (infix "\<lhd>" 60)
