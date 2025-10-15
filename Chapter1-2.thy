@@ -407,4 +407,6 @@ interpretation RP2C: projective_plane2  "{OrdinaryP P | P . (P \<in> A2Points)} 
 (* need definition of isomorphism, and proof that RP2Q is isomorphic to RP2C; 
 place these Chapter 1-3. *)
 
+text \<open>\nick\<close>
+
 end
