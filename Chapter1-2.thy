@@ -267,6 +267,7 @@ proof (transfer)
 qed
 text \<open>\done\<close>
 
+text \<open>\hadi\<close>
 lemma unique_cross:
   fixes a b n k
   assumes "a \<times> b \<noteq> 0"
@@ -274,6 +275,7 @@ lemma unique_cross:
   shows "\<exists>s. k = s *\<^sub>R (a \<times> b)"
   using assms Lagrange zvec_def projrel_def cross3_def cross_nz scaleR_zero_left
     cancel_comm_monoid_add_class.diff_cancel zero_index by (metis (no_types))
+text \<open>\done\<close>
 
 (* TO DO: To show uniqueness of the join, we have to show (for P,Q nonzero and P and Q not proj_rel,
 that if h is orthog to P and Q, then h is a nonzero multiple of the cross product, i.e., the lemma
