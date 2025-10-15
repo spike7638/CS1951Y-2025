@@ -1131,11 +1131,13 @@ theorem
   shows "A4incid P (A4join P Q)"
   using assms all_pairs by auto
 
+text \<open>\Jiayi\<close>
 theorem
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
   shows "A4incid Q (A4join P Q)"
   using assms all_pairs by auto
+text \<open>\Done\<close>
 
 text \<open>\Luke\<close>
 theorem  A4affine_plane_a3_lemma:
