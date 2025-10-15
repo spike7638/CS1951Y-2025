@@ -345,6 +345,7 @@ lemma rp2_P3:
   sorry
   text \<open>\George\<close>
 
+text \<open>\Luke\<close>
 text \<open>\Jiayi\Luke\<close>
 lemma rp2_P4:
   fixes k
