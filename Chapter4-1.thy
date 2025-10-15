@@ -169,6 +169,10 @@ text \<open>\done\<close>
 typedecl "statement" 
   consts Statement :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool"
 
+fun dual_statement :: "bool \<Rightarrow> bool" where
+  "dual_statement (Statement Points Lines incid)
+   = (Statement Lines Points (mdualize incid))"
+
 proposition proj_statement: 
   fixes Points :: "'p set"
   fixes Lines :: "'l set"

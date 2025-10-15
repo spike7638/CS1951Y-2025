@@ -334,12 +334,11 @@ lemma rp2_P2:
   assumes a2: "k \<in> rp2_Lines"
   assumes a3: "m \<noteq> k"
   shows "(\<exists>P . P \<in> rp2_Points \<and> rp2_incid P m \<and> rp2_incid P k)"
-  sorry
+  using rp2_P1a [of m k] incid_commute rp2_Points_def by auto
 
 lemma rp2_P3:
-  shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in>  rp2_Points \<and> R \<in>  rp2_Points \<and> 
-          P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
-          \<not> (\<exists>k \<in> rp2_Lines . rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
+  shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R 
+    \<and> Q \<noteq> R \<and> \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
   sorry
 
 text \<open>\Jiayi\Luke\<close>
@@ -376,13 +375,13 @@ theorem analytic_rp2:
 proof (unfold_locales)
   show "\<lbrakk>P \<noteq> Q; P \<in> rp2_Points; Q \<in> rp2_Points\<rbrakk> 
     \<Longrightarrow> (\<exists>!k. k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k)" for P Q 
-    using rp2_P1a rp2_P1b rp2_Lines_def UNIV_I by metis
+    using rp2_P1a [of P Q] rp2_P1b [of P Q] rp2_Lines_def by auto
   show "\<lbrakk>k \<in> rp2_Lines; n \<in> rp2_Lines\<rbrakk> 
     \<Longrightarrow> \<exists>P. (P \<in> rp2_Points \<and> rp2_incid P k \<and> rp2_incid P n)" for k n
-    using rp2_P2 rp2_P3 rp2_Points_def rp2_Lines_def by metis
-  show "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points  \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
+    using rp2_P2 [of k n] rp2_P4 by auto
+  show "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
     \<and> \<not> (projective_plane_data2.pcollinear rp2_Points rp2_Lines rp2_incid P Q R)"
-    using rp2_P3 rp2_Points_def rp2_Lines_def by (simp add: projective_plane_data2.pcollinear_def)
+    using rp2_P3 unfolding projective_plane_data2.pcollinear_def by auto
   show "\<lbrakk>k \<in> rp2_Lines; U = {P. (P \<in> rp2_Points \<and> rp2_incid P k)}\<rbrakk> 
     \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U 
     using rp2_P4 by auto
@@ -393,17 +392,17 @@ text \<open>\done\<close>
 interpretation RP2Q: projective_plane2 rp2_Points rp2_Lines rp2_incid
   using analytic_rp2 by auto
 
-
 theorem projectivisation_of_A2:
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> A2Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil  A2Points  A2Lines ( a2incid) k) )}"
-  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in>  A2Lines)} \<union> {Infty}"
-  defines pm: "pincid \<equiv>  mprojectivize (a2incid)"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
+     ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in>  A2Lines)} \<union> {Infty}"
+  defines pm: "pincid \<equiv> mprojectivize (a2incid)"
   shows "projective_plane2 pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
 
-interpretation RP2C: projective_plane2  "{OrdinaryP P | P . (P \<in> A2Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil  A2Points  A2Lines ( a2incid) k) )}" " {OrdinaryL n | n . (n \<in>  A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
+interpretation RP2C: projective_plane2  "{OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
+  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}" 
+  " {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
   using projectivisation_of_A2 by auto
 
 (* need definition of isomorphism, and proof that RP2Q is isomorphic to RP2C; 
