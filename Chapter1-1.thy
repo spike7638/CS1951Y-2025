@@ -1980,14 +1980,12 @@ assumes
 (*    p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> S \<noteq> Q \<and> Q \<noteq> R \<and> R \<noteq> S" *)
 begin
 
-(* To be added once the necessary lemmas are proved:
+(*Uncommented and fixed by Nick and George for use in 4-4:*)
+definition (in projective_plane_data2) meet::"'l \<Rightarrow> 'l \<Rightarrow> 'p" (infix "." 60) where
+"meet n k = (if (n \<in> Lines \<and> k \<in> Lines \<and> n \<noteq> k) then THE P . P \<lhd> n \<and> P \<lhd> k else undefined)"
+definition (in projective_plane_data2) join::"'p \<Rightarrow> 'p \<Rightarrow> 'l" (infix "\<^bold>" 60) where   
+"join P Q = (if (P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q) then THE k . P \<lhd> k \<and> Q \<lhd> k else undefined)"
 
-definition meet::"'l \<Rightarrow> 'l \<Rightarrow> 'p" (infix "." 60) where
-"meet n k = (if n \<in> Lines \<and> k \<in> Lines \<and> n \<noteq> k then  THE P . P \<lhd> n \<and> P \<lhd> k) else undefined)"
-
-definition join::"'p \<Rightarrow> 'p \<Rightarrow> 'l" (infix "\<^bold>" 60) where
-"join P Q = (if P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q then THE k . P \<lhd> k \<and> Q \<lhd> k) else undefined"
-*)
 
 end
 (* right above here is where many small theorems about projective planes should go, theorems like "any
