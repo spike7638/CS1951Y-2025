@@ -344,8 +344,13 @@ lemma rp2_P3:
 text \<open>\Jiayi\Luke\<close>
 lemma vector_3_eq_iff:
   fixes a1 a2 a3 b1 b2 b3 :: real
-  shows "vector[a1, a2, a3] = vector[b1, b2, b3] \<longleftrightarrow> a1 = b1 \<and> a2 = b2 \<and> a3 = b3"
-  sorry
+  shows "(vector[a1, a2, a3] :: real^3) = (vector[b1, b2, b3] :: real^3) \<longleftrightarrow> a1 = b1 \<and> a2 = b2 \<and> a3 = b3"
+  using vector_3 exhaust_3 by (metis (no_types, opaque_lifting))
+
+lemma projrel_imp_smult:
+  assumes "projrel u v"
+  shows "\<exists>c::real. c \<noteq> 0 \<and> u = c *\<^sub>R v"
+  using assms unfolding projrel_def by blast
 
 lemma rp2_P4:
   fixes k
@@ -360,9 +365,9 @@ proof -
   using forall_vector_3 by fastforce
 
   find_theorems " _ \<bullet>  _"
-  let ?v1 = "vector[0, -c, b]"
-  let ?v2 = "vector[c, 0, -a]"
-  let ?v3 = "vector[-b, a, 0]"
+  let ?v1 = "(vector[0, -c, b] :: real^3)"
+  let ?v2 = "(vector[c, 0, -a] :: real^3)"
+  let ?v3 = "(vector[-b, a, 0] :: real^3)"
 
   have abc_not_all_zero: "a \<noteq> 0 \<or> b \<noteq> 0 \<or> c \<noteq> 0" using kvec_nz abc_def zvec_def by auto
 
@@ -376,42 +381,60 @@ proof -
     
     have ortho2: "?v2 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
     have ortho3: "?v3 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
-    have ortho3: "?v4 \<bullet> kvec = 0" unfolding abc_def by (smt (verit, del_insts) abc_def inner_left_distrib ortho2 ortho3)
+
+    (*will fix later*)
+    have ortho4: "?v4 \<bullet> kvec = 0" unfolding abc_def by (smt (verit, del_insts) abc_def inner_left_distrib ortho2 ortho3)
 
     (* Since a \<noteq> 0, ?v2 and ?v3 are non-zero *)
     have v2_nz: "?v2 \<noteq> zvec"
-    proof
-      assume "?v2 = zvec"
+    proof (rule ccontr)
+      assume "\<not>(?v2 \<noteq> zvec)"
       then have "vector[c, 0, -a] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
       then have "-a = 0" by (metis vector_3(3))
       then have "a = 0" by simp
-      then show False using a_nz by contradiction
+      then show False using a_nz by auto
     qed
     
     have v3_nz: "?v3 \<noteq> zvec"
-    proof
-      assume "vector[-b, a, 0] = zvec"
+    proof (rule ccontr)
+      assume "\<not>(?v3 \<noteq> zvec)"
       then have "vector[-b, a, 0] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
       then have "a = 0" by (metis vector_3(2))
-      then show False using a_nz by contradiction
+      then show False using a_nz by auto
     qed
 
     have v4_nz: "?v4 \<noteq> zvec"
-    proof
-      assume v4_z: "zvec = ?v4"
+    proof (rule ccontr)
+      assume v4_z: "\<not>(?v4 \<noteq> zvec)"
       have sum_eq: "vector[c, 0, -a] + vector[-b, a, 0] = vector[c - b, a, -a]"
         unfolding vector_def by vector
-      then show False unfolding vector_def v4_z
-        using a_nz add.commute local.sum_eq uminus_add_conv_diff v4_z vector_3_eq_iff zvec_def by contradiction
-      then have "zvec = vector[c - b, a, -a]" unfolding vector_def v4_z  sledgehammer
-      then have "vector[-b + c, a, -a] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
-      then have "a = 0" by (metis vector_3(2))
-      then show False using a_nz by contradiction
+      then show False using a_nz local.sum_eq  v4_z vector_3_eq_iff zvec_def by metis
     qed
 
-    have v2_in_U: "?v2 \<in> U"
-    proof
-      have "?v2 \<in> rp2_Points" using v2_nz by auto
+    let ?P = "Abs_Proj ?v2"
+    let ?Q = "Abs_Proj ?v3"
+    let ?R = "Abs_Proj ?v4"
+
+    have p_point: "?P \<in> rp2_Points" unfolding rp2_Points_def by auto 
+    have q_point: "?Q \<in> rp2_Points" unfolding rp2_Points_def by auto 
+    have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
+
+    have "k = Abs_Proj kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
+    then have "rp2_incid ?P k = rp2_incid (Abs_Proj ?v2) (Abs_Proj kvec)"
+      by auto
+
+    have temp: "projrel (Rep_Proj ?P) ?v2"
+    proof -
+      have "projrel ?v2 ?v2" using v2_nz unfolding projrel_def by auto
+      then show ?thesis
+        by sledgehammer
+    qed
+
+    have inc_P: "rp2_incid ?P k"
+    proof (rule ccontr)
+      assume "\<not>rp2_incid ?P k"
+      then have "(Rep_Proj ?P) \<bullet> (Rep_Proj k) \<noteq> 0" using rp2_incid.rep_eq by auto
+    qed
 
   next
     case b_nz
@@ -422,7 +445,6 @@ proof -
   qed
 
 qed
-
 
 text \<open>\done\done\<close>
 
