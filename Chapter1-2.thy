@@ -342,6 +342,11 @@ lemma rp2_P3:
   text \<open>\George\<close>
 
 text \<open>\Jiayi\Luke\<close>
+lemma vector_3_eq_iff:
+  fixes a1 a2 a3 b1 b2 b3 :: real
+  shows "vector[a1, a2, a3] = vector[b1, b2, b3] \<longleftrightarrow> a1 = b1 \<and> a2 = b2 \<and> a3 = b3"
+  sorry
+
 lemma rp2_P4:
   fixes k
   fixes U
@@ -349,23 +354,75 @@ lemma rp2_P4:
   assumes "U = {X . X \<in> rp2_Points \<and> rp2_incid X k}"
   shows "\<exists>P Q R. P \<in> U \<and> Q \<in> U \<and> R \<in> U \<and> distinct [P,Q,R]"
 proof - 
-  obtain P Q where pq: "P \<in> U \<and> Q \<in> U" using assms rp2_Lines_def rp2_Points_def
-      mem_Collect_eq rp2_P1a rp2_P2 rp2_P3 by metis
-  obtain a b c :: real where abc: "Rep_Proj P = vector[a, b, c]" 
-    using forall_vector_3 by fastforce
-  obtain d e f :: real where def: "Rep_Proj Q = vector[d, e, f]" 
-    using forall_vector_3 by fastforce
-  obtain g h i :: real where ghi: "g=(a+b)/2 \<and> h= (b+e)/2 \<and> i=(c+f)/2" 
-    by blast
+  obtain kvec where kvec_def: "kvec = Rep_Proj k" by auto
+  have kvec_nz: "kvec \<noteq> zvec" using rep_P_nz using kvec_def by auto
+  obtain a b c :: real where abc_def: "kvec = vector[a, b, c]" using kvec_def
+  using forall_vector_3 by fastforce
 
-  have 0: "Abs_Proj (vector[g, h, i]) \<in> rp2_Points" using rp2_Points_def by auto 
+  find_theorems " _ \<bullet>  _"
+  let ?v1 = "vector[0, -c, b]"
+  let ?v2 = "vector[c, 0, -a]"
+  let ?v3 = "vector[-b, a, 0]"
 
-  obtain R where r: " R = Abs_Proj (vector[g, h, i])" using 0 by auto
-  then have r_rep: "projrel((Rep_Proj R)) (vector[g, h, i])" sorry
-  then have 0: "distinct[P,Q,R]" using num1_eq1 vt sorry
-  then have 1: "R \<in> U" using num1_eq1 vt sorry
-  then show ?thesis using pq r 0 1 by auto
+  have abc_not_all_zero: "a \<noteq> 0 \<or> b \<noteq> 0 \<or> c \<noteq> 0" using kvec_nz abc_def zvec_def by auto
+
+  consider (a_nz) "a \<noteq> 0" | (b_nz) "b \<noteq> 0" | (c_nz) "c \<noteq> 0"
+    using abc_not_all_zero by auto
+  then show ?thesis
+  proof (cases)
+    case a_nz
+
+    let ?v4 = "?v2 + ?v3"
+    
+    have ortho2: "?v2 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
+    have ortho3: "?v3 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
+    have ortho3: "?v4 \<bullet> kvec = 0" unfolding abc_def by (smt (verit, del_insts) abc_def inner_left_distrib ortho2 ortho3)
+
+    (* Since a \<noteq> 0, ?v2 and ?v3 are non-zero *)
+    have v2_nz: "?v2 \<noteq> zvec"
+    proof
+      assume "?v2 = zvec"
+      then have "vector[c, 0, -a] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
+      then have "-a = 0" by (metis vector_3(3))
+      then have "a = 0" by simp
+      then show False using a_nz by contradiction
+    qed
+    
+    have v3_nz: "?v3 \<noteq> zvec"
+    proof
+      assume "vector[-b, a, 0] = zvec"
+      then have "vector[-b, a, 0] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
+      then have "a = 0" by (metis vector_3(2))
+      then show False using a_nz by contradiction
+    qed
+
+    have v4_nz: "?v4 \<noteq> zvec"
+    proof
+      assume v4_z: "zvec = ?v4"
+      have sum_eq: "vector[c, 0, -a] + vector[-b, a, 0] = vector[c - b, a, -a]"
+        unfolding vector_def by vector
+      then show False unfolding vector_def v4_z
+        using a_nz add.commute local.sum_eq uminus_add_conv_diff v4_z vector_3_eq_iff zvec_def by contradiction
+      then have "zvec = vector[c - b, a, -a]" unfolding vector_def v4_z  sledgehammer
+      then have "vector[-b + c, a, -a] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
+      then have "a = 0" by (metis vector_3(2))
+      then show False using a_nz by contradiction
+    qed
+
+    have v2_in_U: "?v2 \<in> U"
+    proof
+      have "?v2 \<in> rp2_Points" using v2_nz by auto
+
+  next
+    case b_nz
+    then show ?thesis sorry
+  next
+    case c_nz
+    then show ?thesis sorry
+  qed
+
 qed
+
 
 text \<open>\done\done\<close>
 
