@@ -326,16 +326,18 @@ proof -
 qed
 text \<open>\done\<close>
 
+text \<open>\nick\<close>
 lemma rp2_P2:
   fixes m k 
   assumes a1: "m \<in> rp2_Lines" 
   assumes a2: "k \<in> rp2_Lines"
   assumes a3: "m \<noteq> k"
   shows "(\<exists>P . P \<in> rp2_Points \<and> rp2_incid P m \<and> rp2_incid P k)"
-  sorry
+  using UNIV_I incid_commute rp2_P1a rp2_Points_def by metis
+text \<open>\done\<close>
 
 lemma rp2_P3:
-  shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in>  rp2_Points \<and> R \<in>  rp2_Points \<and> 
+  shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in>  rp2_Points \<and> 
           P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
           \<not> (\<exists>k \<in> rp2_Lines . rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
   sorry
