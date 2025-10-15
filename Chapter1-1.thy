@@ -180,6 +180,9 @@ lemma parallel_symmetric [iff]:
 (* We can't prove parallel is transitive yet, because it 
 actually requires axiom 2 of a projective plane *)
 
+text\<open>\oliver\<close>
+text\<open>\done\<close>
+
 lemma parallelE [elim]:
   assumes "parallel l m"  and
   "l \<in> Lines" and "m \<in> Lines"
