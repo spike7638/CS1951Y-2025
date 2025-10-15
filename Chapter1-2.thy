@@ -328,6 +328,7 @@ proof -
 qed
 text \<open>\done\<close>
 
+text \<open>\nick\<close>
 lemma rp2_P2:
   fixes m k 
   assumes a1: "m \<in> rp2_Lines" 
@@ -340,7 +341,9 @@ lemma rp2_P3:
   shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R 
     \<and> Q \<noteq> R \<and> \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
   sorry
+  text \<open>\George\<close>
 
+text \<open>\Luke\<close>
 text \<open>\Jiayi\Luke\<close>
 lemma rp2_P4:
   fixes k
@@ -407,5 +410,7 @@ interpretation RP2C: projective_plane2  "{OrdinaryP P | P. (P \<in> A2Points)} \
 
 (* need definition of isomorphism, and proof that RP2Q is isomorphic to RP2C; 
 place these Chapter 1-3. *)
+
+text \<open>\nick\<close>
 
 end

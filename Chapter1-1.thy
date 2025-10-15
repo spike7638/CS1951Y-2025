@@ -2,6 +2,7 @@ theory "Chapter1-1"
   imports Complex_Main  "HOL-Library.Uprod" (*"HOL-Library.Quadratic_Discriminant" *)
 
 begin
+\spike
 
 (* ML\<open>Context.>> (Context.map_theory (Config.put_global Blast.trace (true)))\<close> *)
 
@@ -1130,11 +1131,13 @@ theorem
   shows "A4incid P (A4join P Q)"
   using assms all_pairs by auto
 
+text \<open>\Jiayi\<close>
 theorem
   fixes P Q
   assumes "P \<noteq> Q" and "P \<in> A4Points" and "Q \<in> A4Points"
   shows "A4incid Q (A4join P Q)"
   using assms all_pairs by auto
+text \<open>\Done\<close>
 
 text \<open>\Luke\<close>
 theorem  A4affine_plane_a3_lemma:
@@ -2108,6 +2111,7 @@ affine plane. Goals are:
     p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> incid P k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> S \<noteq> Q \<and> Q \<noteq> R \<and> R \<noteq> S"
 \<close>
 
+text \<open>\Jackson\<close>
 lemma Ap2:
   fixes Points Lines join find_parallel
   fixes incid (infix "\<lhd>" 60)
