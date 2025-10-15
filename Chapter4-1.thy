@@ -166,29 +166,20 @@ proof (unfold_locales)
 qed
 text \<open>\done\<close>
 
-typedecl "statement" 
-  consts Statement :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool"
+definition proj_statement :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool" where
+  "proj_statement Points Lines incid = projective_plane2 Points Lines incid"
 
-proposition proj_statement: 
-  fixes Points :: "'p set"
-  fixes Lines :: "'l set"
-  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
-  shows "Statement Points Lines incid = projective_plane2 Points Lines incid"
-  sorry
+lift_definition dual_statement :: "('l set) \<Rightarrow> ('p set) \<Rightarrow> ('l \<Rightarrow> 'p \<Rightarrow> bool) \<Rightarrow> bool"
+  is "\<lambda>Points Lines incid. proj_statement Lines Points (mdualize incid)" .
 
 text \<open>\hadi\<close>
 theorem principle_of_duality:
   fixes Points :: "'p set"
   fixes Lines :: "'l set"
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
-  assumes pp: "projective_plane2 Points Lines incid"
-  defines dPdef: "dPoints \<equiv> Lines"
-  defines dLdef: "dLines \<equiv> Points"
-  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
-  assumes dm: "dincid = mdualize incid"
-  assumes s_facts: "Statement Points Lines incid = True"
-  shows "Statement dPoints dLines dincid"
-  using assms proj_statement dual_plane_is_projective by blast
+  assumes "proj_statement Points Lines incid"
+  shows "dual_statement Points Lines incid"
+  using assms dual_plane_is_projective dual_statement.transfer proj_statement_def by metis
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
