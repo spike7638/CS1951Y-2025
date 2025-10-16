@@ -2,7 +2,6 @@ theory "Chapter1-1"
   imports Complex_Main  "HOL-Library.Uprod" (*"HOL-Library.Quadratic_Discriminant" *)
 
 begin
-\spike
 
 (* ML\<open>Context.>> (Context.map_theory (Config.put_global Blast.trace (true)))\<close> *)
 
@@ -525,12 +524,6 @@ proof (rule ccontr)
 qed
 text \<open>\done\<close>
 
-(*
-If there's no point on k, we have PQ and PR, where PR and PQ aren't parallel, but both are parallel
-to k, and by parallel transitivity that gives us a contradiction.
-Useful Question: Have we proved that two lines intersect at a point? (Or does that rely on this?)
-
-*)
 
 text  \<open>\begin{hartshorne}
 Example. An affine plane has at least four points. There is an affine plane with four points.
@@ -1525,10 +1518,9 @@ text \<open>\jfh\<close>
 interpretation A4: affine_plane A4Points A4Lines A4incid  A4join A4find_parallel
   using A4affine_plane by auto
 
-find_theorems name: "A4." 
+
 text \<open>\done\<close>
 
-find_theorems name: "A4." 
 (* ======================Switch to talking about A2, real affine 2-space =================*)
 (* Team A2 = Jackson and Hadi *)
 
