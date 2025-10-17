@@ -374,7 +374,7 @@ text \<open>\done\done\<close>
 
 text \<open>\hadi\<close>
 theorem analytic_rp2:
-  shows "projective_plane2 rp2_Points rp2_Lines rp2_incid"
+  shows "projective_plane rp2_Points rp2_Lines rp2_incid"
 proof (unfold_locales)
   show "\<lbrakk>P \<noteq> Q; P \<in> rp2_Points; Q \<in> rp2_Points\<rbrakk> 
     \<Longrightarrow> (\<exists>!k. k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k)" for P Q 
@@ -383,8 +383,8 @@ proof (unfold_locales)
     \<Longrightarrow> \<exists>P. (P \<in> rp2_Points \<and> rp2_incid P k \<and> rp2_incid P n)" for k n
     using rp2_P2 [of k n] rp2_P4 by auto
   show "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
-    \<and> \<not> (projective_plane_data2.pcollinear rp2_Points rp2_Lines rp2_incid P Q R)"
-    using rp2_P3 unfolding projective_plane_data2.pcollinear_def by auto
+    \<and> \<not> (projective_plane_data.pcollinear rp2_Points rp2_Lines rp2_incid P Q R)"
+    using rp2_P3 unfolding projective_plane_data.pcollinear_def by auto
   show "\<lbrakk>k \<in> rp2_Lines; U = {P. (P \<in> rp2_Points \<and> rp2_incid P k)}\<rbrakk> 
     \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U 
     using rp2_P4 by auto
@@ -392,7 +392,7 @@ qed
 text \<open>\done\<close>
 
 (* also needed: an interpretation claim like those for A4 and A2 *)
-interpretation RP2Q: projective_plane2 rp2_Points rp2_Lines rp2_incid
+interpretation RP2Q: projective_plane rp2_Points rp2_Lines rp2_incid
   using analytic_rp2 by auto
 
 theorem projectivisation_of_A2:
@@ -400,10 +400,10 @@ theorem projectivisation_of_A2:
      ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}"
   defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in>  A2Lines)} \<union> {Infty}"
   defines pm: "pincid \<equiv> mprojectivize (a2incid)"
-  shows "projective_plane2 pPoints pLines pincid"
+  shows "projective_plane pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
 
-interpretation RP2C: projective_plane2  "{OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
+interpretation RP2C: projective_plane  "{OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
   ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}" 
   " {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
   using projectivisation_of_A2 by auto

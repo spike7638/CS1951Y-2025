@@ -1696,18 +1696,18 @@ Let's go ahead and make a locale description for a projective plane, as we did f
 There's no need for a \isi{find_parallel} function this time, but other things are fairly similar.
 \<close>
 
-locale projective_plane_data2 =
+locale projective_plane_data =
   fixes Points :: "'p set" and Lines :: "'l set" and incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool" (infix "\<lhd>" 60)
 begin
 
-definition (in projective_plane_data2) pcollinear :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> bool"
+definition (in projective_plane_data) pcollinear :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> bool"
     where "pcollinear A B C = (if (A \<in> Points \<and> B \<in> Points \<and> C \<in> Points)  
   then (\<exists> l. l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l) else undefined)"
 
-definition (in projective_plane_data2) coincident :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool"
+definition (in projective_plane_data) coincident :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool"
     where "coincident n k m  = (if (n \<in> Lines) \<and> (k \<in> Lines) \<and> (m  \<in> Lines)
   then (\<exists> P. P \<in> Points \<and> P \<lhd> n \<and> P \<lhd> k \<and> P \<lhd> m) else undefined)"
-end (* projective_plane_data2 *)
+end (* projective_plane_data *)
 
 (* 
 locale affine_plane =
@@ -1720,7 +1720,7 @@ locale affine_plane =
      find_parallel:: "'l \<Rightarrow> 'p \<Rightarrow> 'l" +
 *)
 
-locale projective_plane2 = projective_plane_data2 Points Lines incid
+locale projective_plane = projective_plane_data Points Lines incid
   for
      Points :: "'p set" and
      Lines :: "'l set" and
@@ -1990,7 +1990,7 @@ lemma Ap3:
   fixes pincid (infix "p\<lhd>" 60)
   assumes \<open>pincid =  mprojectivize (incid)\<close>
   (* defines "pincid \<equiv>  mprojectivize (incid) (infix "\<lhd>" 60)"*)
-  shows "\<exists>P Q R. P \<in> pPoints \<and> Q \<in> pPoints \<and> R \<in> pPoints \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (projective_plane_data2.pcollinear pPoints pLines (pincid) P Q R)"
+  shows "\<exists>P Q R. P \<in> pPoints \<and> Q \<in> pPoints \<and> R \<in> pPoints \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (projective_plane_data.pcollinear pPoints pLines (pincid) P Q R)"
   text \<open>Idea: the three noncollinear points in the affine plane are noncollinear in the projectivization as well\<close>
 proof -
   obtain P Q R where ss: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (affine_plane_data.collinear Points Lines (incid) P Q R)" 
@@ -2004,25 +2004,25 @@ proof -
   have p5: "(((OrdinaryP P) p\<lhd> (OrdinaryL n))\<and> ((OrdinaryP Q) p\<lhd> (OrdinaryL n)) \<and> ((OrdinaryP R) p\<lhd> (OrdinaryL n)) ) \<Longrightarrow>  
     (P \<lhd> n) \<and> (Q \<lhd> n) \<and> (R \<lhd> n)" using affine_plane.a1b p4  ap assms(4) by auto 
 
-  have p6: "(projective_plane_data2.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> (if ((OrdinaryP P) \<in> pPoints \<and> (OrdinaryP Q) \<in> pPoints \<and> (OrdinaryP R) \<in> pPoints) 
+  have p6: "(projective_plane_data.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> (if ((OrdinaryP P) \<in> pPoints \<and> (OrdinaryP Q) \<in> pPoints \<and> (OrdinaryP R) \<in> pPoints) 
   then (\<exists> l. l \<in> pLines \<and> (OrdinaryP P) p\<lhd> l \<and> (OrdinaryP Q) p\<lhd> l \<and> (OrdinaryP R) p\<lhd> l) 
-  else undefined)" using projective_plane_data2.pcollinear_def by fastforce
-  have p7: "(projective_plane_data2.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
+  else undefined)" using projective_plane_data.pcollinear_def by fastforce
+  have p7: "(projective_plane_data.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
     \<exists> l. l \<in> pLines \<and> (OrdinaryP P) p\<lhd> l \<and> (OrdinaryP Q) p\<lhd> l \<and> (OrdinaryP R) p\<lhd> l" using p6 p1 by auto
-  have p8: "(projective_plane_data2.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
+  have p8: "(projective_plane_data.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
     \<exists> l. l \<noteq> Infty \<and> l \<in> pLines \<and> (OrdinaryP P) p\<lhd> l \<and> (OrdinaryP Q) p\<lhd> l \<and> (OrdinaryP R) p\<lhd> l" using p7 p2  by (metis assms(4) mprojectivize.simps(3))
-  have p9: "(projective_plane_data2.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
+  have p9: "(projective_plane_data.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
     \<exists> k.  (OrdinaryP P) p\<lhd> ( OrdinaryL k) \<and> (OrdinaryP Q) p\<lhd>  ( OrdinaryL k) \<and>  (OrdinaryP R) p\<lhd>  ( OrdinaryL k)" using p8
   by (metis projLine.exhaust)
-  have p10: "(projective_plane_data2.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
+  have p10: "(projective_plane_data.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
     \<exists> k. P \<lhd> k \<and> Q \<lhd> k \<and> R \<lhd> k" using p9 assms(4) by auto
-  have p11: "(projective_plane_data2.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
+  have p11: "(projective_plane_data.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R)) \<Longrightarrow> 
     (affine_plane_data.collinear Points Lines (incid)P Q R)" 
   using ss affine_plane.a1b affine_plane.parallel_to_collinear ap p10 by fastforce
 
   have p12: "\<not>(affine_plane_data.collinear Points Lines (incid) P Q R)" 
     by (simp add: \<open>P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> affine_plane_data.collinear Points Lines incid P Q R\<close>)
-  have p13: "\<not> (projective_plane_data2.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R))" using p11 p12
+  have p13: "\<not> (projective_plane_data.pcollinear pPoints pLines pincid (OrdinaryP P) (OrdinaryP Q) (OrdinaryP R))" using p11 p12
   using affine_plane.a1b affine_plane.parallel_to_collinear ap p10 ss by fastforce
   
   show ?thesis using p13 p1 p2 ss  by auto
@@ -2383,10 +2383,10 @@ theorem projectivization_is_projective:
   fixes pincid (infix "p\<lhd>" 60)
   assumes pm: \<open>pincid =  mprojectivize (incid)\<close>
   assumes ap: "affine_plane Points Lines incid join find_parallel"
-  shows   "projective_plane2 pPoints pLines pincid"
+  shows   "projective_plane pPoints pLines pincid"
 
 proof (unfold_locales)
-  find_theorems name: projective_plane2_def
+  find_theorems name: projective_plane_def
 
   have pp1a: "\<And>P Q .\<lbrakk>P \<noteq> Q; P \<in> pPoints; Q \<in> pPoints\<rbrakk> \<Longrightarrow> (\<exists>k . k \<in> pLines \<and>  P p\<lhd> k  \<and> Q p\<lhd> k)" using ap Ap1a 
   by (smt (verit) Collect_cong pLdef pPdef pm) 
@@ -2414,14 +2414,14 @@ proof (unfold_locales)
 
   have pp3: "\<exists>P Q R. P \<in> pPoints \<and> Q \<in> pPoints \<and> R \<in> pPoints \<and>
     P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
-  \<not> (projective_plane_data2.pcollinear pPoints pLines (pincid) P Q R)"
+  \<not> (projective_plane_data.pcollinear pPoints pLines (pincid) P Q R)"
     by (smt (verit) Ap3 Collect_cong ap pLdef pPdef pm)
   show " \<exists>P Q R.
        P \<in> pPoints \<and> Q \<in> pPoints \<and> R \<in> pPoints  \<and>
        P \<noteq> Q \<and>
        P \<noteq> R \<and>
        Q \<noteq> R \<and>
-       \<not> projective_plane_data2.pcollinear
+       \<not> projective_plane_data.pcollinear
            pPoints pLines pincid P Q R" using pp3 by auto
 
 
