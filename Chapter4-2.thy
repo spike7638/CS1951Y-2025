@@ -4,23 +4,36 @@ theory "Chapter4-2"
 begin
 text\<open> start at definition of complete quadrangle; stop just before "Harmonic points"\<close>
 
-definition cquadrangle :: "('p set) \<Rightarrow> (('p set) \<Rightarrow> ('l set))"
-  where "'p"
+definition (in projective_plane) cquadrangle :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> bool"
+  where "cquadrangle A B C D = (A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> 
+  \<not>pcollinear A B C \<and> \<not>pcollinear A B D \<and> \<not>pcollinear A C D \<and> \<not>pcollinear B C D)"
 
-text\<open>
-Our idea for defining the configuration cquadrangle:
-- p_4p: a definition of points a x b x c x d
-- cquadrangle: a definition of a set of p_4p's, where the a, b, c, d in every p_4p are noncolinear
-- cquadrangle_fun: a function that takes in one p_4p's in cquadrangles => (point set, line set) 
-\<close>
+term affine_plane
 
- datatype cquadrangle = A | B | C | D 
- definition "cquadranglePoints = {A, B, C, D}"
- definition "cqAB = {A, B}"
- definition "cqBC = {B, C}"
- definition "cqCD = {C, D}"
- definition "cqDA = {D, A}"
- definition "A4Lines = {A4PQ, A4PR, A4PS, A4QR, A4QS, A4RS}"
+
+(* Temporarily deleted: 
+fun (in projective_plane) cquadrangle_sides :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'l set"
+  where "cquadrangle_sides A B C D = (if (cquadrangle A B C D) 
+  then({join A B})
+  else undefined)"
+
+
+fun (in projective_plane) cquadrangle_sides :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'l set"
+  where "cquadrangle_sides A B C D = (if (cquadrangle A B C D) 
+  then({join A B,
+        THE l. l\<in> Lines \<and> A \<lhd> l \<and> C \<lhd> l, 
+        THE l. l\<in> Lines \<and> B \<lhd> l \<and> C \<lhd> l,
+        THE l. l\<in> Lines \<and> A \<lhd> l \<and> D \<lhd> l,
+        THE l. l\<in> Lines \<and> B \<lhd> l \<and> D \<lhd> l,
+        THE l. l\<in> Lines \<and> C \<lhd> l \<and> D \<lhd> l})
+  else undefined)"
+
+fun (in projective_plane) cquadrangle_points :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p set"
+  where "cquadrangle_points A B C D = (if (cquadrangle A B C D)
+  then {THE P. P \<in> Points \<and> P \<lhd> (THE l. l\<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l)}
+  else undefined)" termination by (relation "{}") simp
+
+*)
 
 
 end
