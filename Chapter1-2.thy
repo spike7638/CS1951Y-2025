@@ -409,8 +409,10 @@ proof -
     have ortho2: "?v2 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
     have ortho3: "?v3 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
 
-    (*will fix later*)
-    have ortho4: "?v4 \<bullet> kvec = 0" unfolding abc_def by (smt (verit, del_insts) abc_def inner_left_distrib ortho2 ortho3)
+    have orthom: "(?v2 + ?v3) \<bullet> kvec = 0" unfolding abc_def using ortho2 ortho3
+      by (simp add: abc_def inner_left_distrib)
+    have ortho4: "?v4 \<bullet> kvec = 0" unfolding abc_def
+      using abc_def orthom by auto
 
     (* Since a \<noteq> 0, ?v2 and ?v3 are non-zero *)
     have v2_nz: "?v2 \<noteq> zvec"
@@ -496,14 +498,21 @@ proof -
       by (metis (no_types, lifting) a_nz cross3_def norm_and_cross_eq_0 rep_P_nz scaleR_eq_0_iff vector_3(2)
           vector_scaleR_component zvec_def)
 
-    have p_not_r: "?P \<noteq> ?R"  using Abs_Proj_def equal_implies_projrel_ra[of ?P ?R ?v2 ?v4] p_point r_point temp1 temp3 
-      by (smt (verit, del_insts) a_nz add_0 cross3_def norm_and_cross_eq_0 rep_P_nz scaleR_eq_0_iff vector_3(2)
-        vector_add_component vector_scaleR_component zvec_def)
+    have p_not_r: "?P \<noteq> ?R"
+      using
+        \<open>projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a] + vector [- b, a, 0]))) 
+          (vector [c, 0, - a] + vector [- b, a, 0])\<close>
+        \<open>projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a]))) (vector [c, 0, - a])\<close>
+        a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      by force 
 
-    have q_not_r: "?Q \<noteq> ?R"  using Abs_Proj_def equal_implies_projrel_ra[of ?Q ?R ?v3 ?v4] r_point q_point temp2 temp3 
-      by (smt (verit, del_insts) a_nz add.inverse_neutral add.right_neutral cross3_def norm_and_cross_eq_0
-        real_scaleR_def rep_P_nz scaleR_eq_0_iff vector_3(3) vector_add_component vector_scaleR_component
-        zvec_def)
+    have q_not_r: "?Q \<noteq> ?R" 
+      using
+        \<open>projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a] + vector [- b, a, 0]))) 
+          (vector [c, 0, - a] + vector [- b, a, 0])\<close>
+        \<open>projrel (Rep_Proj (Abs_Proj (vector [- b, a, 0]))) (vector [- b, a, 0])\<close>
+        a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      by force 
 
     have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
 
