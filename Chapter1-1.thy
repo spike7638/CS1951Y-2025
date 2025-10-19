@@ -1975,10 +1975,10 @@ begin
 
 (*Uncommented and fixed by Nick and George for use in 4-4:*)
 definition (in projective_plane_data) meet::"'l \<Rightarrow> 'l \<Rightarrow> 'p" (infix "." 60) where
-"meet n k = (if (n \<in> Lines \<and> k \<in> Lines \<and> n \<noteq> k) then THE P . P \<lhd> n \<and> P \<lhd> k else undefined)"
+"meet n k = (if (n \<in> Lines \<and> k \<in> Lines \<and> n \<noteq> k) then THE P. P \<in> Points \<and> P \<lhd> n \<and> P \<lhd> k else undefined)"
 
 definition (in projective_plane_data) join::"'p \<Rightarrow> 'p \<Rightarrow> 'l" (infix "\<^bold>" 60) where
-"join P Q = (if (P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q) then THE k . k \<in> Lines \<and> P \<lhd> k \<and> Q \<lhd> k else undefined)"
+"join P Q = (if (P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q) then THE k. k \<in> Lines \<and> P \<lhd> k \<and> Q \<lhd> k else undefined)"
 
 thm p1
 thm p1[of P Q]
@@ -1986,11 +1986,9 @@ thm theI'
 thm theI'[OF p1]
 thm theI'[OF p1[of P Q]]
 
-
-
 lemma join_properties1:
   "\<lbrakk>P \<in> Points; Q \<in> Points; P \<noteq> Q\<rbrakk> \<Longrightarrow> P \<lhd> join P Q  \<and> Q \<lhd> join P Q \<and> join P Q \<in> Lines"
-  unfolding join_def using  theI' [OF p1[of P Q]] by auto
+  unfolding join_def using theI' [OF p1[of P Q]] by auto
 
 lemma join_properties2:
   "\<lbrakk>P \<in> Points; Q \<in> Points; P \<noteq> Q; k \<in> Lines\<rbrakk> \<Longrightarrow> P \<lhd> k  \<Longrightarrow> Q \<lhd> k \<Longrightarrow> k =  join P Q"
@@ -2005,8 +2003,8 @@ lemma s:
   using p2 unique_meet by blast
 
 lemma meet_properties2:
-  "\<lbrakk>k \<in> Lines; n \<in> Lines; k \<noteq> n\<rbrakk> \<Longrightarrow>meet n k \<in> Points \<and> meet n k \<lhd> k  \<and> meet n k  \<lhd> n "
-  sorry
+  "\<lbrakk>k \<in> Lines; n \<in> Lines; k \<noteq> n\<rbrakk> \<Longrightarrow> meet n k \<in> Points \<and> meet n k \<lhd> k \<and> meet n k \<lhd> n "
+  using s theI meet_def by (smt (verit))
 end
 
 
