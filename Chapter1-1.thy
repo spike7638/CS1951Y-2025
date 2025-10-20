@@ -2,7 +2,7 @@ theory "Chapter1-1"
   imports Complex_Main  "HOL-Library.Uprod" (*"HOL-Library.Quadratic_Discriminant" *)
 
 begin
-\spike
+
 
 (* ML\<open>Context.>> (Context.map_theory (Config.put_global Blast.trace (true)))\<close> *)
 
