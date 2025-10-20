@@ -1,5 +1,5 @@
 theory "Chapter4-2"
-  imports Complex_Main  "Chapter4-1"
+  imports Complex_Main  "Chapter4-1" "Chapter1-2"
 
 begin
 text\<open> start at definition of complete quadrangle; stop just before "Harmonic points"\<close>
@@ -24,6 +24,26 @@ definition (in projective_plane) cquadrangle_points :: "'p \<Rightarrow> 'p \<Ri
         meet (join A C) (join B D), 
         meet (join A B) (join C D)})
   else undefined)"
+
+
+lemma P7:
+  fixes A B C D
+  fixes E F G
+  assumes "cquadrangle A B C D"
+  assumes "E \<in> Points \<and> F \<in> Points \<and> G \<in> Points" 
+  assumes "{E, F, G} = cquadrangle_points A B C D"
+  shows "\<not>pcollinear E F G"
+  sorry
+
+theorem rp2_P7:
+  fixes A B C D
+  fixes E F G
+  assumes "A \<in> rp2_Points \<and> B \<in> rp2_Points \<and> C \<in> rp2_Points \<and> D \<in> rp2_Points \<and> E \<in> rp2_Points \<and> F \<in> rp2_Points \<and> G \<in> rp2_Points"
+  assumes "cquadrangle A B C D"
+  assumes "{E, F, G} = cquadrangle_points A B C D"
+  shows "\<not>pcollinear E F G"
+  sorry 
+
 
 
 definition (in projective_plane) cquadrilateral :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool"
