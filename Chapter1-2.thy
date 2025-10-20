@@ -354,10 +354,21 @@ lemma projrel_imp_smult:
   shows "\<exists>c::real. c \<noteq> 0 \<and> u = c *\<^sub>R v"
   using assms unfolding projrel_def by blast
 
+lemma projrel_self:
+  fixes x
+  assumes "x \<noteq> (vector[0,0,0]:: real^3)"
+  shows "projrel x x"
+proof - 
+  show ?thesis using assms projrel_def by force
+qed
+
+lemma ar: "Abs_Proj (Rep_Proj x) = x"
+  by (meson Quotient_abs_rep Quotient_rp2)
+
 lemma ra: 
   fixes x
-  assumes "(x \<noteq> (vector[0,0,0]:: real^3)) \<and> projrel x x"
-  shows "projrel (Rep_Proj (Abs_Proj x)) x" 
+  assumes "(x \<noteq> (vector[0,0,0]:: real^3))"
+  shows "projrel (Rep_Proj (Abs_Proj x)) x" using projrel_self
   by (simp add: Quotient3_rp2 assms rep_abs_rsp_left) 
 
 lemma equal_implies_projrel:
@@ -378,6 +389,31 @@ lemma equal_implies_projrel_ra:
   shows "projrel (Rep_Proj (Abs_Proj x)) (Rep_Proj (Abs_Proj y))"
 proof - 
   show ?thesis using assms equal_implies_projrel ra by auto
+qed
+
+lemma dot_product_zero_implies_incid:
+  fixes P
+  fixes k
+  fixes x kvec
+  assumes "P \<in> rp2_Points"
+  assumes "k \<in> rp2_Lines"
+  assumes "x \<noteq> zvec \<and> kvec \<noteq> zvec"
+  assumes "P = Abs_Proj x"
+  assumes "k = Abs_Proj kvec"
+  assumes "x \<bullet> kvec = 0"
+  shows "rp2_incid P k"
+proof (rule ccontr)
+  assume not_incid: "\<not>rp2_incid P k"
+  have "projrel (Rep_Proj P) x" using ra smult_projrel assms  by fastforce
+  then have temp1: "\<exists>e. e *\<^sub>R x = (Rep_Proj P)" using projrel_def by auto
+  then obtain e where edef: "e *\<^sub>R x = (Rep_Proj P)" by auto
+
+  have "(Rep_Proj P) \<bullet> (Rep_Proj k) \<noteq> 0" using rp2_incid.rep_eq not_incid by auto
+  then have "(e *\<^sub>R x) \<bullet> (Rep_Proj k) \<noteq> 0" using edef by auto
+  then have "e *\<^sub>R (x \<bullet> kvec) \<noteq> 0" 
+    using assms alt_projrel equal_implies_projrel not_incid rep_P_nz rp2_incid.abs_eq by force
+  then have "e*\<^sub>R 0 \<noteq> 0" using assms by auto
+  then show False using scaleR_zero_right by fastforce
 qed
 
 lemma rp2_P4:
@@ -452,66 +488,34 @@ proof -
     then have "rp2_incid ?P k = rp2_incid (Abs_Proj ?v2) (Abs_Proj kvec)"
       by auto
 
-    have "projrel (Rep_Proj ?P) ?v2" using ra smult_projrel v2_nz by fastforce
-    then have temp1: "\<exists>x. x *\<^sub>R ?v2 = (Rep_Proj ?P)" using projrel_def by auto
-    obtain e where edef: "e *\<^sub>R ?v2 = (Rep_Proj ?P)" using temp1 by auto
+    have abs_proj_kvec: "k = Abs_Proj kvec" using ar kvec_def by auto
 
-    have inc_P: "rp2_incid ?P k"
-    proof (rule ccontr)
-      assume "\<not>rp2_incid ?P k"
-      then have "(Rep_Proj ?P) \<bullet> (Rep_Proj k) \<noteq> 0" using rp2_incid.rep_eq by auto
-      then have "(e *\<^sub>R ?v2) \<bullet> (Rep_Proj k) \<noteq> 0" using edef by auto
-      then have "e *\<^sub>R (?v2 \<bullet> (kvec)) \<noteq> 0" using kvec_def by auto
-      then have "e*\<^sub>R 0 \<noteq> 0" using ortho2 by auto
-      then show False using scaleR_zero_right by fastforce
-    qed
+    have inc_P: "rp2_incid ?P k" 
+      using dot_product_zero_implies_incid[of ?P k ?v2 kvec] abs_proj_kvec assms(1) kvec_nz ortho2 p_point v2_nz by auto
 
-    have "projrel (Rep_Proj ?Q) ?v3" using ra smult_projrel v3_nz by fastforce
-    then have temp2: "\<exists>x. x *\<^sub>R ?v3 = (Rep_Proj ?Q)" using projrel_def by auto
-    obtain e where edef: "e *\<^sub>R ?v3 = (Rep_Proj ?Q)" using temp2 by auto
-
-    have inc_Q: "rp2_incid ?Q k"
-    proof (rule ccontr)
-      assume "\<not>rp2_incid ?Q k"
-      then have "(Rep_Proj ?Q) \<bullet> (Rep_Proj k) \<noteq> 0" using rp2_incid.rep_eq by auto
-      then have "(e *\<^sub>R ?v3) \<bullet> (Rep_Proj k) \<noteq> 0" using edef by auto
-      then have "e *\<^sub>R (?v3 \<bullet> (kvec)) \<noteq> 0" using kvec_def by auto
-      then have "e*\<^sub>R 0 \<noteq> 0" using ortho3 by auto
-      then show False using scaleR_zero_right by fastforce
-    qed
-
-    have "projrel (Rep_Proj ?R) ?v4" using ra smult_projrel v4_nz by fastforce
-    then have temp3: "\<exists>x. x *\<^sub>R ?v4 = (Rep_Proj ?R)" using projrel_def by auto
-    obtain e where edef: "e *\<^sub>R ?v4 = (Rep_Proj ?R)" using temp3 by auto
+    have inc_Q: "rp2_incid ?Q k" 
+      using dot_product_zero_implies_incid[of ?Q k ?v3 kvec] abs_proj_kvec assms kvec_nz ortho3 q_point v3_nz by auto
 
     have inc_R: "rp2_incid ?R k"
-    proof (rule ccontr)
-      assume "\<not>rp2_incid ?R k"
-      then have "(Rep_Proj ?R) \<bullet> (Rep_Proj k) \<noteq> 0" using rp2_incid.rep_eq by auto
-      then have "(e *\<^sub>R ?v4) \<bullet> (Rep_Proj k) \<noteq> 0" using edef by auto
-      then have "e *\<^sub>R (?v4 \<bullet> (kvec)) \<noteq> 0" using kvec_def by auto
-      then have "e*\<^sub>R 0 \<noteq> 0" using ortho4 by auto
-      then show False using scaleR_zero_right by fastforce
-    qed
+      using dot_product_zero_implies_incid[of ?R k ?v4 kvec] abs_proj_kvec assms kvec_nz ortho4 r_point v4_nz by auto
 
-    have p_not_q: "?P \<noteq> ?Q"  using Abs_Proj_def equal_implies_projrel_ra[of ?P ?Q ?v2 ?v3] p_point q_point temp1 temp2 
-      by (metis (no_types, lifting) a_nz cross3_def norm_and_cross_eq_0 rep_P_nz scaleR_eq_0_iff vector_3(2)
-          vector_scaleR_component zvec_def)
+    have projrel_v4: "projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a] + vector [- b, a, 0]))) (vector [c, 0, - a] + vector [- b, a, 0])" 
+      using v4_nz ra[of ?v4] by auto
+    have projrel_v3: "projrel (Rep_Proj (Abs_Proj (vector [- b, a, 0]))) (vector [- b, a, 0])"
+      using v3_nz ra[of ?v3] by auto
+    have projrel_v2: "projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a]))) (vector [c, 0, - a])"
+      using v2_nz ra[of ?v2] by auto
+
+    have p_not_q: "?P \<noteq> ?Q"
+      using projrel_v3 projrel_v2 a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      by force 
 
     have p_not_r: "?P \<noteq> ?R"
-      using
-        \<open>projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a] + vector [- b, a, 0]))) 
-          (vector [c, 0, - a] + vector [- b, a, 0])\<close>
-        \<open>projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a]))) (vector [c, 0, - a])\<close>
-        a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using projrel_v4 projrel_v2 a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
       by force 
 
     have q_not_r: "?Q \<noteq> ?R" 
-      using
-        \<open>projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a] + vector [- b, a, 0]))) 
-          (vector [c, 0, - a] + vector [- b, a, 0])\<close>
-        \<open>projrel (Rep_Proj (Abs_Proj (vector [- b, a, 0]))) (vector [- b, a, 0])\<close>
-        a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using projrel_v4 projrel_v3 a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
       by force 
 
     have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
