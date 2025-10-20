@@ -523,7 +523,86 @@ proof -
     then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
   next
     case b_nz
-    then show ?thesis sorry
+    let ?v4 = "?v1 + ?v3"
+    
+    have ortho1: "?v1 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
+    have ortho3: "?v3 \<bullet> kvec = 0" unfolding abc_def by (simp add: inner_vec_def sum_3)
+
+    have orthom: "(?v1 + ?v3) \<bullet> kvec = 0" unfolding abc_def using ortho1 ortho3
+      by (simp add: abc_def inner_left_distrib)
+    have ortho4: "?v4 \<bullet> kvec = 0" unfolding abc_def
+      using abc_def orthom by auto
+
+    (* Since a \<noteq> 0, ?v2 and ?v3 are non-zero *)
+    have v1_nz: "?v1 \<noteq> zvec"
+    proof (rule ccontr)
+      assume "\<not>(?v1 \<noteq> zvec)"
+      then have "vector[0, -c, b] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
+      then have "b = 0" by (metis vector_3(3))
+      then show False using b_nz by auto
+    qed
+    
+    have v3_nz: "?v3 \<noteq> zvec"
+    proof (rule ccontr)
+      assume "\<not>(?v3 \<noteq> zvec)"
+      then have "vector[-b, a, 0] = vector[0, 0, 0]" by (simp add: vector_3_eq_iff)
+      then have "-b = 0"  using vector_3_eq_iff by blast
+      then show False using b_nz by auto
+    qed
+
+    have v4_nz: "?v4 \<noteq> zvec"
+    proof (rule ccontr)
+      assume v4_z: "\<not>(?v4 \<noteq> zvec)"
+      have sum_eq: "vector[0, -c, b] + vector[-b, a, 0] = vector[-b, -c + a, b]"
+        unfolding vector_def by vector
+      then show False using b_nz local.sum_eq v4_z vector_3_eq_iff zvec_def by metis
+    qed
+
+    let ?P = "Abs_Proj ?v1"
+    let ?Q = "Abs_Proj ?v3"
+    let ?R = "Abs_Proj ?v4"
+
+    have p_point: "?P \<in> rp2_Points" unfolding rp2_Points_def by auto 
+    have q_point: "?Q \<in> rp2_Points" unfolding rp2_Points_def by auto 
+    have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
+
+    have "k = Abs_Proj kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
+    then have "rp2_incid ?P k = rp2_incid (Abs_Proj ?v1) (Abs_Proj kvec)"
+      by auto
+
+    have abs_proj_kvec: "k = Abs_Proj kvec" using ar kvec_def by auto
+
+    have inc_P: "rp2_incid ?P k" 
+      using dot_product_zero_implies_incid[of ?P k ?v1 kvec] abs_proj_kvec assms(1) kvec_nz ortho1 p_point v1_nz by auto
+
+    have inc_Q: "rp2_incid ?Q k" 
+      using dot_product_zero_implies_incid[of ?Q k ?v3 kvec] abs_proj_kvec assms kvec_nz ortho3 q_point v3_nz by auto
+
+    have inc_R: "rp2_incid ?R k"
+      using dot_product_zero_implies_incid[of ?R k ?v4 kvec] abs_proj_kvec assms kvec_nz ortho4 r_point v4_nz by auto
+
+    have projrel_v4: "projrel (Rep_Proj (Abs_Proj (vector[0, -c, b] + vector[-b, a, 0]))) (vector [0, -c, b] + vector [- b, a, 0])" 
+      using v4_nz ra[of ?v4] by auto
+    have projrel_v3: "projrel (Rep_Proj (Abs_Proj (vector [- b, a, 0]))) (vector [- b, a, 0])"
+      using v3_nz ra[of ?v3] by auto
+    have projrel_v2: "projrel (Rep_Proj (Abs_Proj (vector [0, -c, b]))) (vector [0, -c, b])"
+      using v1_nz ra[of ?v1] by auto
+
+    have p_not_q: "?P \<noteq> ?Q"
+      using projrel_v3 projrel_v2 b_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      by force 
+
+    have p_not_r: "?P \<noteq> ?R"
+      using projrel_v4 projrel_v2 b_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      by force 
+
+    have q_not_r: "?Q \<noteq> ?R" 
+      using projrel_v4 projrel_v3 b_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      by force 
+
+    have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
+
+    then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
   next
     case c_nz
     then show ?thesis sorry
