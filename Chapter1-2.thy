@@ -607,7 +607,6 @@ proof -
     case c_nz
     then show ?thesis sorry
   qed
-
 qed
 
 text \<open>\done\done\<close>
