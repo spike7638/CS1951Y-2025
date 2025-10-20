@@ -26,6 +26,27 @@ definition (in projective_plane) cquadrangle_points :: "'p \<Rightarrow> 'p \<Ri
   else undefined)"
 
 
+definition (in projective_plane) cquadrilateral :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool"
+  where "cquadrilateral a b c d = (a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines \<and> 
+  meet a b \<noteq> meet b c \<and> meet b c \<noteq> meet c d \<and> meet a c \<noteq> meet c d \<and> meet a b \<noteq> meet b d)"
+
+definition (in projective_plane) cquadrilateral_points :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'p set"
+  where "cquadrilateral_points a b c d = (if (cquadrilateral a b c d) 
+  then({meet a b,
+        meet a c,
+        meet a d,
+        meet b c,
+        meet b d,
+        meet c d})
+  else undefined)"
+
+definition (in projective_plane) cquadrilateral_lines :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l set"
+  where "cquadrilateral_lines a b c d = (if (cquadrilateral a b c d) 
+  then({join (meet a b) (meet c d),
+        join (meet a c) (meet b d),
+        join (meet a d) (meet b c)})
+  else undefined)"
+
 end
 
 
