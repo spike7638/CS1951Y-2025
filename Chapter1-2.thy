@@ -267,6 +267,7 @@ proof (transfer)
 qed
 text \<open>\done\<close>
 
+text \<open>\hadi\<close>
 lemma unique_cross:
   fixes a b n k
   assumes "a \<times> b \<noteq> 0"
@@ -274,6 +275,7 @@ lemma unique_cross:
   shows "\<exists>s. k = s *\<^sub>R (a \<times> b)"
   using assms Lagrange zvec_def projrel_def cross3_def cross_nz scaleR_zero_left
     cancel_comm_monoid_add_class.diff_cancel zero_index by (metis (no_types))
+text \<open>\done\<close>
 
 (* TO DO: To show uniqueness of the join, we have to show (for P,Q nonzero and P and Q not proj_rel,
 that if h is orthog to P and Q, then h is a nonzero multiple of the cross product, i.e., the lemma
@@ -326,20 +328,22 @@ proof -
 qed
 text \<open>\done\<close>
 
+text \<open>\nick\<close>
 lemma rp2_P2:
   fixes m k 
   assumes a1: "m \<in> rp2_Lines" 
   assumes a2: "k \<in> rp2_Lines"
   assumes a3: "m \<noteq> k"
   shows "(\<exists>P . P \<in> rp2_Points \<and> rp2_incid P m \<and> rp2_incid P k)"
-  sorry
+  using rp2_P1a [of m k] incid_commute rp2_Points_def by auto
 
 lemma rp2_P3:
-  shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in>  rp2_Points \<and> R \<in>  rp2_Points \<and> 
-          P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
-          \<not> (\<exists>k \<in> rp2_Lines . rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
+  shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R 
+    \<and> Q \<noteq> R \<and> \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
   sorry
+  text \<open>\George\<close>
 
+text \<open>\Luke\<close>
 text \<open>\Jiayi\Luke\<close>
 lemma rp2_P4:
   fixes k
@@ -370,17 +374,17 @@ text \<open>\done\done\<close>
 
 text \<open>\hadi\<close>
 theorem analytic_rp2:
-  shows "projective_plane2 rp2_Points rp2_Lines rp2_incid"
+  shows "projective_plane rp2_Points rp2_Lines rp2_incid"
 proof (unfold_locales)
   show "\<lbrakk>P \<noteq> Q; P \<in> rp2_Points; Q \<in> rp2_Points\<rbrakk> 
     \<Longrightarrow> (\<exists>!k. k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k)" for P Q 
-    using rp2_P1a rp2_P1b rp2_Lines_def UNIV_I by metis
+    using rp2_P1a [of P Q] rp2_P1b [of P Q] rp2_Lines_def by auto
   show "\<lbrakk>k \<in> rp2_Lines; n \<in> rp2_Lines\<rbrakk> 
     \<Longrightarrow> \<exists>P. (P \<in> rp2_Points \<and> rp2_incid P k \<and> rp2_incid P n)" for k n
-    using rp2_P2 rp2_P3 rp2_Points_def rp2_Lines_def by metis
-  show "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points  \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
-    \<and> \<not> (projective_plane_data2.pcollinear rp2_Points rp2_Lines rp2_incid P Q R)"
-    using rp2_P3 rp2_Points_def rp2_Lines_def by (simp add: projective_plane_data2.pcollinear_def)
+    using rp2_P2 [of k n] rp2_P4 by auto
+  show "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
+    \<and> \<not> (projective_plane_data.pcollinear rp2_Points rp2_Lines rp2_incid P Q R)"
+    using rp2_P3 unfolding projective_plane_data.pcollinear_def by auto
   show "\<lbrakk>k \<in> rp2_Lines; U = {P. (P \<in> rp2_Points \<and> rp2_incid P k)}\<rbrakk> 
     \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U 
     using rp2_P4 by auto
@@ -388,23 +392,25 @@ qed
 text \<open>\done\<close>
 
 (* also needed: an interpretation claim like those for A4 and A2 *)
-interpretation RP2Q: projective_plane2 rp2_Points rp2_Lines rp2_incid
+interpretation RP2Q: projective_plane rp2_Points rp2_Lines rp2_incid
   using analytic_rp2 by auto
 
-
 theorem projectivisation_of_A2:
-  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P . (P \<in> A2Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil  A2Points  A2Lines ( a2incid) k) )}"
-  defines pLdef: "pLines \<equiv> {OrdinaryL n | n . (n \<in>  A2Lines)} \<union> {Infty}"
-  defines pm: "pincid \<equiv>  mprojectivize (a2incid)"
-  shows "projective_plane2 pPoints pLines pincid"
+  defines pPdef: "pPoints \<equiv> {OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
+     ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}"
+  defines pLdef: "pLines \<equiv> {OrdinaryL n | n. (n \<in>  A2Lines)} \<union> {Infty}"
+  defines pm: "pincid \<equiv> mprojectivize (a2incid)"
+  shows "projective_plane pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
 
-interpretation RP2C: projective_plane2  "{OrdinaryP P | P . (P \<in> A2Points)} \<union> {Ideal t | k t . 
-                  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil  A2Points  A2Lines ( a2incid) k) )}" " {OrdinaryL n | n . (n \<in>  A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
+interpretation RP2C: projective_plane  "{OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
+  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}" 
+  " {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
   using projectivisation_of_A2 by auto
 
 (* need definition of isomorphism, and proof that RP2Q is isomorphic to RP2C; 
 place these Chapter 1-3. *)
+
+text \<open>\nick\<close>
 
 end

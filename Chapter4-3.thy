@@ -29,7 +29,7 @@ lemma diagonal_points_noncollinear:
   fixes A B C D::"'p"
   fixes X Y Z W::"'p"
   assumes "distinct[A,B,C,D]"
-  assumes pp: "projective_plane2 Points Lines incid"
+  assumes pp: "projective_plane Points Lines incid"
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
   assumes "X \<in> Points" "Y \<in> Points" "Z \<in> Points" "W \<in> Points"
   (*assume also that we have a complete quadrilateral*)
@@ -46,7 +46,7 @@ theorem p4_5:
   fixes Lines :: "'l set"
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   fixes A B C D::"'p"
-  assumes pp: "projective_plane2 Points Lines incid"
+  assumes pp: "projective_plane Points Lines incid"
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
   assumes "distinct [A,B,C,D]"
   shows "harmonic_quadruple Points Lines incid A B C D \<longleftrightarrow> 
@@ -66,7 +66,7 @@ theorem p4_6_existence:
   fixes Lines :: "'l set"
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   fixes A B C ::"'p"
-  assumes pp: "projective_plane2 Points Lines incid"
+  assumes pp: "projective_plane Points Lines incid"
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points"
   assumes "distinct [A,B,C]"
   assumes p7
@@ -78,7 +78,7 @@ theorem p4_6_uniqueness:
   fixes Lines :: "'l set"
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   fixes A B C D ::"'p"
-  assumes pp: "projective_plane2 Points Lines incid"
+  assumes pp: "projective_plane Points Lines incid"
   assumes "A \<in> Points\<and>B \<in> Points\<and>C \<in> Points\<and>D\<in>Points"
   assumes "distinct [A,B,C,D]"
   assumes p7
@@ -98,7 +98,7 @@ theorem p4_7:
   fixes Lines :: "'l set"
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   fixes A B C D ::"'p"
-  assumes pp: "projective_plane2 Points Lines incid"
+  assumes pp: "projective_plane Points Lines incid"
   assumes "A \<in> Points\<and>B \<in> Points\<and>C \<in> Points\<and>D\<in>Points"
   assumes "distinct [A,B,C,D]"
   assumes p5
