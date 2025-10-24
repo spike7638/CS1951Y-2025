@@ -11,7 +11,7 @@ definition (in projective_plane_data2) isperspectivity :: "'p \<Rightarrow> 'l \
 
 definition (in projective_plane_data2) perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "perspectivity Or l1 l2 = (if (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> isperspectivity Or l1 l2)
-  then (\<lambda>Q . if Q \<in> Points then (meet (join Or Q) l2) else undefined) else undefined)"
+  then (\<lambda>Q . if Q \<in> Points \<and> incid Q l1 then (meet (join Or Q) l2) else undefined) else undefined)"
 
 lemma (in projective_plane_data2) perspectivity_inj:
   fixes f Or l1 l2 P Q
@@ -56,6 +56,21 @@ lemma (in projective_plane_data2) perspectivity_of_meet_is_itself:
   assumes P_on_l2: "P \<lhd> l2"
   shows "f P = P"
   sorry
+
+(* Definition. A projectivity is a mapping of one line l into another l\<Zprime> (which may be equal to l), which can be expressed as a composition of perspectivities. We write l Z l\<Zprime>, and write ABC . . . Z A\<Zprime>B\<Zprime>C\<Zprime> . . . if the projectivity that takes  points A, B, C, . . . into A\<Zprime>, B\<Zprime>, C\<Zprime>, . . . respectively. Note that a projectivity also is always one-to-one and onto.   *)
+
+fun (in projective_plane_data2) projectivity :: "'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)" where
+  "projectivity (Cons p []) (Cons l1 (Cons l2 [])) = (perspectivity p l1 l2)" |
+  "projectivity (Cons p ps) (Cons l1 (Cons l2 ls)) = (projectivity ps (Cons l2 ls)) \<circ> (perspectivity p l1 l2)" |
+  "projectivity [] b = undefined" |
+  "projectivity a [] = undefined" |
+  "projectivity a [v] = undefined"
+
+(* Proposition 4.8 Let l be a line. Then the set of projectivities of l into itself forms a group, which we will call PJ(l). *)
+
+(* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l. Then there is a projectivity of l into itself which sends A, B, C into A\<Zprime>, B\<Zprime>, C\<Zprime>. *)
+
+(* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
 
 end
 
