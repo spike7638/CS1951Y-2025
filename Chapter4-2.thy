@@ -40,6 +40,7 @@ theorem rp2_P7:
   fixes E F G
   assumes "A \<in> rp2_Points \<and> B \<in> rp2_Points \<and> C \<in> rp2_Points \<and> D \<in> rp2_Points \<and> 
             E \<in> rp2_Points \<and> F \<in> rp2_Points \<and> G \<in> rp2_Points"
+  assumes "A \<in> rp2_Points \<and> B \<in> rp2_Points \<and> C \<in> rp2_Points \<and> D \<in> rp2_Points \<and> E \<in> rp2_Points \<and> F \<in> rp2_Points \<and> G \<in> rp2_Points"
   assumes "cquadrangle A B C D"
   assumes "{E, F, G} = cquadrangle_points A B C D"
   shows "\<not>pcollinear E F G"
@@ -76,6 +77,27 @@ theorem rp2_P7_dual:
   assumes "{p, q, r} = cquadrilateral_lines p q r"
   shows "\<not>pconcurrent p q r"
   sorry 
+
+definition (in projective_plane) cquadrilateral :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool"
+  where "cquadrilateral a b c d = (a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines \<and> 
+  meet a b \<noteq> meet b c \<and> meet b c \<noteq> meet c d \<and> meet a c \<noteq> meet c d \<and> meet a b \<noteq> meet b d)"
+
+definition (in projective_plane) cquadrilateral_points :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'p set"
+  where "cquadrilateral_points a b c d = (if (cquadrilateral a b c d) 
+  then({meet a b,
+        meet a c,
+        meet a d,
+        meet b c,
+        meet b d,
+        meet c d})
+  else undefined)"
+
+definition (in projective_plane) cquadrilateral_lines :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l set"
+  where "cquadrilateral_lines a b c d = (if (cquadrilateral a b c d) 
+  then({join (meet a b) (meet c d),
+        join (meet a c) (meet b d),
+        join (meet a d) (meet b c)})
+  else undefined)"
 
 end
 
