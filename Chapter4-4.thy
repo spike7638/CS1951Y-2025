@@ -3,8 +3,6 @@ theory "Chapter4-4"
 begin
 text\<open> start at "Perspectivies and Projectivities" and go to end of chapter\<close>
 
-(*This stuff took us two hours... we'll keep going when we have time to meet again*)
-
 definition (in projective_plane_data2) isperspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
   where "isperspectivity Or l1 l2 = (if Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines 
   then (\<not> (incid Or l1) \<and> \<not> (incid Or l2)) else undefined)"
@@ -70,7 +68,44 @@ fun (in projective_plane_data2) projectivity :: "'p list \<Rightarrow> 'l list \
 
 (* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l. Then there is a projectivity of l into itself which sends A, B, C into A\<Zprime>, B\<Zprime>, C\<Zprime>. *)
 
+lemma (in projective_plane_data2) exists_projectivity_triplet_to_triplet:
+  fixes A B C A' B' C' l
+  assumes ABC_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
+  assumes ABC'_def: "A' \<in> Points \<and> B' \<in> Points \<and> C' \<in> Points \<and> distinct [A', B', C']"
+  assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l \<and> A' \<lhd> l \<and> B' \<lhd> l \<and> C' \<lhd> l"
+  shows "\<exists> ps . \<exists> ls . f = projectivity ps (App (Cons l ls) [l]) \<and> f A = A' \<and> f B = B' \<and> f C = C'"
+  sorry
+
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
+
+
+(* Previous attempts:
+
+type_synonym ('a, 'b) persp_data = "'a \<times> 'b \<times> 'b"
+
+definition is_persp_data :: "persp_data \<Rightarrow> bool" 
+  where "is_persp_data (Or, l1, l2) = (if Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines 
+  then (\<not> (incid Or l1) \<and> \<not> (incid Or l2)) else undefined)"
+
+context projective_plane2
+begin
+
+locale perspectivity_data =
+  fixes Or :: "'p" and l1 :: "'l" and l2 :: "'l"
+begin 
+end
+
+locale perspectivity =
+     perspectivity_data Or l1 l2
+     for
+     Or :: "'p" and 
+     l1 :: "'l" and 
+     l2 :: "'l" + 
+   assumes
+     p1: "Or \<in> Points" and
+     p2: "l1 \<in> Lines \<and> l2 \<in> Lines" and
+     p3: "(\<not> (incid Or l1) \<and> \<not> (incid Or l2))"
+end*)
 
 end
 
