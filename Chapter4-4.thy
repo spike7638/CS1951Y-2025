@@ -1,5 +1,5 @@
 theory "Chapter4-4"
-  imports Complex_Main  "Chapter4-3"
+  imports Complex_Main  "Chapter4-3" "HOL-Algebra.Group"
 begin
 text\<open> start at "Perspectivies and Projectivities" and go to end of chapter\<close>
 
@@ -65,12 +65,19 @@ fun (in projective_plane) projectivity :: "'p list \<Rightarrow> 'l list \<Right
   "projectivity a [] = undefined" |
   "projectivity a [v] = undefined"
 
+definition (in projective_plane) PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
+  where "PJ l = (if (l \<in> Lines) then
+  \<lparr>carrier = {f . \<exists> ps . \<exists> ls . (f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)},
+  monoid.mult = (\<circ>),
+  one = (\<lambda>Q. Q)\<rparr> 
+  else undefined)"
+(*may need to create a projectivity identity element*)
+
 (* Proposition 4.8 Let l be a line. Then the set of projectivities of l into itself forms a group, which we will call PJ(l). *)
 lemma (in projective_plane) PJ_l_is_group:
-  fixes l PJ_l
+  fixes l
   assumes l_def: "l \<in> Lines"
-  assumes PJ_l_def: "PJ_l = {f . \<exists> ps . \<exists> ls . (f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)}"
-  shows True
+  shows "group (PJ l)"
   sorry
 
 (* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l. 
@@ -86,7 +93,13 @@ lemma (in projective_plane) exists_projectivity_triplet_to_triplet:
   sorry
 
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
-
+lemma (in projective_plane) projectivity_hquad_to_hquad:
+  fixes A B C D f
+  assumes ABCD_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> C \<in> Points \<and> (harmonic_quadruple A B C D)"
+  assumes f_def: "\<exists> ps . \<exists> ls . (f = projectivity ps ls)"
+  assumes ABCD'_def: "A' = f(A) \<and> B' = f(B) \<and> C' = f(C) \<and> D' = f(D)"
+  shows "harmonic_quadruple A' B' C' D'"
+  sorry
 
 (* Previous attempts:
 
