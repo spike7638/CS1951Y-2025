@@ -38,11 +38,13 @@ lemma P7:
 theorem rp2_P7:
   fixes A B C D
   fixes E F G
-  assumes "A \<in> rp2_Points \<and> B \<in> rp2_Points \<and> C \<in> rp2_Points \<and> D \<in> rp2_Points \<and> E \<in> rp2_Points \<and> F \<in> rp2_Points \<and> G \<in> rp2_Points"
+  assumes "A \<in> rp2_Points \<and> B \<in> rp2_Points \<and> C \<in> rp2_Points \<and> D \<in> rp2_Points \<and> 
+            E \<in> rp2_Points \<and> F \<in> rp2_Points \<and> G \<in> rp2_Points"
   assumes "cquadrangle A B C D"
   assumes "{E, F, G} = cquadrangle_points A B C D"
   shows "\<not>pcollinear E F G"
   sorry 
+
 
 definition (in projective_plane) cquadrilateral :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool"
   where "cquadrilateral a b c d = (a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines \<and> 
@@ -64,6 +66,16 @@ definition (in projective_plane) cquadrilateral_lines :: "'l \<Rightarrow> 'l \<
         join (meet a c) (meet b d),
         join (meet a d) (meet b c)})
   else undefined)"
+
+theorem rp2_P7_dual:
+  fixes a b c d
+  fixes p q r
+  assumes "a \<in> rp2_Lines \<and> b \<in> rp2_Lines \<and> c \<in> rp2_Lines \<and> d \<in> rp2_Lines \<and> 
+            p \<in> rp2_Lines \<and> q \<in> rp2_Lines \<and> r \<in> rp2_Lines"
+  assumes "cquadrilateral a b c d"
+  assumes "{p, q, r} = cquadrilateral_lines p q r"
+  shows "\<not>pconcurrent p q r"
+  sorry 
 
 end
 
