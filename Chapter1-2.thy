@@ -20,7 +20,12 @@ type_synonym v3 = "real^3"
 definition punctured_r_3 where
 "punctured_r_3 = (UNIV::(v3 set)) - {0::v3}"
 
-definition zvec where "zvec = vector[0::real, 0, 0]"
+definition zvec where "zvec = (vector[0, 0, 0]::v3)"
+
+(* suprisingly hard-to-prove lemma! *)
+lemma zvec_alt:
+  shows "zvec = 0"
+  by (vector, metis exhaust_3 vector_3(1,2,3) zvec_def)
 
 lemma [simp]:
   shows "zvec = vector[0::real, 0, 0]" using zvec_def by auto
@@ -336,11 +341,50 @@ lemma rp2_P2:
   assumes a3: "m \<noteq> k"
   shows "(\<exists>P . P \<in> rp2_Points \<and> rp2_incid P m \<and> rp2_incid P k)"
   using rp2_P1a [of m k] incid_commute rp2_Points_def by auto
+text \<open>\done \spike\<close>
 
+lemma orthog_implies_not_projrel:
+  fixes v w::v3
+  assumes wnz: "w \<noteq>zvec"
+  assumes dotz: "v \<bullet> w = 0"
+  shows "\<not> projrel v w"
+(* sledgehammer:   by (metis alt_projrel assms(2) cross_refl exists_projrel_refl norm_and_cross_eq_0 projrel_def) *)
+proof (rule ccontr)
+  assume ch: "\<not> \<not> projrel v w"
+  then have ch1: "projrel v w" by auto
+  then obtain t where tf: "t \<noteq> 0 \<and> v = t *\<^sub>R w" using projrel_def by auto
+
+  have "v \<bullet> w = t * (w \<bullet> w)" using tf by simp
+  have "(w \<bullet> w) = 0" using dotz tf by auto
+  then have "w = 0" using inner_eq_zero_iff [of w] by simp
+  then show False using wnz zvec_alt by auto
+qed
+definition e1 where "e1 \<equiv> (vector[1,0,0]::v3)"
+definition e2 where "e2 \<equiv> (vector[0,1,0]::v3)"
+definition e3 where "e3 \<equiv> (vector[0,0,1]::v3)"
+
+lemma e_dots:
+  shows "e1 \<bullet> e2 = 0 \<and> e1 \<bullet> e3 = 0 \<and> e2 \<bullet> e3 = 0"
+  using e1_def e2_def e3_def vector_3  inner_vec_def[of e1 e2]inner_vec_def[of e1 e3] inner_vec_def[of e2 e3]  by (metis inner_zero_left inner_zero_right pth_7(1) sum_3)
+  
 lemma rp2_P3:
   shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R 
     \<and> Q \<noteq> R \<and> \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
-  sorry
+proof -
+  have rep_diffs: "\<not>projrel e1 e2 \<and> \<not>projrel e1 e3 \<and> \<not>projrel e2 e3"  using e_dots orthog_implies_not_projrel projrel_def by auto
+  define P where "P \<equiv> Abs_Proj e1"
+  define Q where "Q \<equiv> Abs_Proj e2"
+  define R where "R \<equiv> Abs_Proj e3"
+  have basics1: "P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points" using P_def Q_def R_def rp2_Points_def by auto
+  have repP: "projrel (Rep_Proj P) e1" using P_def Quotient_rep_abs[of projrel Abs_Proj Rep_Proj _ e1] 
+  by (metis Quotient_rp2 cross_nz cross_refl e1_def vt zvec_alt) 
+  have repQ: "projrel (Rep_Proj Q) e2" using Q_def Quotient_rep_abs[of "projrel" ] by sledgehammer 
+    sorry (* by (metis Quotient_rp2 cross_nz cross_refl e2_def vt zvec_alt) *)
+  have basics2: "P \<noteq> Q"  by (metis Quotient3_rel Quotient3_rp2 repP repQ rep_diffs)
+(* \<and> P \<noteq> R \<and> Q \<noteq> R"  *)
+(* Quotient_rep_abs: "R r r \<Longrightarrow> R (Rep (Abs r)) r" *)
+text \<open>\done\<close>
+
   text \<open>\George\<close>
 
 text \<open>\Jiayi\Luke\<close>
