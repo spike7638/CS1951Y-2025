@@ -1971,8 +1971,6 @@ assumes
     p4: "\<lbrakk>k \<in> Lines; U = {P. (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
 begin
 
-
-
 (*Uncommented and fixed by Nick and George for use in 4-4:*)
 definition (in projective_plane_data) meet::"'l \<Rightarrow> 'l \<Rightarrow> 'p" (infix "." 60) where
 "meet n k = (if (n \<in> Lines \<and> k \<in> Lines \<and> n \<noteq> k) then THE P. P \<in> Points \<and> P \<lhd> n \<and> P \<lhd> k else undefined)"
