@@ -359,13 +359,15 @@ proof (rule ccontr)
   then have "w = 0" using inner_eq_zero_iff [of w] by simp
   then show False using wnz zvec_alt by auto
 qed
+
 definition e1 where "e1 \<equiv> (vector[1,0,0]::v3)"
 definition e2 where "e2 \<equiv> (vector[0,1,0]::v3)"
 definition e3 where "e3 \<equiv> (vector[0,0,1]::v3)"
 
 lemma e_dots:
   shows "e1 \<bullet> e2 = 0 \<and> e1 \<bullet> e3 = 0 \<and> e2 \<bullet> e3 = 0"
-  using e1_def e2_def e3_def vector_3  inner_vec_def[of e1 e2]inner_vec_def[of e1 e3] inner_vec_def[of e2 e3]  by (metis inner_zero_left inner_zero_right pth_7(1) sum_3)
+  using e1_def e2_def e3_def vector_3  inner_vec_def[of e1 e2]inner_vec_def[of e1 e3] inner_vec_def[of e2 e3]
+    by (metis inner_zero_left inner_zero_right pth_7(1) sum_3)
   
 lemma rp2_P3:
   shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R 
@@ -378,11 +380,18 @@ proof -
   have basics1: "P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points" using P_def Q_def R_def rp2_Points_def by auto
   have repP: "projrel (Rep_Proj P) e1" using P_def Quotient_rep_abs[of projrel Abs_Proj Rep_Proj _ e1] 
   by (metis Quotient_rp2 cross_nz cross_refl e1_def vt zvec_alt) 
-  have repQ: "projrel (Rep_Proj Q) e2" using Q_def Quotient_rep_abs[of "projrel" ] by sledgehammer 
-    sorry (* by (metis Quotient_rp2 cross_nz cross_refl e2_def vt zvec_alt) *)
-  have basics2: "P \<noteq> Q"  by (metis Quotient3_rel Quotient3_rp2 repP repQ rep_diffs)
-(* \<and> P \<noteq> R \<and> Q \<noteq> R"  *)
-(* Quotient_rep_abs: "R r r \<Longrightarrow> R (Rep (Abs r)) r" *)
+  have repQ: "projrel (Rep_Proj Q) e2" using Q_def Quotient_rep_abs[of "projrel" Abs_Proj Rep_Proj _ e2]
+  by (metis Quotient_rp2 alt_projrel cross_refl e2_def one_neq_zero vector_3(2) zvec_alt zvec_def)
+  have repR: "projrel (Rep_Proj R) e3" using R_def Quotient_rep_abs[of projrel Abs_Proj Rep_Proj _ e3] 
+  by (metis Quotient_rp2 e3_def one_neq_zero pth_1 smult_projrel vector_3(3) zero_index zvec_alt)
+
+  have basics2: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R"   by (metis Quotient3_rel Quotient3_rp2 repP repQ repR rep_diffs)
+  have adv: " \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
+  by (metis P_def Q_def Quotient_refl2 Quotient_rp2 R_def basics1 basics2 e_dots incid_commute repP repQ repR rp2_Lines_def rp2_P1b
+      rp2_Points_def rp2_incid.abs_eq)
+  show ?thesis using basics1 basics2 adv by blast
+qed
+
 text \<open>\done\<close>
 
   text \<open>\George\<close>
@@ -469,14 +478,14 @@ lemma rp2_P4:
 proof - 
   obtain kvec where kvec_def: "kvec = Rep_Proj k" by auto
   have kvec_nz: "kvec \<noteq> zvec" using rep_P_nz using kvec_def by auto
-  obtain a b c :: real where abc_def: "kvec = vector[a, b, c]" using kvec_def
+  obtain a b c :: real where abc_def: "kvec = (vector[a, b, c]::v3)" using kvec_def
   using forall_vector_3 by fastforce
 
   let ?v1 = "(vector[0, -c, b] :: real^3)"
   let ?v2 = "(vector[c, 0, -a] :: real^3)"
   let ?v3 = "(vector[-b, a, 0] :: real^3)"
 
-  have abc_not_all_zero: "a \<noteq> 0 \<or> b \<noteq> 0 \<or> c \<noteq> 0" using kvec_nz abc_def zvec_def by auto
+  have abc_not_all_zero: "a \<noteq> 0 \<or> b \<noteq> 0 \<or> c \<noteq> 0" using kvec_nz abc_def zvec_def zvec_alt  by metis
 
   consider (a_nz) "a \<noteq> 0" | (b_nz) "b \<noteq> 0" | (c_nz) "c \<noteq> 0"
     using abc_not_all_zero by auto
@@ -772,9 +781,12 @@ interpretation RP2C: projective_plane  "{OrdinaryP P | P. (P \<in> A2Points)} \<
   " {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
   using projectivisation_of_A2 by auto
 
+
 (* need definition of isomorphism, and proof that RP2Q is isomorphic to RP2C; 
 place these Chapter 1-3. *)
 
-text \<open>\nick\<close>
+text \<open>\spike\<close>
+
+
 
 end
