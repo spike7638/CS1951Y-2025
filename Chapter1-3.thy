@@ -26,7 +26,9 @@ begin
 end
 
 locale  pp_automorphism = pp_isomorphism  Points1 Lines1 incid1 Points1 Lines1 incid1 f
-  for Points1 Lines1 incid1 Points2 Lines2 incid2 f
+  for Points1 Lines1 incid1 Points2 Lines2 incid2 f +
+  assumes
+    m4: "Points2 = Points1 \<and> Lines2 = Lines1 \<and> incid2=incid1"
 begin
 end
 
