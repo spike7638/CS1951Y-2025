@@ -5,10 +5,9 @@ theory "Z3-1"
          "HOL-Analysis.Cartesian_Space"
          "HOL-Analysis.Finite_Cartesian_Product"
          "HOL-Analysis.Determinants"
- "HOL-Analysis.Cross3"
-  "Chapter1-2.thy"
+          "HOL-Analysis.Cross3"
+          "Chapter1-2"
 begin
-
 
 
 section "Isabelle groups and monoids"
@@ -109,9 +108,10 @@ big help. We'll start with just vectors, define and prove a few things about RP2
 Fortunately, for real vectors addition is predefined, and scalar multiplication is denoted by a * 
 with a subscript R. 
 \<close>
-
 (* We're going to need cross and dot-products *)
 unbundle cross3_syntax
+
+(*
 type_synonym v3 = "real^3"
 
 definition zvec where "zvec = ((vector[0, 0, 0])::real^3)"
@@ -203,6 +203,7 @@ qed
 lemma incid_commute:
   shows "rp2_incid A B \<longleftrightarrow> rp2_incid B A"
   by (simp add: inner_commute rp2_incid.rep_eq)
+*)
 
 subsection\<open>Automorphisms of the real projective plane\<close>
 text\<open>
@@ -215,6 +216,7 @@ where
 \[x_2' = a_{21}x_1 + a_{22}x_2 + a_{23}x_3\]
 \[x_3' = a_{31}x_1 + a_{32}x_2 + a_{33}x_3\]
 \end{hartshorne}
+
 
 We'll need 3x3 matrices (our type m33) and we'll define what Hartshorne calls T_A
 as a map from RP2 to RP2, and show that 
@@ -244,6 +246,7 @@ lemma not_all_zero_eqv: "not_all_zero x y z \<longleftrightarrow> vector[x, y, z
 
 (*Now, the components of the definition of RP2 *)
 
+(*
 definition respects_scaling :: "(v3 \<Rightarrow> v3) \<Rightarrow> bool"
   where "respects_scaling f \<longleftrightarrow> (\<forall>x::v3. \<forall>l :: real. l \<noteq> 0 \<longrightarrow> (\<exists>q . f (l *s x) = q *s (f x)))"
 
@@ -260,22 +263,17 @@ definition well_defined :: "(v3 \<Rightarrow> v3) \<Rightarrow> bool"
 definition is_punctured_line :: "(v3) set \<Rightarrow> bool" 
   where "is_punctured_line L \<longleftrightarrow> (\<exists> a b c  :: real. (not_all_zero a b c) \<and> 
                          L = {x. a  * x$1 + b * x$2 + c * x$3 = 0})"
+*)
 
-(*Above, I stay faithful to Hartshorne and do not translate this into the language
-  of inner products. *)
-
-definition maps_lines_to_lines :: "(v3 \<Rightarrow> v3) \<Rightarrow> bool"
-  where "maps_lines_to_lines f \<longleftrightarrow> (\<forall>L. is_punctured_line L \<longrightarrow> (\<exists>L' . is_punctured_line L' \<and> (f ` L) \<subseteq> L'))"
+definition maps_lines_to_lines :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
+  where "maps_lines_to_lines f \<longleftrightarrow> (\<forall>k P Q R . ((k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k) \<longrightarrow> 
+                                   (\<exists>m . m \<in> rp2_Lines  \<and>  rp2_incid (f P) m \<and> rp2_incid (f Q) m \<and> rp2_incid (f R) m)))"
 
 (*Note that inclusion is sufficient. See also this MSE post:
 https://math.stackexchange.com/questions/3481844/is-isomorphic-between-projective-planes-actually-equivalence-relation *)
 
-definition is_RP2_auto :: "(v3 \<Rightarrow> v3) \<Rightarrow> bool"
-  where "is_RP2_auto f \<longleftrightarrow> well_defined f \<and> (bij_betw f UNIV UNIV) \<and> maps_lines_to_lines f"
-
-definition make_RP2_auto :: "(v3 \<Rightarrow> v3) \<Rightarrow> (rp2 \<Rightarrow> rp2)"
-  where "make_RP2_auto f = (if is_RP2_auto f then Abs_Proj \<circ> f \<circ> Rep_Proj else undefined)"
-
+definition is_RP2_auto :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
+  where "is_RP2_auto f \<longleftrightarrow> (bij_betw f UNIV UNIV) \<and> maps_lines_to_lines f"
 
 (* The below definition helps make the types work out when working with
    definitions like "image_non_zero." In general, writing A *v x will also work.
@@ -307,14 +305,14 @@ proof (transfer,clarsimp)
         by (metis invertible_def matrix_left_invertible_ker vect_zero_eqv zvec_def)
       have "tom A x \<noteq> zvec" using xz nzAt ta by auto
       have "tom A y \<noteq> zvec" using yz nzAt ta by auto
-    then show ?thesis 
-    using \<open>tom A x \<noteq> zvec\<close> ah matrix_vector_mult_scaleR projrel_def tom_def by auto
-  next
-    case id: False
-    then show ?thesis 
-    using ah tom_def by auto
-qed
-qed
+      then show ?thesis 
+        using \<open>tom A x \<noteq> zvec\<close> ah matrix_vector_mult_scaleR projrel_def tom_def by auto
+      next
+      case id: False
+      then show ?thesis 
+        using ah tom_def by auto
+    qed
+  qed
 qed
 
 
@@ -468,11 +466,13 @@ lemma vect_vect_by_vect_mult:
   using matrix_by_vect_mult vector_3[of x y z]
   by (simp add: matrix_vector_mult_def)
 
+(*
 lemma matrices_respect_scaling:
   fixes A :: m33
   shows "respects_scaling (tom A)"
   using tom_def respects_scaling_def[of "tom A"] vec.scale
   by metis
+*)
 
 lemma maps_lines_to_lines_helper:
   fixes A :: m33
