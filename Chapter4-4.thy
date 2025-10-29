@@ -19,10 +19,11 @@ lemma (in projective_plane) perspectivity_inj:
   assumes f_def: "f = perspectivity Or l1 l2"
   assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
   assumes Q_def: "Q \<in> Points \<and> Q \<lhd> l1"
-  assumes PQ_neq: "P \<noteq> Q"
-  shows "f P \<noteq> f Q"
-  sorry
-
+  assumes PQ_neq: "f P = f Q"
+  shows "P = Q"
+  using assms perspectivity_def[of Or l1 l2] isperspectivity_def[of Or l1 l2] join_properties2 meet_properties2 p1
+    by (smt (verit))
+ 
 lemma (in projective_plane) perspectivity_surj:
   fixes f Or l1 l2 Q
   assumes l1_def: "l1 \<in> Lines"
@@ -31,11 +32,19 @@ lemma (in projective_plane) perspectivity_surj:
   assumes f_def: "f = perspectivity Or l1 l2"
   assumes Q_def: "Q \<in> Points \<and> Q \<lhd> l2"
   shows "\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q"
-  sorry
+proof -
+  have h0: "isperspectivity Or l1 l2 = True" using Or_def isperspectivity_def[of Or l1 l2] l1_def l2_def by presburger
+  let ?P = "meet l1 (join Or Q)"
+  have h1: "?P \<in> Points \<and> ?P \<lhd> l1" using Or_def Q_def join_properties1 l1_def meet_properties2 
+    by auto
+  have h2: "f ?P = Q" using assms h0 h1 perspectivity_def[of Or l1 l2] join_properties1 join_properties2 meet_properties2 punctured_r_3_def 
+    by (smt (z3))
+  show ?thesis using h1 h2 by auto
+qed
 
 lemma (in projective_plane) inv_is_perspectivity:
   fixes f Or l1 l2 f_inv P
-  assumes Or_def: "Or \<in> Points"
+  assumes Or_def: "Or \<in> Points \<and> \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)"
   assumes l1_def: "l1 \<in> Lines"
   assumes l2_def: "l2 \<in> Lines"
   assumes f_def: "f = perspectivity Or l1 l2"
@@ -53,7 +62,7 @@ lemma (in projective_plane) perspectivity_of_meet_is_itself:
   assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
   assumes P_on_l2: "P \<lhd> l2"
   shows "f P = P"
-  sorry
+  using Or_def P_def P_on_l2 f_def inv_is_perspectivity l1_def l2_def by fastforce
 
 (* Definition. A projectivity is a mapping of one line l into another l\<Zprime> (which may be equal to l), which can be expressed as a composition of perspectivities. 
 We write l Z l\<Zprime>, and write ABC . . . Z A\<Zprime>B\<Zprime>C\<Zprime> . . . if the projectivity that takes  points A, B, C, . . . into A\<Zprime>, B\<Zprime>, C\<Zprime>, . . . respectively. 
@@ -80,6 +89,25 @@ lemma (in projective_plane) PJ_l_is_group:
   shows "group (PJ l)"
   sorry
 
+thm projective_plane.p3
+
+lemma (in projective_plane) double_non_containing_line:
+  fixes A B C l
+  assumes points_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
+  assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l \<and> A' \<lhd> l \<and> B' \<lhd> l \<and> C' \<lhd> l"
+  shows "\<exists> l' . l' \<in> Lines \<and> l' \<noteq> l \<and> \<not> A \<lhd> l' \<and> \<not> B \<lhd> l'" 
+proof-
+  obtain D where D_def: "D \<in> Points \<and> \<not> D \<lhd> l" using l_def p3 pcollinear_def by metis
+  let ?l' = "join D C"
+  have h1: "?l' \<in> Lines" using D_def join_properties1 l_def points_def by blast
+  have h2: "?l' \<noteq> l" using D_def join_properties1 l_def points_def by blast
+  have h3: "\<not> A \<lhd> ?l' \<and> \<not> B \<lhd> ?l'" 
+    using D_def h2 distinct_length_2_or_more join_properties1 l_def points_def unique_meet by metis
+  show ?thesis using h1 h2 h3 by auto
+qed
+(*Derived "False" from these facts alone: distinct_length_2_or_more insert_Nil 
+inv_is_perspectivity l_def perspectivity_of_meet_is_itself points_def*)
+
 (* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l. 
 Then there is a projectivity of l into itself which sends A, B, C into A\<Zprime>, B\<Zprime>, C\<Zprime>. *)
 lemma (in projective_plane) exists_projectivity_triplet_to_triplet:
@@ -90,8 +118,12 @@ lemma (in projective_plane) exists_projectivity_triplet_to_triplet:
   shows "\<exists> ps . \<exists> ls . (f = projectivity ps ls) 
                         \<and> (hd ls = l) \<and> (last ls = l) 
                         \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"
-  sorry
+proof-
+  have h1: "\<exists> l' . l' \<in> Lines \<and> l' \<noteq> l" using non_containing_line p1 p3 by blast
+  obtain l' where l'_def: "l' \<in> Lines \<and> l' \<noteq> l \<and> meet l l' \<noteq> A \<and> meet l l' \<noteq> A'" 
+    using h1 l_def by (metis meet_properties2 non_containing_line)
 
+  
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
 lemma (in projective_plane) projectivity_hquad_to_hquad:
   fixes A B C D f
