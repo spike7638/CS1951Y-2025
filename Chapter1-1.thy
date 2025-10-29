@@ -1945,6 +1945,19 @@ Let's go ahead and make a locale description for a projective plane, as we did f
 
 There's no need for a \isi{find_parallel} function this time, but other things are fairly similar.
 \<close>
+text\<open> We're about to use distinctness of three points, and soon 
+we'll use distinctness of more than 3, and each of these uses lists,
+and unwinding that turns out to be a pain in some proofs...so I'm going
+to define a bunch of predicates to capture those ideas\<close>
+
+definition distinct3 where "distinct3 x y z \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z)"
+definition distinct4 where 
+  "distinct4 x y z w \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z) 
+                      \<and> (x \<noteq> w) \<and> (y \<noteq> w) \<and> (z \<noteq> w)"
+definition distinct5 where 
+  "distinct5 x y z w r \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z) 
+                      \<and> (x \<noteq> w) \<and> (y \<noteq> w) \<and> (z \<noteq> w) \<and>
+                        (x \<noteq> r) \<and> (y \<noteq> r) \<and> (z \<noteq> r) \<and> (w \<noteq> r)"
 
 locale projective_plane_data =
   fixes Points :: "'p set" and Lines :: "'l set" and incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool" (infix "\<lhd>" 60)
