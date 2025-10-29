@@ -776,10 +776,13 @@ theorem projectivisation_of_A2:
   shows "projective_plane pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
 
-interpretation RP2C: projective_plane  "{OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
-  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}" 
-  " {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
-  using projectivisation_of_A2 by auto
+definition completed_points where "completed_points \<equiv> 
+  {OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
+    ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}"
+definition completed_lines where "completed_lines \<equiv> {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}"
+
+interpretation RP2C: projective_plane  completed_points completed_lines  "(mprojectivize (a2incid))"
+  unfolding completed_points_def completed_lines_def using projectivisation_of_A2 by auto
 
 
 (* need definition of isomorphism, and proof that RP2Q is isomorphic to RP2C; 
