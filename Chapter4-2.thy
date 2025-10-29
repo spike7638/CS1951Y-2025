@@ -44,12 +44,13 @@ definition (in projective_plane) cquadrangle_points_diag_3 :: "'p \<Rightarrow> 
   else undefined)"
 
 
-definition (in projective_plane) P7 :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> bool"
-  where "P7 A B C D = (if (cquadrangle A B C D) 
-  then(\<not>pcollinear (cquadrangle_points_diag_1 A B C D) 
-                   (cquadrangle_points_diag_2 A B C D)
-                   (cquadrangle_points_diag_3 A B C D))
-  else undefined)"
+definition P7 :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool"
+  where "P7 Points Lines incid \<equiv> ((projective_plane Points Lines incid) \<and> 
+        (\<forall>A B C D. A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> (projective_plane.cquadrangle Points Lines incid  A B C D)
+        \<and>\<not>(projective_plane_data.pcollinear Points Lines incid 
+            (projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D) 
+            (projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D)
+            (projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D))))"
 
 
 (*
@@ -92,6 +93,7 @@ theorem (in projective_plane) quadrilateral_lines_distinct:
   assumes "cquadrilateral a b c d"
   shows "a \<noteq> b \<and> a \<noteq> c \<and> a \<noteq> d \<and> b \<noteq> c \<and> b \<noteq> d \<and> c \<noteq> d"
   sorry
+
 
 theorem (in projective_plane) meet_of_quadrilateral_is_quadrangle:
   fixes a b c d
@@ -137,20 +139,104 @@ proof -
 
     then show False using ch by auto
   qed
-  show ?thesis sorry
+  
+  have not_collin_2: "\<not>pcollinear ?D ?F ?A"
+  proof (rule ccontr)
+    assume ch: "\<not>(\<not>pcollinear ?D ?F ?A)"
+    then have "pcollinear ?D ?F ?A" by auto
+    then have ch_alt: "\<exists> l. l \<in> Lines \<and> ?D \<lhd> l \<and> ?F \<lhd> l \<and> ?A \<lhd> l" 
+      using assms(1) lines_distinct meet_properties2 pcollinear_def by force
+
+    have D_in_bd: "?D \<lhd> b \<and> ?D \<lhd> d"
+      using assms(1) lines_distinct meet_properties2 by auto
+    have F_in_cd: "?F \<lhd> c \<and> ?F \<lhd> d"
+      using assms(1) lines_distinct meet_properties2 by auto
+    have A_in_ac: "?A \<lhd> a \<and> ?A \<lhd> c"
+      using assms(1) lines_distinct meet_properties2 by auto
+
+    have join_DF_is_d: "join ?D ?F = d" 
+      using D_in_bd F_in_cd assms by (metis cquadrilateral_def join_properties2 lines_distinct meet_properties2)
+    
+    have "meet a c \<noteq> meet c d" using cquadrilateral_def assms by auto
+    then have E_notin_d: "\<not>(?A \<lhd> d)" 
+      using A_in_ac assms D_in_bd d_point a_point f_point lines_distinct unique_meet F_in_cd by blast 
+
+    have "\<not>(pcollinear ?D ?F ?A)" using join_DF_is_d E_notin_d 
+      by (metis assms(2) ch_alt cquadrilateral_def join_properties2 lines_distinct meet_properties2)
+
+    then show False using ch by auto
+  qed
+
+  have not_collin_3: "\<not>pcollinear ?F ?E ?A"
+  proof (rule ccontr)
+    assume ch: "\<not>(\<not>pcollinear ?F ?E ?A)"
+    then have "pcollinear ?F ?E ?A" by auto
+    then have ch_alt: "\<exists> l. l \<in> Lines \<and> ?F \<lhd> l \<and> ?E \<lhd> l \<and> ?A \<lhd> l" 
+      using assms(1) lines_distinct meet_properties2 pcollinear_def by force
+
+    have E_in_ab: "?E \<lhd> a \<and> ?E \<lhd> b"
+      using assms(1) lines_distinct meet_properties2 by auto
+    have F_in_cd: "?F \<lhd> c \<and> ?F \<lhd> d"
+      using assms(1) lines_distinct meet_properties2 by auto
+    have A_in_ac: "?A \<lhd> a \<and> ?A \<lhd> c"
+      using assms(1) lines_distinct meet_properties2 by auto
+
+    have join_EA_is_a: "join ?E ?A = a" 
+      using E_in_ab A_in_ac assms by (metis cquadrilateral_def join_properties2 lines_distinct meet_properties2)
+    
+    have "meet a c \<noteq> meet c d" using cquadrilateral_def assms by auto
+    then have E_notin_d: "\<not>(?F \<lhd> a)" 
+      using A_in_ac assms E_in_ab d_point a_point f_point lines_distinct unique_meet F_in_cd by blast 
+
+    have "\<not>(pcollinear ?F ?E ?A)" using join_EA_is_a E_notin_d 
+      by (metis assms(2) ch_alt cquadrilateral_def join_properties2 lines_distinct meet_properties2)
+
+    then show False using ch by auto
+  qed
+
+  have not_collin_4: "\<not>pcollinear ?F ?E ?A"
+  proof (rule ccontr)
+    assume ch: "\<not>(\<not>pcollinear ?F ?E ?A)"
+    then have "pcollinear ?F ?E ?A" by auto
+    then have ch_alt: "\<exists> l. l \<in> Lines \<and> ?F \<lhd> l \<and> ?E \<lhd> l \<and> ?A \<lhd> l" 
+      using assms(1) lines_distinct meet_properties2 pcollinear_def by force
+
+    have E_in_ab: "?E \<lhd> a \<and> ?E \<lhd> b"
+      using assms(1) lines_distinct meet_properties2 by auto
+    have D_in_bd: "?D \<lhd> b \<and> ?D \<lhd> d"
+      using assms(1) lines_distinct meet_properties2 by auto
+    have A_in_ac: "?A \<lhd> a \<and> ?A \<lhd> c"
+      using assms(1) lines_distinct meet_properties2 by auto
+
+    have join_EA_is_a: "join ?E ?A = a" 
+      using E_in_ab A_in_ac assms by (metis cquadrilateral_def join_properties2 lines_distinct meet_properties2)
+    
+    have "meet b d \<noteq> meet a b" using cquadrilateral_def assms by auto
+    then have D_notin_a: "\<not>(?D \<lhd> a)" 
+      using A_in_ac assms E_in_ab e_point d_point a_point f_point lines_distinct unique_meet D_in_bd by auto
+    have "\<not>(pcollinear ?F ?E ?A)" using join_EA_is_a D_notin_a 
+      by (metis assms(2) ch_alt cquadrilateral_def join_properties2 lines_distinct meet_properties2)
+
+    then show False using ch by auto
+  qed
+
+  show ?thesis using not_collin_1 not_collin_2 not_collin_3 not_collin_4 sorry
 qed
 
 
 
-theorem (in projective_plane) P7_dual:
-  fixes a b c d
-  fixes p q r
-  assumes "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines \<and> 
-            p \<in> Lines \<and> q \<in> Lines \<and> r \<in> Lines"
-  assumes "cquadrilateral a b c d"
-  assumes "[p, q, r] = cquadrilateral_lines a b c d"
-  assumes "P7 (meet b d) (meet c d) (meet a b) (meet a c)"
-  shows "\<not> (meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r)"
+theorem P7_dual:
+  fixes Points :: "'p set"
+  fixes Lines :: "'l set"
+  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  assumes p7: "P7 Points Lines incid"
+  defines dPdef: "dPoints \<equiv> Lines"
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  assumes dm: \<open>dincid = mdualize incid\<close>
+  shows "P7 dPoints dLines dincid"
+  sorry
+(*
 proof (rule ccontr)
   assume ch: "\<not>(\<not>(meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r))"
   then have ch_alt: "meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r" by blast
@@ -194,7 +280,7 @@ proof (rule ccontr)
         join_properties1 meet_properties2 pcollinear_def by (smt (verit))
 
   then show False using c_efg nc_efg by auto
-qed
+qed*)
 
 end
 
