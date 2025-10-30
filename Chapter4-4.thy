@@ -3,60 +3,80 @@ theory "Chapter4-4"
 begin
 text\<open> start at "Perspectivies and Projectivities" and go to end of chapter\<close>
 
-definition (in projective_plane) isperspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
-  where "isperspectivity Or l1 l2 = (if Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines 
+definition (in projective_plane) is_persp_data :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
+  where "is_persp_data Or l1 l2 = (if Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines 
   then (\<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)) else undefined)"
 
 definition (in projective_plane) perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
-  where "perspectivity Or l1 l2 = (if (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> isperspectivity Or l1 l2)
+  where "perspectivity Or l1 l2 = (if (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2)
   then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
 
 lemma (in projective_plane) perspectivity_inj:
   fixes f Or l1 l2 P Q
-  assumes l1_def: "l1 \<in> Lines"
-  assumes l2_def: "l2 \<in> Lines"
-  assumes Or_def: "Or \<in> Points \<and> \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)"
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
   assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
   assumes Q_def: "Q \<in> Points \<and> Q \<lhd> l1"
   assumes PQ_neq: "f P = f Q"
   shows "P = Q"
-  using assms perspectivity_def[of Or l1 l2] isperspectivity_def[of Or l1 l2] join_properties2 meet_properties2 p1
+  using assms perspectivity_def[of Or l1 l2] is_persp_data_def[of Or l1 l2] join_properties2 meet_properties2 p1
     by (smt (verit))
  
 lemma (in projective_plane) perspectivity_surj:
   fixes f Or l1 l2 Q
-  assumes l1_def: "l1 \<in> Lines"
-  assumes l2_def: "l2 \<in> Lines"
-  assumes Or_def: "Or \<in> Points \<and> \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)"
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
   assumes Q_def: "Q \<in> Points \<and> Q \<lhd> l2"
   shows "\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q"
 proof -
-  have h0: "isperspectivity Or l1 l2 = True" using Or_def isperspectivity_def[of Or l1 l2] l1_def l2_def by presburger
+  have h0: "is_persp_data Or l1 l2 = True" using data_def is_persp_data_def[of Or l1 l2] by presburger
   let ?P = "meet l1 (join Or Q)"
-  have h1: "?P \<in> Points \<and> ?P \<lhd> l1" using Or_def Q_def join_properties1 l1_def meet_properties2 
-    by auto
-  have h2: "f ?P = Q" using assms h0 h1 perspectivity_def[of Or l1 l2] join_properties1 join_properties2 meet_properties2 punctured_r_3_def 
+  have h1: "?P \<in> Points \<and> ?P \<lhd> l1" 
+    using data_def Q_def join_properties1 meet_properties2 is_persp_data_def[of Or l1 l2] 
+    by metis
+  have h2: "f ?P = Q" 
+    using assms h0 h1 perspectivity_def[of Or l1 l2] join_properties1 join_properties2 meet_properties2 punctured_r_3_def is_persp_data_def 
     by (smt (z3))
   show ?thesis using h1 h2 by auto
 qed
 
 lemma (in projective_plane) inv_is_perspectivity:
-  fixes f Or l1 l2 f_inv P
-  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> isperspectivity Or l1 l2"
+  fixes Or l1 l2 f f_inv
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   (*assumes Or_def: "Or \<in> Points \<and> \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)"
   assumes l1_def: "l1 \<in> Lines"
-  assumes l2_def: "l2 \<in> Lines"
-  assumes f_def: "f = perspectivity Or l1 l2"*)
-  assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
-  assumes f_inv_def: "f_inv (f P) = P"
+  assumes l2_def: "l2 \<in> Lines"*)
+  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes f_inv_def: "\<forall> P . if P \<in> Points \<and> P \<lhd> l1 then f_inv (f P) = P else f_inv (f P) = undefined"
+  (*assumes f_inv_def: "f_inv = (\<lambda>Q . if Q = f P then P else undefined)"*)
+  (*assumes f_inv_def: "f_inv = (\<lambda>Q . if \<exists>P . f P = Q then P else undefined)"*)
+  (*\<forall> P . P \<in> Points \<and> P \<lhd> l1 \<longrightarrow> f_inv (f P) = P"*)
+  (*assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
+  assumes f_inv_def: "f_inv (f P) = P"*)
   shows "f_inv = perspectivity Or l2 l1"
-  sorry
+proof-
+  have h1: "f = (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined)"
+    using data_def f_def perspectivity_def[of Or l1 l2] by presburger
+  have h2: "f_inv = (\<lambda>Q . if \<exists>P . P \<in> Points \<and> P \<lhd> l1 \<and> (meet (join Or P) l2) = Q then P else undefined)"
+    using h1 f_inv_def by sledgehammer
+  have h2: "\<forall> P . P \<in> Points \<and> P \<lhd> l1 \<longrightarrow> f_inv (meet (join Or P) l2) = P"
+    using h1 f_inv_def by auto
+  have h3: "\<forall> Q . Q \<in> Points \<and> Q \<lhd> l2 \<longrightarrow> (\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q)"
+    using perspectivity_surj assms by auto
+  have h4: "\<forall> Q . Q \<in> Points \<and> Q \<lhd> l2 \<longrightarrow> (\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> (meet (join Or P) l2) = Q)"
+    using h1 h3 by metis
+  have h5: "\<forall> Q . Q \<in> Points \<and> Q \<lhd> l2 \<longrightarrow> (\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> f_inv (meet (join Or P) l2) = P)"
+    using h4 h2 by auto
+  have h6: "\<forall> Q . Q \<in> Points \<and> Q \<lhd> l2 \<longrightarrow> (f_inv Q = (meet (join Or Q) l1))"
+    using h4 h2 data_def is_persp_data_def join_properties1 join_properties2 meet_properties2
+    by (smt (verit))
+  show ?thesis using h6 perspectivity_def[of Or l2 l1] by sledgehammer
+  have h7: "f_inv = (\<lambda>Q . if Q \<in> Points \<and> Q \<lhd> l2 then (meet (join Or Q) l1) else undefined)"
+    using 
 
 lemma (in projective_plane) perspectivity_of_meet_is_itself:
   fixes f Or l1 l2 P
-  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> isperspectivity Or l1 l2"
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   (*assumes Or_def: "Or \<in> Points"
   assumes l1_def: "l1 \<in> Lines"
   assumes l2_def: "l2 \<in> Lines"
@@ -71,7 +91,7 @@ proof-
     using data_def f_def perspectivity_def[of Or l1 l2] by presburger
   have h2: "f P = (meet (join Or P) l2)" using h1 P_def by auto
   have h3: "(meet (join Or P) l2) = P" 
-    using P_on_l2 P_def data_def isperspectivity_def join_properties1 meet_properties2 unique_meet
+    using P_on_l2 P_def data_def is_persp_data_def join_properties1 meet_properties2 unique_meet
     by metis
   show ?thesis using h2 h3 by auto
 qed
@@ -86,13 +106,6 @@ fun (in projective_plane) projectivity :: "'p list \<Rightarrow> 'l list \<Right
   "projectivity a [] = undefined" |
   "projectivity a [v] = undefined"
 
-definition (in projective_plane) PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
-  where "PJ l = (if (l \<in> Lines) then
-  \<lparr>carrier = {f . \<exists> ps . \<exists> ls . (f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)},
-  monoid.mult = (\<circ>),
-  one = (\<lambda>Q. Q)\<rparr> 
-  else undefined)"
-
 lemma (in projective_plane) proj_composition_is_proj:
   fixes ps ps' ls ls' f f'
   assumes f_def: "f = projectivity ps ls"
@@ -100,6 +113,13 @@ lemma (in projective_plane) proj_composition_is_proj:
   assumes ls_ls'_def: "last ls = hd ls'"
   shows "f' \<circ> f = projectivity (ps @ ps') (ls @ (tl ls'))"
   sorry
+
+definition (in projective_plane) PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
+  where "PJ l = (if (l \<in> Lines) then
+  \<lparr>carrier = {f . \<exists> ps . \<exists> ls . (f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)},
+  monoid.mult = (\<circ>),
+  one = (\<lambda>Q. Q)\<rparr> 
+  else undefined)"
 
 (*may need to create a projectivity identity element*)
 
