@@ -5,11 +5,11 @@ text\<open> start at "Perspectivies and Projectivities" and go to end of chapter
 
 definition (in projective_plane) isperspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
   where "isperspectivity Or l1 l2 = (if Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines 
-  then (\<not> (incid Or l1) \<and> \<not> (incid Or l2)) else undefined)"
+  then (\<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)) else undefined)"
 
 definition (in projective_plane) perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "perspectivity Or l1 l2 = (if (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> isperspectivity Or l1 l2)
-  then (\<lambda>Q . if Q \<in> Points \<and> incid Q l1 then (meet (join Or Q) l2) else undefined) else undefined)"
+  then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
 
 lemma (in projective_plane) perspectivity_inj:
   fixes f Or l1 l2 P Q
@@ -44,10 +44,11 @@ qed
 
 lemma (in projective_plane) inv_is_perspectivity:
   fixes f Or l1 l2 f_inv P
-  assumes Or_def: "Or \<in> Points \<and> \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)"
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> isperspectivity Or l1 l2"
+  (*assumes Or_def: "Or \<in> Points \<and> \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)"
   assumes l1_def: "l1 \<in> Lines"
   assumes l2_def: "l2 \<in> Lines"
-  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes f_def: "f = perspectivity Or l1 l2"*)
   assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
   assumes f_inv_def: "f_inv (f P) = P"
   shows "f_inv = perspectivity Or l2 l1"
@@ -55,14 +56,25 @@ lemma (in projective_plane) inv_is_perspectivity:
 
 lemma (in projective_plane) perspectivity_of_meet_is_itself:
   fixes f Or l1 l2 P
-  assumes Or_def: "Or \<in> Points"
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> isperspectivity Or l1 l2"
+  (*assumes Or_def: "Or \<in> Points"
   assumes l1_def: "l1 \<in> Lines"
   assumes l2_def: "l2 \<in> Lines"
+  *)
   assumes f_def: "f = perspectivity Or l1 l2"
   assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
   assumes P_on_l2: "P \<lhd> l2"
   shows "f P = P"
-  using Or_def P_def P_on_l2 f_def inv_is_perspectivity l1_def l2_def by fastforce
+  (*using Or_def P_def P_on_l2 f_def inv_is_perspectivity l1_def l2_def by fastforce*)
+proof-
+  have h1: "f = (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined)"
+    using data_def f_def perspectivity_def[of Or l1 l2] by presburger
+  have h2: "f P = (meet (join Or P) l2)" using h1 P_def by auto
+  have h3: "(meet (join Or P) l2) = P" 
+    using P_on_l2 P_def data_def isperspectivity_def join_properties1 meet_properties2 unique_meet
+    by metis
+  show ?thesis using h2 h3 by auto
+qed
 
 (* Definition. A projectivity is a mapping of one line l into another l\<Zprime> (which may be equal to l), which can be expressed as a composition of perspectivities. 
 We write l Z l\<Zprime>, and write ABC . . . Z A\<Zprime>B\<Zprime>C\<Zprime> . . . if the projectivity that takes  points A, B, C, . . . into A\<Zprime>, B\<Zprime>, C\<Zprime>, . . . respectively. 
@@ -80,6 +92,15 @@ definition (in projective_plane) PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) 
   monoid.mult = (\<circ>),
   one = (\<lambda>Q. Q)\<rparr> 
   else undefined)"
+
+lemma (in projective_plane) proj_composition_is_proj:
+  fixes ps ps' ls ls' f f'
+  assumes f_def: "f = projectivity ps ls"
+  assumes f'_def: "f' = projectivity ps' ls'"
+  assumes ls_ls'_def: "last ls = hd ls'"
+  shows "f' \<circ> f = projectivity (ps @ ps') (ls @ (tl ls'))"
+  sorry
+
 (*may need to create a projectivity identity element*)
 
 (* Proposition 4.8 Let l be a line. Then the set of projectivities of l into itself forms a group, which we will call PJ(l). *)
@@ -89,41 +110,69 @@ lemma (in projective_plane) PJ_l_is_group:
   shows "group (PJ l)"
   sorry
 
-thm projective_plane.p3
-
 lemma (in projective_plane) double_non_containing_line:
-  fixes A B C l
-  assumes points_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
-  assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l \<and> A' \<lhd> l \<and> B' \<lhd> l \<and> C' \<lhd> l"
+  fixes A B l
+  assumes AB_def: "A \<in> Points \<and> B \<in> Points"
+  assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l"
   shows "\<exists> l' . l' \<in> Lines \<and> l' \<noteq> l \<and> \<not> A \<lhd> l' \<and> \<not> B \<lhd> l'" 
 proof-
+  obtain C where C_def: "C \<in> Points \<and> C \<lhd> l \<and> C \<noteq> A \<and> C \<noteq> B" 
+    using l_def p4 distinct_length_2_or_more mem_Collect_eq by (metis (no_types, lifting))
   obtain D where D_def: "D \<in> Points \<and> \<not> D \<lhd> l" using l_def p3 pcollinear_def by metis
   let ?l' = "join D C"
-  have h1: "?l' \<in> Lines" using D_def join_properties1 l_def points_def by blast
-  have h2: "?l' \<noteq> l" using D_def join_properties1 l_def points_def by blast
+  have h1: "?l' \<in> Lines \<and> ?l' \<noteq> l" using AB_def C_def D_def l_def join_properties1 by blast
   have h3: "\<not> A \<lhd> ?l' \<and> \<not> B \<lhd> ?l'" 
-    using D_def h2 distinct_length_2_or_more join_properties1 l_def points_def unique_meet by metis
-  show ?thesis using h1 h2 h3 by auto
+    using AB_def C_def D_def h1 join_properties1 l_def unique_meet by metis
+  show ?thesis using h1 h3 by auto
 qed
-(*Derived "False" from these facts alone: distinct_length_2_or_more insert_Nil 
-inv_is_perspectivity l_def perspectivity_of_meet_is_itself points_def*)
 
-(* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l. 
+lemma (in projective_plane) triplet_to_triplet_diff_lines:
+  fixes A B C A' B' C' l l'
+  assumes ABC_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
+  assumes ABC'_def: "A' \<in> Points \<and> B' \<in> Points \<and> C' \<in> Points \<and> distinct [A', B', C']"
+  assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l"
+  assumes l'_def: "l' \<in> Lines \<and> A' \<lhd> l' \<and> B' \<lhd> l' \<and> C' \<lhd> l'"
+  shows "\<exists> ps . \<exists> ls . \<exists> f . (f = projectivity ps ls) 
+                        \<and> (hd ls = l) \<and> (last ls = l') 
+                        \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"
+  sorry  
+
+(* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l.
 Then there is a projectivity of l into itself which sends A, B, C into A\<Zprime>, B\<Zprime>, C\<Zprime>. *)
-lemma (in projective_plane) exists_projectivity_triplet_to_triplet:
+lemma (in projective_plane) triplet_to_triplet_same_line:
   fixes A B C A' B' C' l
   assumes ABC_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
   assumes ABC'_def: "A' \<in> Points \<and> B' \<in> Points \<and> C' \<in> Points \<and> distinct [A', B', C']"
   assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l \<and> A' \<lhd> l \<and> B' \<lhd> l \<and> C' \<lhd> l"
-  shows "\<exists> ps . \<exists> ls . (f = projectivity ps ls) 
+  shows "\<exists> ps . \<exists> ls . \<exists> f . (f = projectivity ps ls) 
                         \<and> (hd ls = l) \<and> (last ls = l) 
                         \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"
 proof-
   have h1: "\<exists> l' . l' \<in> Lines \<and> l' \<noteq> l" using non_containing_line p1 p3 by blast
-  obtain l' where l'_def: "l' \<in> Lines \<and> l' \<noteq> l \<and> meet l l' \<noteq> A \<and> meet l l' \<noteq> A'" 
-    using h1 l_def by (metis meet_properties2 non_containing_line)
+  obtain l' where l'_def: "l' \<in> Lines \<and> l' \<noteq> l \<and> \<not> A \<lhd> l' \<and> \<not> A' \<lhd> l'" 
+    using double_non_containing_line[of A A' l] ABC'_def ABC_def l_def by auto
+  obtain A'' B'' C'' where ABC''_def: "A'' \<in> Points \<and> B'' \<in> Points \<and> C'' \<in> Points 
+    \<and> distinct [A'', B'', C''] \<and> A'' \<lhd> l' \<and> B'' \<lhd> l' \<and> C'' \<lhd> l'"
+    using p4 l'_def ABC'_def by fastforce
+  obtain ps ls f where f_def: "(f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l') 
+    \<and> (f A = A'') \<and> (f B = B'') \<and> (f C = C'')"
+    using triplet_to_triplet_diff_lines[of A B C A'' B'' C'' l l'] ABC_def ABC''_def l'_def l_def by blast
+  obtain ps' ls' f' where f'_def: "(f' = projectivity ps' ls') \<and> (hd ls' = l') \<and> (last ls' = l) 
+    \<and> (f' A'' = A') \<and> (f' B'' = B') \<and> (f' C'' = C')"
+    using triplet_to_triplet_diff_lines[of A'' B'' C'' A' B' C' l' l] ABC''_def ABC'_def l'_def l_def by blast
+  let ?ps'' = "ps @ ps'"
+  let ?ls'' = "ls @ tl ls'"
+  let ?f'' = "f' \<circ> f"
+  have h2: "?f'' = projectivity ?ps'' ?ls''" 
+    using proj_composition_is_proj[of f ps ls f' ps' ls'] f_def f'_def by auto
+  have h3: "(hd ?ls'' = l) \<and> (last ?ls'' = l)" 
+    using h2 f'_def f_def hd_Nil_eq_last hd_append2 l'_def last_ConsL last_append last_tl list.collapse
+    by metis
+  have h4: "(?f'' A = A') \<and> (?f'' B = B') \<and> (?f'' C = C')"
+    using f_def f'_def by auto
+  show ?thesis using h2 h3 h4 by auto
+qed
 
-  
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
 lemma (in projective_plane) projectivity_hquad_to_hquad:
   fixes A B C D f
