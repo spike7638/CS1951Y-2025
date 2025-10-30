@@ -67,7 +67,7 @@ theorem rp2_P7:
 
 definition (in projective_plane) cquadrilateral :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool"
   where "cquadrilateral a b c d = (a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines \<and> 
-  meet a b \<noteq> meet b c \<and> meet b c \<noteq> meet c d \<and> meet a c \<noteq> meet c d \<and> meet a b \<noteq> meet b d)"
+  \<not>coincident a b c \<and> \<not>coincident b c d \<and> \<not>coincident a b d \<and> \<not>coincident a c d)"
 
 definition (in projective_plane) cquadrilateral_points :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'p set"
   where "cquadrilateral_points a b c d = (if (cquadrilateral a b c d) 
@@ -79,13 +79,20 @@ definition (in projective_plane) cquadrilateral_points :: "'l \<Rightarrow> 'l \
         meet c d})
   else undefined)"
 
-definition (in projective_plane) cquadrilateral_lines :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l list"
-  where "cquadrilateral_lines a b c d = (if (cquadrilateral a b c d) 
-  then([join (meet a b) (meet c d),
-        join (meet a c) (meet b d),
-        join (meet a d) (meet b c)])
+definition (in projective_plane) cquadrilateral_lines_1 :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l"
+  where "cquadrilateral_lines_1 a b c d = (if (cquadrilateral a b c d) 
+  then(join (meet a b) (meet c d))
   else undefined)"
 
+definition (in projective_plane) cquadrilateral_lines_2 :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l"
+  where "cquadrilateral_lines_2 a b c d = (if (cquadrilateral a b c d) 
+  then(join (meet a c) (meet b d))
+  else undefined)"
+
+definition (in projective_plane) cquadrilateral_lines_3 :: "'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 'l"
+  where "cquadrilateral_lines_3 a b c d = (if (cquadrilateral a b c d) 
+  then(join (meet a d) (meet b c))
+  else undefined)"
 
 theorem (in projective_plane) quadrilateral_lines_distinct:
   fixes a b c d
@@ -94,7 +101,7 @@ theorem (in projective_plane) quadrilateral_lines_distinct:
   shows "a \<noteq> b \<and> a \<noteq> c \<and> a \<noteq> d \<and> b \<noteq> c \<and> b \<noteq> d \<and> c \<noteq> d"
   sorry
 
-
+(*
 theorem (in projective_plane) meet_of_quadrilateral_is_quadrangle:
   fixes a b c d
   assumes "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines"
@@ -223,6 +230,30 @@ proof -
   show ?thesis using not_collin_1 not_collin_2 not_collin_3 not_collin_4 sorry
 qed
 
+*)
+
+(* NEED TO CHANGE the incid to ('l \<Rightarrow> 'p \<Rightarrow> bool)*)
+definition P7_dual :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool"
+  where "P7_dual Points Lines incid \<equiv> ((projective_plane Points Lines incid) \<and> 
+        (\<forall>A B C D. A \<in> Lines \<and> B \<in> Lines \<and> C \<in> Lines \<and> D \<in> Lines \<and> (projective_plane.cquadrilateral Points Lines incid  A B C D)
+        \<and>\<not>(projective_plane_data.coincident Points Lines incid 
+            (projective_plane.cquadrilateral_lines_1 Points Lines incid A B C D) 
+            (projective_plane.cquadrilateral_lines_2 Points Lines incid A B C D)
+            (projective_plane.cquadrilateral_lines_3 Points Lines incid A B C D))))"
+
+theorem dual_collinear_is_coincident:
+  fixes Points :: "'p set"
+  fixes Lines :: "'l set"
+  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  defines dPdef: "dPoints \<equiv> Lines"
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  assumes dm: \<open>dincid = mdualize incid\<close>
+  fixes A B C
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points"
+  assumes "projective_plane_data.pcollinear Points Lines incid A B C"
+  shows "projective_plane_data.coincident dPoints dLines dincid A B C"
+  sorry
 
 
 theorem P7_dual:
@@ -234,54 +265,61 @@ theorem P7_dual:
   defines dLdef: "dLines \<equiv> Points"
   fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
   assumes dm: \<open>dincid = mdualize incid\<close>
-  shows "P7 dPoints dLines dincid"
-  sorry
-(*
-proof (rule ccontr)
-  assume ch: "\<not>(\<not>(meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r))"
-  then have ch_alt: "meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r" by blast
-  have pqr: "p = join (meet a b) (meet c d) \<and> q = join (meet a c) (meet b d) \<and> r = join (meet a d) (meet b c)"
-    using assms by (simp add: cquadrilateral_lines_def)
-  let ?A = "meet b d"
-  let ?B = "meet c d"
-  let ?C = "meet a b"
-  let ?D = "meet a c"
-  have abcd_qd: "cquadrangle ?A ?B ?C ?D" 
-    using assms meet_of_quadrilateral_is_quadrangle[of a b c d] by blast
-  let ?E = "cquadrangle_points_diag_1 ?A ?B ?C ?D"
-  let ?F = "cquadrangle_points_diag_2 ?A ?B ?C ?D"
-  let ?G = "cquadrangle_points_diag_3 ?A ?B ?C ?D"
-  have nc_efg: "\<not> pcollinear ?E ?F ?G" using assms P7_def abcd_qd by fastforce
-  have e: "?E = meet (join (meet c d) (meet a b)) (join (meet b d) (meet a c))" using abcd_qd cquadrangle_points_diag_1_def by force
-  have f: "?F = meet (join (meet b d) (meet a b)) (join (meet c d) (meet a c))" using abcd_qd cquadrangle_points_diag_2_def by force
-  have g: "?G = meet (join (meet b d) (meet c d)) (join (meet a b) (meet a c))" using abcd_qd cquadrangle_points_diag_3_def by force
-  have ef_1: "join ?E ?F = join (meet (join (meet c d) (meet a b)) (join (meet b d) (meet a c))) 
-                        (meet (join (meet b d) (meet a b)) (join (meet c d) (meet a c)))"
-    using e f by argo
-  
-  (*fix later*)
-  then have intm: "\<not> pcollinear
-      (cquadrangle_points_diag_1 (b . d) (c . d) (a . b) (a . c)) 
-      (cquadrangle_points_diag_2 (b . d) (c . d) (a . b) (a . c)) 
-      (cquadrangle_points_diag_3 (b . d) (c . d) (a . b) (a . c))"
-    using
-      \<open>\<not> pcollinear (cquadrangle_points_diag_1 (b . d) (c . d) (a . b) (a . c)) 
-            (cquadrangle_points_diag_2 (b . d) (c . d) (a . b) (a . c)) 
-            (cquadrangle_points_diag_3 (b . d) (c . d) (a . b) (a . c))\<close>
-    by force
+  shows "P7_dual dPoints dLines dincid"
+proof - 
+  obtain A B C D where abcd_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points 
+        \<and>(projective_plane.cquadrangle Points Lines incid  A B C D)
+        \<and>\<not>(projective_plane_data.pcollinear Points Lines incid 
+            (projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D) 
+            (projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D)
+            (projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D))" 
+    using assms P7_def by fastforce
 
-  (*fix later*)
-  then have ef_a: "join ?E ?F = a" using assms abcd_qd ch cquadrangle_def e f g join_properties1
-        meet_properties2 pcollinear_def pqr unique_meet by (smt (verit))
-  have fg_a: "join ?F ?G = a" using assms abcd_qd ch cquadrangle_def e f g join_properties1
-        meet_properties2 pcollinear_def pqr unique_meet ef_a
-    by (smt (verit))
-  then have c_efg:"pcollinear ?E ?F ?G" using ef_a fg_a abcd_qd assms(2) cquadrangle_def cquadrilateral_def e f g
-        join_properties1 meet_properties2 pcollinear_def by (smt (verit))
+  have projective_dual: "projective_plane dPoints dLines dincid" using dual_plane_is_projective P7_def dLdef dPdef dm p7 by blast
 
-  then show False using c_efg nc_efg by auto
-qed*)
+  have 0: "A \<in> dLines \<and> B \<in> dLines \<and> C \<in> dLines \<and> D \<in> dLines" using assms dLdef abcd_def by auto
+  have 1: "projective_plane.cquadrangle Points Lines incid  A B C D" using abcd_def by auto
+  have 2: "\<not>projective_plane_data.pcollinear Points Lines incid A B C \<and> 
+          \<not>projective_plane_data.pcollinear Points Lines incid A B D \<and> 
+          \<not>projective_plane_data.pcollinear Points Lines incid A C D \<and>
+          \<not>projective_plane_data.pcollinear Points Lines incid B C D" 
+    using abcd_def 1 projective_plane.cquadrangle_def[of Points Lines incid A B C D] P7_def p7 by auto
 
+  have non_coincid_1: "\<not>projective_plane_data.coincident dPoints dLines dincid A B C" 
+    using abcd_def 2 dual_collinear_is_coincident
+    by (simp add: dLdef dPdef dm projective_plane_data.coincident_def projective_plane_data.pcollinear_def)
+  have non_coincid_2: "\<not>projective_plane_data.coincident dPoints dLines dincid A B D" 
+    using abcd_def 2 dual_collinear_is_coincident
+    by (simp add: dLdef dPdef dm projective_plane_data.coincident_def projective_plane_data.pcollinear_def)
+  have non_coincid_3: "\<not>projective_plane_data.coincident dPoints dLines dincid A C D" 
+    using abcd_def 2 dual_collinear_is_coincident
+    by (simp add: dLdef dPdef dm projective_plane_data.coincident_def projective_plane_data.pcollinear_def)
+  have non_coincid_4: "\<not>projective_plane_data.coincident dPoints dLines dincid B C D" 
+    using abcd_def 2 dual_collinear_is_coincident
+    by (simp add: dLdef dPdef dm projective_plane_data.coincident_def projective_plane_data.pcollinear_def)
+
+  have abcd_cquadrilateral: "projective_plane.cquadrilateral dPoints dLines dincid A B C D" 
+    using non_coincid_1 non_coincid_2 non_coincid_3 non_coincid_4 dLdef dPdef dm P7_def p7 projective_dual projective_plane.cquadrilateral_def 
+    by fastforce
+
+
+  (*Incomplete proof idea: show that the extra points in cquadrangle correspond to the extra lines in cquadrilateral, 
+  then use collinear \<rightarrow> coincident in dual to show that they not coincident
+  *)
+  have 3: "projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D = projective_plane.cquadrilateral_lines_1 dPoints dLines dincid A B C D"
+    using abcd_cquadrilateral sorry
+  have 4: "projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D = projective_plane.cquadrilateral_lines_2 dPoints dLines dincid A B C D"
+    using abcd_cquadrilateral sorry
+  have 5: "projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D = projective_plane.cquadrilateral_lines_3 dPoints dLines dincid A B C D"
+    using abcd_cquadrilateral sorry
+
+  have "\<not>projective_plane_data.coincident dPoints dLines dincid
+      (projective_plane.cquadrilateral_lines_1 dPoints dLines dincid A B C D)
+      (projective_plane.cquadrilateral_lines_1 dPoints dLines dincid A B C D)
+      (projective_plane.cquadrilateral_lines_1 dPoints dLines dincid A B C D)" 
+    using dual_collinear_is_coincident 3 4 5 sorry
+
+  then show ?thesis sorry 
 end
 
 
