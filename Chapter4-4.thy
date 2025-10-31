@@ -284,6 +284,48 @@ proof-
   show ?thesis using h2 h3 h4 by auto
 qed
 
+lemma (in projective_plane) perspectivity_hquad_to_hquad:
+  fixes A B C D f
+  assumes ABCD_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> harmonic_quadruple A B C D"
+  assumes data_def: "Q \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
+  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes ABCD'_def: "A' = f A \<and> B' = f B \<and> C' = f C \<and> D' = f D"
+  shows "harmonic_quadruple A' B' C' D'"
+proof -
+   have A'_def: "A' = (perspectivity Q l1 l2) A" 
+    and B'_def: "B' = (perspectivity Q l1 l2) B"
+    and C'_def: "C' = (perspectivity Q l1 l2) C"
+    and D'_def: "D' = (perspectivity Q l1 l2) D"
+    using f_def ABCD'_def sorry
+
+  have A'_on_l2: "A' \<in> Points \<and> A' \<lhd> l2"
+    and B'_on_l2: "B' \<in> Points \<and> B' \<lhd> l2"
+    and C'_on_l2: "C' \<in> Points \<and> C' \<lhd> l2"
+    and D'_on_l2: "D' \<in> Points \<and> D' \<lhd> l2"
+    using A'_def B'_def C'_def D'_def ABCD_def sorry
+
+  let ?l'' = "join A B'"
+
+  let ?X = "meet (join B C') (join Q A)"
+
+  have X_on_OA: "?X \<in> Points \<and> ?X \<lhd> (join Q A)"
+    and X_on_BC': "?X \<in> Points \<and> ?X \<lhd> (join B C')"
+    using join_properties1 meet_properties2 sorry
+
+  have "meet (join X B') ?l'' = D"
+  proof -
+    have "C \<in> Points \<and> C \<lhd> (join Q C')"
+      using C'_def perspectivity_def join_properties1 join_properties2 meet_properties2 sorry
+
+    have "meet (join ?X B') ?l'' = D"
+      using ABCD_def A'_def B'_def C'_def D'_def sorry
+    thus ?thesis sorry
+  qed
+  thus ?thesis sorry
+qed
+
+
+
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
 lemma (in projective_plane) projectivity_hquad_to_hquad:
   fixes A B C D f
