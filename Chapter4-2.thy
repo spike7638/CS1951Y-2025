@@ -27,7 +27,6 @@ definition (in projective_plane) cquadrangle_points :: "'p \<Rightarrow> 'p \<Ri
 
 
 
-
 definition (in projective_plane) cquadrangle_points_diag_1 :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p"
   where "cquadrangle_points_diag_1 A B C D = (if (cquadrangle A B C D) 
   then(meet (join B C) (join A D))
@@ -52,6 +51,28 @@ definition P7 :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow
             (projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D)
             (projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D))))"
 
+locale projective_plane_7 = projective_plane  Points Lines incid
+  for Points Lines incid + 
+  assumes
+  p7: "(cquadrangle A B C D) \<Longrightarrow> \<not> (pcollinear ((B\<bar>C) \<sqdot> (A\<bar>D)) ((A\<bar>C) \<sqdot> B\<bar>D) ((A\<bar>B) \<sqdot> C\<bar>D))"
+begin
+end
+
+
+locale projective_plane_5_7 = projective_plane_7 Points Lines incid
+  for Points Lines incid + 
+  assumes
+  p5:"\<lbrakk>U \<in> Points; A \<in> Points; B \<in> Points; C \<in> Points; 
+    A' \<in> Points; B' \<in> Points; C' \<in> Points;
+    distinct7 U A B C A' B' C';
+    pcollinear A A' U; pcollinear B B' U; pcollinear C C' U;
+    \<not>pcollinear A B C; \<not>pcollinear A' B' C'; 
+    join A B \<noteq> join A' B'; join A C \<noteq> join A' C'; join B C \<noteq> join B' C';
+    P = meet (join A B) (join A' B');
+    Q = meet (join A C) (join A' C');
+    R = meet (join B C)  (join B' C')\<rbrakk> \<Longrightarrow> pcollinear P Q R"
+begin
+end
 
 (*
 theorem rp2_P7:
@@ -168,6 +189,62 @@ proof -
     then have E_notin_d: "\<not>(?A \<lhd> d)" 
       using A_in_ac assms D_in_bd d_point a_point f_point lines_distinct unique_meet F_in_cd by blast 
 
+theorem (in projective_plane) P7_dual:
+  fixes a b c d
+  fixes p q r
+  assumes "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines \<and> 
+            p \<in> Lines \<and> q \<in> Lines \<and> r \<in> Lines"
+  assumes "cquadrilateral a b c d"
+  assumes "[p, q, r] = cquadrilateral_lines a b c d"
+  assumes "P7 (meet b d) (meet c d) (meet a b) (meet a c)"
+  shows "\<not> (meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r)"
+  sorry
+(*
+proof (rule ccontr)
+  assume ch: "\<not>(\<not>(meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r))"
+  then have ch_alt: "meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r" by blast
+  have pqr: "p = join (meet a b) (meet c d) \<and> q = join (meet a c) (meet b d) \<and> r = join (meet a d) (meet b c)"
+    using assms by (simp add: cquadrilateral_lines_def)
+  let ?A = "meet b d"
+  let ?B = "meet c d"
+  let ?C = "meet a b"
+  let ?D = "meet a c"
+  have abcd_qd: "cquadrangle ?A ?B ?C ?D" 
+    using assms meet_of_quadrilateral_is_quadrangle[of a b c d] by blast
+  let ?E = "cquadrangle_points_diag_1 ?A ?B ?C ?D"
+  let ?F = "cquadrangle_points_diag_2 ?A ?B ?C ?D"
+  let ?G = "cquadrangle_points_diag_3 ?A ?B ?C ?D"
+  have nc_efg: "\<not> pcollinear ?E ?F ?G" using assms P7_def abcd_qd by fastforce
+  have e: "?E = meet (join (meet c d) (meet a b)) (join (meet b d) (meet a c))" using abcd_qd cquadrangle_points_diag_1_def by force
+  have f: "?F = meet (join (meet b d) (meet a b)) (join (meet c d) (meet a c))" using abcd_qd cquadrangle_points_diag_2_def by force
+  have g: "?G = meet (join (meet b d) (meet c d)) (join (meet a b) (meet a c))" using abcd_qd cquadrangle_points_diag_3_def by force
+  have ef_1: "join ?E ?F = join (meet (join (meet c d) (meet a b)) (join (meet b d) (meet a c))) 
+                        (meet (join (meet b d) (meet a b)) (join (meet c d) (meet a c)))"
+    using e f by argo
+  
+  (*fix later*)
+  then have intm: "\<not> pcollinear
+      (cquadrangle_points_diag_1 (b . d) (c . d) (a . b) (a . c)) 
+      (cquadrangle_points_diag_2 (b . d) (c . d) (a . b) (a . c)) 
+      (cquadrangle_points_diag_3 (b . d) (c . d) (a . b) (a . c))"
+    using
+      \<open>\<not> pcollinear (cquadrangle_points_diag_1 (b . d) (c . d) (a . b) (a . c)) 
+            (cquadrangle_points_diag_2 (b . d) (c . d) (a . b) (a . c)) 
+            (cquadrangle_points_diag_3 (b . d) (c . d) (a . b) (a . c))\<close>
+    by force
+
+  (*fix later*)
+  then have ef_a: "join ?E ?F = a" using assms abcd_qd ch cquadrangle_def e f g join_properties1
+        meet_properties2 pcollinear_def pqr unique_meet by (smt (verit))
+  have fg_a: "join ?F ?G = a" using assms abcd_qd ch cquadrangle_def e f g join_properties1
+        meet_properties2 pcollinear_def pqr unique_meet ef_a
+    by (smt (verit))
+  then have c_efg:"pcollinear ?E ?F ?G" using ef_a fg_a abcd_qd assms(2) cquadrangle_def cquadrilateral_def e f g
+        join_properties1 meet_properties2 pcollinear_def by (smt (verit))
+
+  then show False using c_efg nc_efg by auto
+qed
+*)
     have "\<not>(pcollinear ?D ?F ?A)" using join_DF_is_d E_notin_d 
       by (metis assms(2) ch_alt cquadrilateral_def join_properties2 lines_distinct meet_properties2)
 
