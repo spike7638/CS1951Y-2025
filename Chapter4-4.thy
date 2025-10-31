@@ -1,17 +1,20 @@
 theory "Chapter4-4"
   imports Complex_Main  "Chapter4-3" "HOL-Algebra.Group"
 begin
+
+context projective_plane
+begin
 text\<open> start at "Perspectivies and Projectivities" and go to end of chapter\<close>
 
-definition (in projective_plane) is_persp_data :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
+definition is_persp_data :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
   where "is_persp_data Or l1 l2 = (if Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines 
   then (\<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)) else undefined)"
 
-definition (in projective_plane) perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
+definition perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "perspectivity Or l1 l2 = (if (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2)
   then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
 
-lemma (in projective_plane) perspectivity_inj:
+lemma perspectivity_inj:
   fixes f Or l1 l2 P Q
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
@@ -22,7 +25,7 @@ lemma (in projective_plane) perspectivity_inj:
   using assms perspectivity_def[of Or l1 l2] is_persp_data_def[of Or l1 l2] join_properties2 meet_properties2 p1
     by (smt (verit))
  
-lemma (in projective_plane) perspectivity_surj:
+lemma perspectivity_surj:
   fixes f Or l1 l2 Q
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
@@ -40,7 +43,7 @@ proof -
   show ?thesis using h1 h2 by auto
 qed
 
-lemma (in projective_plane) perspectivity_bij:
+lemma perspectivity_bij:
   fixes f Or l1 l2
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
@@ -75,8 +78,7 @@ proof -
     using inj surj bij_betw_def by blast
 qed
 
-
-lemma (in projective_plane) perspectivity_has_inverse:
+lemma perspectivity_has_inverse:
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   shows "\<exists> g. bij_betw g {Q \<in> Points. Q \<lhd> l2} {P \<in> Points. P \<lhd> l1}"
 proof -
@@ -123,7 +125,7 @@ proof-
   have h7: "f_inv = (\<lambda>Q . if Q \<in> Points \<and> Q \<lhd> l2 then (meet (join Or Q) l1) else undefined)"
     using  *)
 
-lemma (in projective_plane) inv_is_perspectivity:
+lemma inv_is_perspectivity:
   fixes Or l1 l2 f f_inv
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
@@ -165,7 +167,7 @@ proof (rule ext)
 qed
 
 
-lemma (in projective_plane) perspectivity_of_meet_is_itself:
+lemma perspectivity_of_meet_is_itself:
   fixes f Or l1 l2 P
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   (*assumes Or_def: "Or \<in> Points"
@@ -197,7 +199,7 @@ fun (in projective_plane) projectivity :: "'p list \<Rightarrow> 'l list \<Right
   "projectivity a [] = undefined" |
   "projectivity a [v] = undefined"
 
-lemma (in projective_plane) proj_composition_is_proj:
+lemma proj_composition_is_proj:
   fixes ps ps' ls ls' f f'
   assumes f_def: "f = projectivity ps ls"
   assumes f'_def: "f' = projectivity ps' ls'"
@@ -205,7 +207,7 @@ lemma (in projective_plane) proj_composition_is_proj:
   shows "f' \<circ> f = projectivity (ps @ ps') (ls @ (tl ls'))"
   sorry
 
-definition (in projective_plane) PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
+definition PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
   where "PJ l = (if (l \<in> Lines) then
   \<lparr>carrier = {f . \<exists> ps . \<exists> ls . (f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)},
   monoid.mult = (\<circ>),
@@ -215,13 +217,13 @@ definition (in projective_plane) PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) 
 (*may need to create a projectivity identity element*)
 
 (* Proposition 4.8 Let l be a line. Then the set of projectivities of l into itself forms a group, which we will call PJ(l). *)
-lemma (in projective_plane) PJ_l_is_group:
+lemma PJ_l_is_group:
   fixes l
   assumes l_def: "l \<in> Lines"
   shows "group (PJ l)"
   sorry
 
-lemma (in projective_plane) double_non_containing_line:
+lemma double_non_containing_line:
   fixes A B l
   assumes AB_def: "A \<in> Points \<and> B \<in> Points"
   assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l"
@@ -237,7 +239,7 @@ proof-
   show ?thesis using h1 h3 by auto
 qed
 
-lemma (in projective_plane) triplet_to_triplet_diff_lines:
+lemma triplet_to_triplet_diff_lines:
   fixes A B C A' B' C' l l'
   assumes ABC_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
   assumes ABC'_def: "A' \<in> Points \<and> B' \<in> Points \<and> C' \<in> Points \<and> distinct [A', B', C']"
@@ -284,7 +286,7 @@ proof-
   show ?thesis using h2 h3 h4 by auto
 qed
 
-lemma (in projective_plane) perspectivity_hquad_to_hquad:
+lemma perspectivity_hquad_to_hquad:
   fixes A B C D f
   assumes ABCD_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> harmonic_quadruple A B C D"
   assumes data_def: "Q \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
@@ -327,7 +329,7 @@ qed
 
 
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
-lemma (in projective_plane) projectivity_hquad_to_hquad:
+lemma projectivity_hquad_to_hquad:
   fixes A B C D f
   assumes ABCD_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> C \<in> Points \<and> (harmonic_quadruple A B C D)"
   assumes f_def: "\<exists> ps . \<exists> ls . (f = projectivity ps ls)"
@@ -362,7 +364,7 @@ locale perspectivity =
      p2: "l1 \<in> Lines \<and> l2 \<in> Lines" and
      p3: "(\<not> (incid Or l1) \<and> \<not> (incid Or l2))"
 end*)
-
+end
 end
 
 
