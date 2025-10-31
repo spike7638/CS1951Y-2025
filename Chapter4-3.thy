@@ -9,7 +9,7 @@ is a complete quadrangle X,Y,Z,W such that A and B are diagonal points of the co
 This is denoted H(AB,CD) if A,B,C,D form a harmonic quadruple\<close>
 
 text\<open>\jackson \oliver\<close>
-(* WE SHOULD COMMENT THIS OUT UPON PUSH  -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
+(* WE SHOULD COMMENT THIS OUT UPON PUSH -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
 proposition (in projective_plane) P5:
   fixes A B C D E F Z P Q R (* D E F = A' B' C', Z = O *)
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points \<and>
@@ -30,7 +30,7 @@ text\<open>\done\<close>
 
 
 text\<open>\jackson \oliver\<close>
-(* WE SHOULD COMMENT THIS OUT UPON PUSH  -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
+(* WE SHOULD COMMENT THIS OUT UPON PUSH -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
 (* This is equivalent to the P5 above. I am not sure which will be easier to work with *)
 proposition (in projective_plane) P5_equivalent:
   fixes A B C D E F Z P Q R (* D E F = A' B' C', Z = O *)
@@ -52,7 +52,7 @@ text\<open>\done\<close>
 
 
 text\<open>\jackson \oliver\<close>
-(* WE SHOULD COMMENT THIS OUT UPON PUSH  -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
+(* WE SHOULD COMMENT THIS OUT UPON PUSH -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
 proposition (in projective_plane) P7:
   fixes X Y Z W::"'p"
   assumes "X \<in> Points" "Y \<in> Points" "Z \<in> Points" "W \<in> Points"
@@ -137,6 +137,16 @@ proof -
     by (smt (verit) distinct_length_2_or_more pcollinear_def unique_meet)
 qed
 
+text\<open>\jackson \oliver\<close>
+lemma (in projective_plane) incid_join_collinear:
+  fixes A B C :: "'p"
+  assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" 
+  assumes "incid A (join B C)"
+  shows "pcollinear A B C"
+proof -
+  show ?thesis using assms by (metis join_properties1 p3 pcollinear_def)
+qed
+text\<open>\done\<close>
 
 text\<open>\jackson \oliver\<close>
 lemma (in projective_plane) cquadrangle_joins_distinct:
@@ -151,17 +161,18 @@ qed
 text\<open>\done\<close>
 
 text\<open>\jackson \oliver\<close>
-lemma (in projective_plane) quadrangle_meet_implies_incid:
+lemma (in projective_plane) meet_implies_incid:
   fixes X Y Z W Q::"'p"
   assumes "X \<in> Points" "Y \<in> Points" "Z \<in> Points" "W \<in> Points" "Q \<in> Points"
-  assumes "cquadrangle X Y Z W"
+  assumes "distinct[X, Y, Z, W]"
   assumes "Q = meet (join X W) (join Y Z)"
+  assumes "(join X W) \<noteq> (join Y Z)"
 
   shows "incid Q (join X W) \<and> incid Q (join Y Z)"
 proof -
-  show ?thesis using assms meet_properties2[of "(join X W)" "(join Y Z)"] 
-    by (metis cquadrangle_joins_distinct distinct_length_2_or_more join_properties1 meet_properties2
-      quadrangle_points_distinct)
+  have 0: "incid Q (join X W)" using assms meet_properties2 join_properties1 by auto
+  have 1: "incid Q (join Y Z)" using assms meet_properties2 join_properties1 by auto
+  show ?thesis using 0 1 by auto
 qed
 text\<open>\done\<close>
 
@@ -174,30 +185,12 @@ lemma (in projective_plane) diagonal_points_distinct:
   assumes "Q = meet (join X Z) (join Y W)"
   assumes "R = meet (join X W) (join Y Z)"
   shows "distinct[P, Q, R]"
-  sorry (* sledgehammer was able to prove this but for now it is omitted to try and simplify the proof *)
-(*proof (rule ccontr)
-  assume ch: "\<not>distinct[P, Q, R]"
-  show False
-  proof -
-    have 0: "P = Q \<or> P = R \<or> Q = R" using ch by auto
-    consider 
-      (PQ) "P = Q"
-      | (PR) "P = R"
-      | (QR) "Q = R"
-      using 0 by blast
-    then show ?thesis
-    proof (cases)
-      case PQ
-      have 0: "incid P (join X Y)" using assms quadrangle_meet_implies_incid[of X Z W Y P] quadrangle_order by metis
-      have 1: "incid Q (join X Z)" 
-        using assms quadrangle_meet_implies_incid[of X Y W Z Q] 0 quadrangle_order by metis
-
-      have 2: "incid X (join X Y)" using assms 
-          by (metis distinct_length_2_or_more join_properties1 quadrangle_points_distinct)
-      have 3: "pcollinear P X Y" using 0 2 assms pcollinear_def 
-          by (smt (verit, del_insts) cquadrangle_joins_distinct join_properties1)
-      sorry
- *)
+proof -
+  show ?thesis using assms 
+  by (smt (z3) cquadrangle_joins_distinct distinct_length_2_or_more distinct_singleton join_properties1
+      meet_implies_incid quadrangle_order quadrangle_points_distinct unique_meet)
+qed
+text\<open>\done\<close>
 
 text\<open>\jackson \oliver\<close>
 lemma (in projective_plane) quadrangle_all_points_distinct:
@@ -225,26 +218,50 @@ qed
 text\<open>\done\<close>
 
 
-(*
+text\<open>\Jackson \Oliver\<close>
 lemma (in projective_plane) harmonic_and_quadrangle_all_points_distinct:
   fixes X Y Z W P Q R A B C D::"'p"
+  (* ASSUMES P7*)
   assumes "X \<in> Points" "Y \<in> Points" "Z \<in> Points" "W \<in> Points" "P \<in> Points" "Q \<in> Points" "R \<in> Points"
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
   assumes "cquadrangle X Y Z W"
-  assumes "P = meet (join X Y) (join Z W)"
-  assumes "Q = meet (join X Z) (join Y W)"
   assumes "R = meet (join X W) (join Y Z)"
   assumes "harmonic_quadruple A B C D"
   assumes "A = meet (join X Y) (join Z W)" "B = meet (join X Z) (join Y W)" 
   assumes "incid C (join X W)"  "incid D (join Y Z)"
-  shows "distinct[X, Y, Z, W, P, Q, R, C, D]"
-  sorry
-(*proof -
-  have 0: "distinct[X, Y, Z, W, P, Q, R]" using assms quadrangle_all_points_distinct by metis
+  shows "distinct[X, Y, Z, W, A, B, R, C, D]"
+ proof -
+  have 0: "distinct[X, Y, Z, W, A, B, R]" using assms quadrangle_all_points_distinct by metis
   have 1: "distinct[A, B, C, D]" using assms harmonic_quadruple_def by auto
-  have 2: "distinct[X, Y, Z, W, P, Q, R, C]" using 0 assms harmonic_quadruple_def[of A B C D] by sledgehammer
-*)
-*)
+  have 2: "distinct[X, Y, Z, W, A, B, R, C]"
+  proof (rule ccontr)
+    assume ch: "\<not>distinct[X, Y, Z, W, A, B, R, C]"
+    show False
+    proof -
+      have ch2: "C = X \<or> C = Y \<or> C = Z \<or> C = W \<or> C = A  \<or> C = B \<or> C = R" using ch 0 by auto
+      show ?thesis using assms ch2
+      by (smt (verit) cquadrangle_def[of X Y Z W] distinct_length_2_or_more harmonic_quadruple_def[of A B C D] incid_join_collinear join_properties1
+          join_properties2 meet_properties2)
+    qed
+  qed
+
+  have 3: "distinct[X, Y, Z, W, A, B, R, D]"
+  proof (rule ccontr)
+    assume ch: "\<not>distinct[X, Y, Z, W, A, B, R, D]"
+    show False
+    proof -
+      have ch2: "D = X \<or> D = Y \<or> D = Z \<or> D = W \<or> D = A  \<or> D = B \<or> D = R" using ch 0 by auto
+      show ?thesis using assms ch2 
+      by (smt (verit) cquadrangle_def[of X Y Z W] distinct_length_2_or_more harmonic_quadruple_def[of A B C D] incid_join_collinear join_properties1
+          join_properties2 meet_properties2)
+    qed
+  qed
+
+  show ?thesis using 1 2 3 by auto
+qed
+text\<open>\done\<close>
+
+
 
 text\<open>\jackson \oliver\<close>
 lemma (in projective_plane) diagonal_points_noncollinear:
@@ -257,7 +274,7 @@ lemma (in projective_plane) diagonal_points_noncollinear:
   assumes "Q = meet (join X W) (join Y Z)"
   (* We need to connect XYZW and ABCD through the definition of a harmonic quadruple*)
   (* Otherwise, we have an arbitrary harmonic quadruple and complete quadrangle that are unrelated *)
-  (* NEEDS P7  *)
+  (* Assumes P7  *)
   assumes "A = meet (join X Y) (join Z W)" "B = meet (join X Z) (join Y W)" 
   assumes "incid C (join X W)"  "incid D (join Y Z)"
   shows "\<not>(\<exists>l. l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid Q l)"
@@ -383,8 +400,40 @@ theorem (in projective_plane) p4_7a:
   (* Assume P7 *)
   assumes "harmonic_quadruple A B C D"
   shows "harmonic_quadruple C D A B"
-  sorry 
-text\<open>\done\<close>
+  sorry
+(*proof -
+   obtain l X Y Z W where harmon: "l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid C l \<and> incid D l \<and>
+    X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
+    cquadrangle X Y Z W \<and>
+    A = meet (join X Y) (join Z W) \<and> B = meet (join X Z) (join Y W) \<and>
+    incid C (join X W) \<and> incid D (join Y Z) \<and> (distinct[A,B,C,D])" using assms harmonic_quadruple_def by auto
+
+   have 0: "(join X D) \<noteq> (join C Z)" 
+   proof (rule ccontr)
+     assume ch: "\<not>(join X D) \<noteq> (join C Z)"
+     show False
+     proof -
+       have 0: "(join X D) = (join C Z)" using ch by auto
+       have 1: "incid X (join C Z)" using 0
+        by (metis assms(1) cquadrangle_def[of X Y Z W] harmon incid_join_collinear join_properties1)
+      have 2: "pcollinear C X Z" using 1 harmon assms incid_join_collinear[of X C Z] pcollinear_def by auto
+      have 3: "pcollinear C X W" using assms harmon 
+        by (metis (no_types, lifting) incid_join_collinear pcollinear_def)
+
+      have 4: "pcollinear X W Z" using harmon 2 3 collinear_helper[of C X W Z] by sledgehammer
+
+   obtain U where u: " U \<in> Points \<and> U = meet (join X D) (join C Z)" 
+     using assms harmon harmonic_and_quadrangle_all_points_distinct sledgehammer
+  obtain T where t:"T\<in>Points\<and>T=meet (join X W) (join Y Z)" using assms harmonic_and_quadrangle_all_points_distinct
+  have ncXTU: "\<not>pcollinear X T U" using u t assms by auto
+  have ncXUZ: "\<not>pcollinear X U Z" using u t assms by auto
+  have ncTUZ: "\<not>pcollinear T U Z" using u t assms by auto
+  have 0: "cquadrangle X T U Z" unfolding cquadrangle_def using u t assms by auto
+  have meetA: "incid A (join U T)" using u t 0 by auto
+  have 1: "pcollinear C D A B" using assms harmon by auto
+  show ?thesis using 1 0 P5 by auto
+   *)
+
 
 text\<open>\oliver \jackson\<close>
 text\<open>Proposition 4.7B. Inverse direction of p4_7\<close>
