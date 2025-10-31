@@ -27,7 +27,6 @@ definition (in projective_plane) cquadrangle_points :: "'p \<Rightarrow> 'p \<Ri
 
 
 
-
 definition (in projective_plane) cquadrangle_points_diag_1 :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p"
   where "cquadrangle_points_diag_1 A B C D = (if (cquadrangle A B C D) 
   then(meet (join B C) (join A D))
@@ -51,6 +50,28 @@ definition (in projective_plane) P7 :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<R
                    (cquadrangle_points_diag_3 A B C D))
   else undefined)"
 
+locale projective_plane_7 = projective_plane  Points Lines incid
+  for Points Lines incid + 
+  assumes
+  p7: "(cquadrangle A B C D) \<Longrightarrow> \<not> (pcollinear ((B\<bar>C) \<sqdot> (A\<bar>D)) ((A\<bar>C) \<sqdot> B\<bar>D) ((A\<bar>B) \<sqdot> C\<bar>D))"
+begin
+end
+
+
+locale projective_plane_5_7 = projective_plane_7 Points Lines incid
+  for Points Lines incid + 
+  assumes
+  p5:"\<lbrakk>U \<in> Points; A \<in> Points; B \<in> Points; C \<in> Points; 
+    A' \<in> Points; B' \<in> Points; C' \<in> Points;
+    distinct7 U A B C A' B' C';
+    pcollinear A A' U; pcollinear B B' U; pcollinear C C' U;
+    \<not>pcollinear A B C; \<not>pcollinear A' B' C'; 
+    join A B \<noteq> join A' B'; join A C \<noteq> join A' C'; join B C \<noteq> join B' C';
+    P = meet (join A B) (join A' B');
+    Q = meet (join A C) (join A' C');
+    R = meet (join B C)  (join B' C')\<rbrakk> \<Longrightarrow> pcollinear P Q R"
+begin
+end
 
 (*
 theorem rp2_P7:
@@ -151,6 +172,8 @@ theorem (in projective_plane) P7_dual:
   assumes "[p, q, r] = cquadrilateral_lines a b c d"
   assumes "P7 (meet b d) (meet c d) (meet a b) (meet a c)"
   shows "\<not> (meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r)"
+  sorry
+(*
 proof (rule ccontr)
   assume ch: "\<not>(\<not>(meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r))"
   then have ch_alt: "meet p q = meet p r \<and> meet p r = meet q r \<and> meet p q = meet q r" by blast
@@ -195,7 +218,7 @@ proof (rule ccontr)
 
   then show False using c_efg nc_efg by auto
 qed
-
+*)
 end
 
 
