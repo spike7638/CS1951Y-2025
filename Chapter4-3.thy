@@ -4,11 +4,64 @@ theory "Chapter4-3"
 begin
 text\<open> start at  "Harmonic points", stop just before "Perspectivies and Projectivities"\<close>
 
-
-
 text\<open>an ordered quadruple of distinct points A,B,C,D on a line is a harmonic quadruple if there is
 is a complete quadrangle X,Y,Z,W such that A and B are diagonal points of the complete quadrangle. 
 This is denoted H(AB,CD) if A,B,C,D form a harmonic quadruple\<close>
+
+text\<open>\jackson \oliver\<close>
+(* WE SHOULD COMMENT THIS OUT UPON PUSH  -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
+proposition (in projective_plane) P5:
+  fixes A B C D E F Z P Q R (* D E F = A' B' C', Z = O *)
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points \<and>
+           F \<in> Points \<and> Z \<in> Points \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
+  assumes "distinct [A, B, C, D, E, F, Z]" 
+  assumes "\<not>pcollinear A B C"
+  assumes "\<not>pcollinear D E F"
+  assumes "P = meet (join A B) (join D E)"
+  assumes "Q = meet (join B C) (join E F)"
+  assumes "R = meet (join A C) (join D F)"
+  assumes "incid Z (join A D)"
+  assumes "incid Z (join B E)"
+  assumes "incid Z (join C F)"
+  
+  shows "pcollinear P Q R"
+  sorry
+text\<open>\done\<close>
+
+
+text\<open>\jackson \oliver\<close>
+(* WE SHOULD COMMENT THIS OUT UPON PUSH  -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
+(* This is equivalent to the P5 above. I am not sure which will be easier to work with *)
+proposition (in projective_plane) P5_equivalent:
+  fixes A B C D E F Z P Q R (* D E F = A' B' C', Z = O *)
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points \<and>
+           F \<in> Points \<and> Z \<in> Points \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
+  assumes "distinct [A, B, C, D, E, F, Z]" 
+  assumes "\<not>pcollinear A B C"
+  assumes "\<not>pcollinear D E F"
+  assumes "P = meet (join A B) (join D E)"
+  assumes "Q = meet (join B C) (join E F)"
+  assumes "R = meet (join A C) (join D F)"
+  assumes "pcollinear Z A D"
+  assumes "pcollinear Z B E"
+  assumes "pcollinear Z C F"
+  
+  shows "pcollinear P Q R"
+  sorry
+text\<open>\done\<close>
+
+
+text\<open>\jackson \oliver\<close>
+(* WE SHOULD COMMENT THIS OUT UPON PUSH  -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
+proposition (in projective_plane) P7:
+  fixes X Y Z W::"'p"
+  assumes "X \<in> Points" "Y \<in> Points" "Z \<in> Points" "W \<in> Points"
+  assumes "cquadrangle X Y Z W"
+  shows "\<not> pcollinear  (meet (join Y Z) (join X W))
+                       (meet (join X Z) (join Y W))
+                       (meet (join X Y) (join Z W))"
+  sorry
+text\<open>\done\<close>
 
 text\<open>\jackson \oliver\<close>
 lemma (in projective_plane) quadrangle_order:
@@ -204,71 +257,89 @@ lemma (in projective_plane) diagonal_points_noncollinear:
   assumes "Q = meet (join X W) (join Y Z)"
   (* We need to connect XYZW and ABCD through the definition of a harmonic quadruple*)
   (* Otherwise, we have an arbitrary harmonic quadruple and complete quadrangle that are unrelated *)
+  (* NEEDS P7  *)
   assumes "A = meet (join X Y) (join Z W)" "B = meet (join X Z) (join Y W)" 
   assumes "incid C (join X W)"  "incid D (join Y Z)"
   shows "\<not>(\<exists>l. l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid Q l)"
-  sorry
-(*proof (rule ccontr)
+proof (rule ccontr)
   assume ch: "\<not>\<not>(\<exists>l. l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid Q l)"
   show False
   proof -
     have 0: "(\<exists>l. l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid Q l)" using ch by auto
     (* diag_l is the line containing the three diagonal points of quadrangle XYZW *)
     obtain diag_l where 1: "diag_l \<in> Lines \<and> incid A diag_l \<and> incid B diag_l \<and> incid Q diag_l" using 0 by auto
-    (* harmonic_l is the line containing the four harmonic points ABCD *)
-    obtain harmonic_l where 2: "harmonic_l \<in> Lines \<and> 
-         incid A harmonic_l \<and> incid B harmonic_l \<and> incid C harmonic_l \<and> incid D harmonic_l"
-         using assms harmonic_quadruple_def by auto
-       have 3: "incid Q (join X W)" and 4: "incid Q (join Y Z)" using assms quadrangle_meet_implies_incid by auto
-       have 5: "pcollinear Q W C" unfolding pcollinear_def using assms 3
-         by (metis distinct_length_2_or_more join_properties1 quadrangle_points_distinct)
 
-       have 6: "distinct[X, Y, Z, W, A, B, Q]" using quadrangle_all_points_distinct assms by metis
+    have 2: "\<not>pcollinear Q B A" using assms P7[of X Y Z W] by (smt (verit, ccfv_threshold) meet_def meet_properties2 unique_meet)
+    show ?thesis using 0 1 2 assms P7[of X Y Z W] pcollinear_def by auto
+  qed
+qed
+text\<open>\done\<close>
 
-       (* Now we have repeated use of collinearities to reach the contradiction *)
-       have 7: "pcollinear A B Q" unfolding pcollinear_def using 0 assms by metis
-       have 8: "pcollinear A B C" unfolding pcollinear_def using assms harmonic_quadruple_def by metis
-       have 9: "pcollinear A C Q" using 7 8 collinear_helper 
-         by (smt (verit, best) 6 assms(2) distinct_length_2_or_more pcollinear_def unique_meet)
-       have 10: "pcollinear Q C A" using pcollinear_def 9 by auto
-       have 11: "pcollinear Q C W" using pcollinear_def 5 by auto
-       have 12: "pcollinear Q A W" using assms 6 10 11 collinear_helper[of Q C A W] 
-         by (smt (verit) distinct_length_2_or_more harmonic_quadruple_def join_properties1 pcollinear_def
-             quadrangle_meet_implies_incid quadrangle_order unique_meet)
+text\<open>\jackson \oliver\<close>
+theorem (in projective_plane) harmonic_swap_first_pair:
+  fixes A B C D::"'p"
+  assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
+  assumes "harmonic_quadruple A B C D"
+  shows "harmonic_quadruple B A C D"
+proof -
+ obtain l X Y Z W where harmon: "l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid C l \<and> incid D l \<and>
+    X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
+    cquadrangle X Y Z W \<and>
+    A = meet (join X Y) (join Z W) \<and> B = meet (join X Z) (join Y W) \<and>
+    incid C (join X W) \<and> incid D (join Y Z) \<and> (distinct[A,B,C,D])" using assms harmonic_quadruple_def by auto
 
-*)
-     
-       
+      have 1: "cquadrangle X Z Y W" using harmon quadrangle_order by auto
+      have 2: "B = meet (join X Z) (join Y W)" using harmon by auto
+      have 3: "A = meet (join X Y) (join Z W)" using harmon by auto
+      
+
+      show ?thesis unfolding harmonic_quadruple_def using assms 1 2 3 harmon
+        by (smt (verit, ccfv_threshold) distinct_length_2_or_more join_properties1 join_properties2)
+    qed
+text\<open>\done\<close>
+
+text\<open>\jackson \oliver\<close>
+theorem (in projective_plane) harmonic_swap_second_pair:
+  fixes A B C D::"'p"
+  assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
+  assumes "harmonic_quadruple A B C D"
+  shows "harmonic_quadruple A B D C"
+proof -
+ obtain l X Y Z W where harmon: "l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid C l \<and> incid D l \<and>
+    X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
+    cquadrangle X Y Z W \<and>
+    A = meet (join X Y) (join Z W) \<and> B = meet (join X Z) (join Y W) \<and>
+    incid C (join X W) \<and> incid D (join Y Z) \<and> (distinct[A,B,C,D])" using assms harmonic_quadruple_def by auto
+
+  have 1: "cquadrangle Y X W Z" using harmon quadrangle_order by auto
+  have 2: "incid C (join X W)" using harmon by auto
+  have 3: "incid D (join Y Z)" using harmon by auto
+      
+
+  show ?thesis unfolding harmonic_quadruple_def using assms 1 2 3 harmon 
+    by (smt (z3) distinct_length_2_or_more join_properties1 meet_properties2 quadrangle_points_distinct unique_meet)
+qed 
+text\<open>\done\<close>
+
 
 text\<open>Proposition 4.5. $H(AB,CD)\iff H(BA,CD)\iff H(AB,DC)\iff H(BA,DC).$\<close>
 text\<open>\jackson \oliver\<close>
 theorem (in projective_plane) p4_5:
   fixes A B C D::"'p"
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
- (* assume P7, which is already a theorem in 4.2 *)
+ (* assume P7 *)
   shows "harmonic_quadruple A B C D \<longleftrightarrow> 
          harmonic_quadruple B A C D \<and>
          harmonic_quadruple B A C D \<longleftrightarrow> 
          harmonic_quadruple A B D C \<and>
          harmonic_quadruple A B D C \<longleftrightarrow> 
          harmonic_quadruple B A D C"
-  sorry
-(* proof -
+proof -
+  show ?thesis using assms harmonic_swap_first_pair harmonic_swap_second_pair by blast
+qed
+text\<open>\done\<close>
 
-  have 0: "harmonic_quadruple A B C D \<Longrightarrow> harmonic_quadruple B A C D"
-  proof -
-    assume assms1: "harmonic_quadruple A B C D"
-    show "harmonic_quadruple B A C D"
-    proof -
-      obtain l X Y Z W where harmon: 
-      show ?thesis unfolding harmonic_quadruple_def using assms assms1 by sledgehammer
-
-  have 1: "harmonic_quadruple A B C D \<longleftrightarrow> 
-         harmonic_quadruple B A C D" 
-    sorry
-*)
-
-
+    
 text\<open>Proposition 4.6. A,B,C are distinct points on a line. Assume p7. There's a point D such that
 H(AB,CD). Also, assuming P5, D is unique.\<close>
 
@@ -280,10 +351,10 @@ theorem (in projective_plane) p4_6_existence:
   assumes "l\<in>Lines"
   assumes "incid A l" and "incid B l" and "incid C l"
   assumes "distinct [A,B,C]"
-  assumes p7 (*comes from 4_2*)
-  shows "\<exists>D. D\<in>Points\<and>harmonic_quadruple A B C D"
+  (* Assume P7 *)
+  shows "\<exists>D. D \<in> Points \<and> harmonic_quadruple A B C D"
   sorry
-text\<open>\done\<close>
+
 
 text\<open>\jackson \oliver\<close>
 theorem (in projective_plane) p4_6_uniqueness:
@@ -292,23 +363,24 @@ theorem (in projective_plane) p4_6_uniqueness:
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points"
   assumes "l\<in>Lines"
   assumes "incid A l" and "incid B l" and "incid C l"
-  assumes p7
+  (* Assume P5 *)
+  (* Assume P7 *)
   assumes "harmonic_quadruple A B C D"
-  assumes p5
   assumes "harmonic_quadruple A B C E"
   shows "D=E"
   sorry 
-text \<open>\done\<close>
+
 
 text\<open>Definition: fourth harmonic point of A,B,C is the D satisfying 4.6.\<close>
 
 text\<open>\oliver \jackson\<close>
 text\<open>Proposition 4.7. AB,CD are four harmonic points. Assuming P5, then CD,AB are four harmonic
 points.\<close>
-theorem (in projective_plane) p4_7:
+theorem (in projective_plane) p4_7a:
   fixes A B C D ::"'p"
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points"
-  assumes p5
+  (* Assume P5 *)
+  (* Assume P7 *)
   assumes "harmonic_quadruple A B C D"
   shows "harmonic_quadruple C D A B"
   sorry 
@@ -319,10 +391,11 @@ text\<open>Proposition 4.7B. Inverse direction of p4_7\<close>
 theorem (in projective_plane) p4_7b:
   fixes A B C D::"'p"
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
-  assumes p5
+  (* Assume P5 *)
+  (* Assume P7 *)
   shows "harmonic_quadruple A B C D\<longleftrightarrow>harmonic_quadruple C D A B"
 proof -
-  show ?thesis using p4_7 assms by blast
+  show ?thesis using p4_7a assms by blast
 qed
 text\<open>\done\<close>
 
@@ -331,7 +404,8 @@ text\<open>Proposition 4.7C. The really big implication after Proposition 4.7. H
 theorem (in projective_plane) p4_7c:
   fixes A B C D::"'p"
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
-  assumes p5
+  (* Assume P5 *)
+  (* Assume P7 *)
   shows "harmonic_quadruple D C B A \<longleftrightarrow>
          harmonic_quadruple C D B A \<and>
          harmonic_quadruple C D B A \<longleftrightarrow>
