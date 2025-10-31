@@ -5,7 +5,10 @@ begin
 text\<open> start at  "Harmonic points", stop just before "Perspectivies and Projectivities"\<close>
 
 
-
+text \<open>Note that everything from here on doesn't really make sense unless we add P7, so 
+let's work in that locale for the rest of this theory. \<close>
+context projective_plane_7
+begin
 text\<open>an ordered quadruple of distinct points A,B,C,D on a line is a harmonic quadruple if there is
 is a complete quadrangle X,Y,Z,W such that A and B are diagonal points of the complete quadrangle. 
 This is denoted H(AB,CD) if A,B,C,D form a harmonic quadruple\<close>
@@ -286,6 +289,7 @@ theorem (in projective_plane) p4_6_existence:
 text\<open>\done\<close>
 
 text\<open>\jackson \oliver\<close>
+(* comment from jfh: you also need to assume P5 for this to be true! *)
 theorem (in projective_plane) p4_6_uniqueness:
   fixes A B C D E ::"'p"
   fixes l :: "'l"
@@ -350,6 +354,6 @@ proof -
   show ?thesis using assms p4_7b p4_5 by (smt (z3))
 qed
 text\<open>\done\<close>
-
+end
 end
 
