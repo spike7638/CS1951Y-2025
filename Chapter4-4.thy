@@ -129,17 +129,15 @@ lemma inv_is_perspectivity:
   fixes Or l1 l2 f f_inv
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
-  assumes f_inv_def: "\<And>P. P \<in> Points \<and> P \<lhd> l1 \<Longrightarrow> f_inv (f P) = P"
+  (* assumes f_inv_def: "\<And>P. P \<in> Points \<and> P \<lhd> l1 \<Longrightarrow> f_inv (f P) = P" *)
+  assumes f_inv_def: "\<And>P. (if P \<in> Points \<and> P \<lhd> l1 then (f_inv (f P) = P) else (f_inv (f P) = undefined))" 
   shows "f_inv = perspectivity Or l2 l1"
 proof (rule ext)
   fix Q :: 'p
   show "f_inv Q = perspectivity Or l2 l1 Q"
   proof (cases "Q \<in> Points \<and> Q \<lhd> l2")
     case False
-    then show ?thesis
-      using perspectivity_def data_def f_def
-      (* this should be simple but I don't see why it isn't getting it by sledgehammer *)
-      sorry
+    then show ?thesis by sledgehammer
   next
     case True
     then obtain P where P_props: "P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q"
@@ -192,27 +190,117 @@ qed
 (* Definition. A projectivity is a mapping of one line l into another l\<Zprime> (which may be equal to l), which can be expressed as a composition of perspectivities. 
 We write l Z l\<Zprime>, and write ABC . . . Z A\<Zprime>B\<Zprime>C\<Zprime> . . . if the projectivity that takes  points A, B, C, . . . into A\<Zprime>, B\<Zprime>, C\<Zprime>, . . . respectively. 
 Note that a projectivity also is always one-to-one and onto. *)
-fun (in projective_plane) projectivity :: "'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)" where
+fun projectivity :: "'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)" where
   "projectivity (Cons p []) (Cons l1 (Cons l2 [])) = (perspectivity p l1 l2)" |
   "projectivity (Cons p ps) (Cons l1 (Cons l2 ls)) = (projectivity ps (Cons l2 ls)) \<circ> (perspectivity p l1 l2)" |
   "projectivity [] b = undefined" |
   "projectivity a [] = undefined" |
   "projectivity a [v] = undefined"
+(*
+fun composition :: "'p list \<Rightarrow> 'l list \<Rightarrow> 'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)"
+  where "composition ps ls ps' ls' = (if projectivity ps ls \<noteq> undefined \<and> projectivity ps' ls' \<noteq> undefined \<and>
+  last ls = hd ls' then projectivity (ps @ ps') (ls @ (tl ls')) else undefined)"
 
+fun composition :: "(('p \<Rightarrow> 'p)) \<Rightarrow> (('p \<Rightarrow> 'p)) \<Rightarrow> ('p \<Rightarrow> 'p)"
+  where "composition (projectivity ps ls) (projectivity ps' ls') = (if last ls = hd ls' then
+  projectivity (ps @ ps') (ls @ (tl ls')) else undefined)"
+
+fun composition :: "(('p \<Rightarrow> 'p)) \<Rightarrow> (('p \<Rightarrow> 'p)) \<Rightarrow> ('p \<Rightarrow> 'p)"
+  where "composition f f' = (if \<exists> ps ls ps' ls' . f = projectivity ps ls \<and> f \<noteq> undefined \<and> 
+  f' = projectivity ps' ls' \<and> f' \<noteq> undefined \<and> last ls = hd ls' then
+  projectivity (ps @ ps') (ls @ (tl ls')) else undefined)"
+*)
+(*
 lemma proj_composition_is_proj:
   fixes ps ps' ls ls' f f'
   assumes f_def: "f = projectivity ps ls"
   assumes f'_def: "f' = projectivity ps' ls'"
   assumes ls_ls'_def: "last ls = hd ls'"
   shows "f' \<circ> f = projectivity (ps @ ps') (ls @ (tl ls'))"
-  sorry
+  sorry*)
 
 definition PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
   where "PJ l = (if (l \<in> Lines) then
   \<lparr>carrier = {f . \<exists> ps . \<exists> ls . (f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)},
   monoid.mult = (\<circ>),
-  one = (\<lambda>Q. Q)\<rparr> 
+  one = (\<lambda>P. if P \<in> Points \<and> P \<lhd> l then P else undefined)\<rparr> 
   else undefined)"
+
+lemma PJ_carrier [simp]:
+  fixes l
+  assumes "l \<in> Lines"
+  shows "carrier (PJ l) = {f . \<exists> ps . \<exists> ls . 
+                            (f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)}"
+  using PJ_def assms by auto
+
+lemma PJ_mult [simp]:
+  fixes l
+  fixes f g :: "'p \<Rightarrow> 'p"
+  assumes "l \<in> Lines"
+  shows "monoid.mult (PJ l) f g = f \<circ> g" 
+  unfolding PJ_def using assms by auto
+
+lemma PJ_one [simp]:
+  fixes l
+  assumes "l \<in> Lines"
+  shows "one (PJ l) = (\<lambda>P. if P \<in> Points \<and> P \<lhd> l then P else undefined)" 
+  unfolding PJ_def using assms by auto
+
+lemma unique_meet:
+  fixes Or l P
+  assumes "l \<in> Lines"
+  assumes "Or \<in> Points \<and> \<not> Or \<lhd> l"
+  assumes "P \<in> Points \<and> P \<lhd> l"
+  shows "meet (join Or P) l = P"
+  sorry
+
+(*
+lemma
+  fixes l
+  assumes l_def "l \<in> Lines"
+  shows PJ_inv [simp]: "A  \<in> carrier (PJ l) \<Longrightarrow> inv\<^bsub>(PJ l)\<^esub> A = matrix_inv A"
+*)
+lemma
+  fixes l
+  assumes "l \<in> Lines"
+  shows PJ_group: "group (PJ l)"
+proof -
+  show "group (PJ l)"
+  proof (unfold_locales, goal_cases)
+    case (1 x y)
+    then show ?case unfolding PJ_def sorry
+  next
+    case (2)
+    show ?case using assms by auto
+  next
+    case 3
+    obtain Or where Or_def: "Or \<in> Points \<and> \<not> Or \<lhd> l" using p3 pcollinear_def assms by fastforce
+    let ?f = "perspectivity Or l l"
+    have h1a: "?f = projectivity (Cons Or []) (Cons l (Cons l []))" by auto
+    have h1b: "\<exists> ps . \<exists> ls . (?f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l)"
+      using h1a by (metis last.simps list.sel(1))
+    have h1c: "?f \<in> carrier (PJ l)" using h1a h1b assms by auto
+
+    have h2: "P \<in> Points \<and> P \<lhd> l \<longrightarrow> meet (join Or P) l = P" for P 
+      using unique_meet Or_def assms by auto
+    have h3: "P \<in> Points \<and> P \<lhd> l \<longrightarrow> ?f P = P" for P 
+      using Or_def assms is_persp_data_def perspectivity_of_meet_is_itself by auto
+    have h4: "\<not>(P \<in> Points \<and> P \<lhd> l) \<longrightarrow> ?f P = undefined" for P 
+      using perspectivity_def[of Or l l] Or_def assms is_persp_data_def by force
+    have h5: "?f = (\<lambda>P. if P \<in> Points \<and> P \<lhd> l then P else undefined)" using h3 h4 by auto
+    have h6: "?f = one (PJ l)" using h5 assms by auto
+    show ?case using h1c h6 by force
+  next
+    case (4 x)
+    then show ?case sorry
+  next
+    case (5 x)
+    then show ?case sorry
+  next
+    case 6
+    then show ?case sorry
+  qed
+qed
 
 (*may need to create a projectivity identity element*)
 
