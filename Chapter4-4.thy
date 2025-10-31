@@ -40,7 +40,56 @@ proof -
   show ?thesis using h1 h2 by auto
 qed
 
-lemma (in projective_plane) inv_is_perspectivity:
+lemma (in projective_plane) perspectivity_bij:
+  fixes f Or l1 l2
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
+  assumes f_def: "f = perspectivity Or l1 l2"
+  shows "bij_betw f {P \<in> Points. P \<lhd> l1} {Q \<in> Points. Q \<lhd> l2}"
+proof -
+  have inj: "inj_on f {P \<in> Points. P \<lhd> l1}"
+    using perspectivity_inj assms inj_on_def by (smt (verit, best)
+    mem_Collect_eq)
+
+  have surj: "f ` {P \<in> Points. P \<lhd> l1} = {Q \<in> Points. Q \<lhd> l2}"
+  proof
+    show "f ` {P \<in> Points. P \<lhd> l1} \<subseteq> {Q \<in> Points. Q \<lhd> l2}"
+      using assms perspectivity_def is_persp_data_def
+      by (smt (verit, del_insts) imageE
+    join_properties1 meet_properties2
+    mem_Collect_eq subsetI)
+  next
+    show "{Q \<in> Points. Q \<lhd> l2} \<subseteq> f ` {P \<in> Points. P \<lhd> l1}"
+    proof
+      fix x assume "x \<in> {Q \<in> Points. Q \<lhd> l2}"
+      then have h: "x \<in> Points \<and> x \<lhd> l2"
+        using mem_Collect_eq by auto
+
+      from h obtain P where "P \<in> Points \<and> P \<lhd> l1 \<and> f P = x"
+        using perspectivity_surj assms by blast
+
+      thus "x \<in> f ` {P \<in> Points. P \<lhd> l1}"
+        by blast
+    qed
+  qed
+  show ?thesis
+    using inj surj bij_betw_def by blast
+qed
+
+
+lemma (in projective_plane) perspectivity_has_inverse:
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
+  shows "\<exists> g. bij_betw g {Q \<in> Points. Q \<lhd> l2} {P \<in> Points. P \<lhd> l1}"
+proof -
+  let ?f = "perspectivity Or l1 l2"
+  from perspectivity_bij[OF data_def refl]
+  obtain g where "g = inv_into {P \<in> Points. P \<lhd> l1} ?f"
+    by blast
+  thus ?thesis using
+    \<open>bij_betw (perspectivity Or l1 l2) {P \<in> Points. P \<lhd> l1} {Q \<in> Points. Q \<lhd> l2}\<close>
+    bij_betw_inv_into by blast
+qed
+
+(* lemma (in projective_plane) inv_is_perspectivity:
   fixes Or l1 l2 f f_inv
   assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
   (*assumes Or_def: "Or \<in> Points \<and> \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2)"
@@ -72,7 +121,49 @@ proof-
     by (smt (verit))
   show ?thesis using h6 perspectivity_def[of Or l2 l1] by sledgehammer
   have h7: "f_inv = (\<lambda>Q . if Q \<in> Points \<and> Q \<lhd> l2 then (meet (join Or Q) l1) else undefined)"
-    using 
+    using  *)
+
+lemma (in projective_plane) inv_is_perspectivity:
+  fixes Or l1 l2 f f_inv
+  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
+  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes f_inv_def: "\<And>P. P \<in> Points \<and> P \<lhd> l1 \<Longrightarrow> f_inv (f P) = P"
+  shows "f_inv = perspectivity Or l2 l1"
+proof (rule ext)
+  fix Q :: 'p
+  show "f_inv Q = perspectivity Or l2 l1 Q"
+  proof (cases "Q \<in> Points \<and> Q \<lhd> l2")
+    case False
+    then show ?thesis
+      using perspectivity_def data_def f_def
+      (* this should be simple but I don't see why it isn't getting it by sledgehammer *)
+      sorry
+  next
+    case True
+    then obtain P where P_props: "P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q"
+      using perspectivity_surj[OF data_def f_def True] by blast
+
+    from P_props have "f_inv Q = P"
+      using f_inv_def P_props by blast
+
+    moreover have "perspectivity Or l2 l1 Q = P"
+    proof -
+      have persp_Q: "perspectivity Or l2 l1 Q = meet l1 (join Or Q)"
+        using perspectivity_def data_def True by (smt (verit, del_insts)
+    is_persp_data_def join_properties1
+    meet_properties2 s)
+
+      moreover from P_props have "P = meet l1 (join Or Q)"
+        using data_def P_props join_properties1 join_properties2 meet_properties2
+        unfolding is_persp_data_def perspectivity_def f_def
+        by smt
+      ultimately show ?thesis by simp
+    qed
+
+    ultimately show ?thesis by simp
+  qed
+qed
+
 
 lemma (in projective_plane) perspectivity_of_meet_is_itself:
   fixes f Or l1 l2 P
