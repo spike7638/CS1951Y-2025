@@ -131,8 +131,10 @@ theorem (in projective_plane) quadrilateral_lines_distinct:
   fixes a b c d
   assumes "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines"
   assumes "cquadrilateral a b c d"
-  shows "a \<noteq> b \<and> a \<noteq> c \<and> a \<noteq> d \<and> b \<noteq> c \<and> b \<noteq> d \<and> c \<noteq> d"
-  sorry
+  shows "distinct4 a b c d"
+proof - 
+  show ?thesis using  assms(2) coincident_def cquadrilateral_def distinct4_def p2 by metis
+qed
 
 theorem (in projective_plane) meet_of_quadrilateral_is_quadrangle:
   fixes a b c d
@@ -326,22 +328,6 @@ qed
   qed
 
 *)
-
-lemma (in projective_plane_data) meet_comm: 
-  fixes a b
-  assumes "a \<in> Lines \<and> b \<in> Lines"
-  shows "meet a b = meet b a"
-proof - 
-  show ?thesis unfolding projective_plane_data.meet_def using assms sorry
-qed
-
-lemma (in projective_plane_data) join_comm: 
-  fixes A B
-  assumes "A \<in> Points \<and> B \<in> Points"
-  shows "join A B = join B A"
-proof - 
-  show ?thesis unfolding projective_plane_data.join_def using assms sorry
-qed
 
 theorem dual_collinear_is_coincident:
   fixes Points :: "'p set"
