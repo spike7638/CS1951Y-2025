@@ -5,8 +5,9 @@ theory "Z3-1"
          "HOL-Analysis.Cartesian_Space"
          "HOL-Analysis.Finite_Cartesian_Product"
          "HOL-Analysis.Determinants"
-          "HOL-Analysis.Cross3"
-          "Chapter1-2"
+         "HOL-Analysis.Cross3"
+         "Chapter1-2"
+         "Chapter1-3"
 begin
 
 
@@ -111,7 +112,7 @@ with a subscript R.
 (* We're going to need cross and dot-products *)
 unbundle cross3_syntax
 
-(*
+text \<open>
 type_synonym v3 = "real^3"
 
 definition zvec where "zvec = ((vector[0, 0, 0])::real^3)"
