@@ -390,7 +390,8 @@ proof -
     | "C = A'" | "C = C'" | "A' = C'" | "U = D" | "A = D" | "D = C'" 
     | "D = C" | "U = D'" | "A = D'"  | "D = A'" | "D = D'"  | "C = D'" 
     | "A' = D'" | "D' = C'" unfolding distinct7_def  by fastforce
-    then show False using assms apply cases 
+    then show False using assms unfolding distinct7_def 
+      apply cases 
     apply simp+ using S1a ddef nubx xdef unfolding collinear_def
     apply metis using assms S1a S1b S2a ddef in_mono
       two_point_line_in_plane xdef   unfolding distinct7_def  apply (smt (verit))
@@ -398,7 +399,7 @@ proof -
       two_point_line_in_plane xdef apply (smt (verit))
     using assms S1a S1b S2a ddef in_mono
       two_point_line_in_plane xdef apply (smt (verit))
-    using und' unfolding distinct7_def  apply simp sorry
+    using und' unfolding distinct7_def  apply (simp) sorry
   qed
   have dd'u: "collinear D D' U" using assms S1a ddef d'def IntE
     unfolding collinear_def by metis
@@ -1450,32 +1451,8 @@ proof (rule ccontr)
   then have "\<not> (pcollinear uP uQ uR)" using assms by blast
   then have jj: "\<not> (\<exists>s\<in> Lines. incid uP s \<and> incid uQ s \<and> incid uR s)" 
     using upqr_def assms(4) in_mono pcollinear_def using assms(3) by fastforce
-  show False using  bexE configuration.base_in_base configuration.fppincid.simps(1) configuration_def distinct3_def empty_iff insertCI upqr_def by sledgehammer
-
-(*  show False using  \<open>\<not> pcollinear uP uQ uR\<close> configuration.base_in_base configuration.fppincid.simps(1) configuration_def empty_iff upqr_def by sledgehammer *)
-  then have "\<not> (\<exists>m\<in>Pi_lines. fppincid (Base_point uP) m \<and> fppincid (Base_point uQ) m \<and> fppincid (Base_point uR) m)sorry
-(*    using non_collinear_persistence [of Points Lines incidx uP uQ uR ] assms(1,4) upqr_def by sledgehammer *)
-  then have non_co: "\<not> (\<exists>m\<in>Pi_lines. fppincid P m \<and> fppincid Q m \<and> fppincid R m)" using upqr_def by sledgehammer
-
-  (* so P, Q, R, are distinct noncollinear and not on k; use them to construct two points on k *)
-  obtain PQ where pq_def: "fppincid P PQ \<and> fppincid Q PQ \<and> PQ \<in> Pi_lines" 
-    by (metis One_nat_def \<open>{P, Q, R} \<subseteq> Pi_points\<close> add_Suc distinct_length_2_or_more fpoint.inject(1) insert_subset joining_line
-      le_add1 nat.inject p_level.simps(1) plus_1_eq_Suc upqr_def)
-  obtain PR where pr_def: "fppincid P PR \<and> fppincid R PR  \<and> PR \<in> Pi_lines" 
-    by (metis One_nat_def \<open>{P, Q, R} \<subseteq> Pi_points\<close> add_Suc distinct_length_2_or_more fpoint.inject(1) insert_subset joining_line
-      le_add1 nat.inject p_level.simps(1) plus_1_eq_Suc upqr_def)
-  obtain k1 where k1_def: "fppincid k1 PQ \<and> fppincid k1 k \<and> k1 \<in> Pi_points"
-    by (metis assms(2,3) crossing_point le0 not_k pq_def)
-  obtain k2 where k2_def: "fppincid k2 PR \<and> fppincid k2 k \<and> k2 \<in> Pi_points" 
-    by (metis assms(2,3) crossing_point k1_def less_eq_nat.simps(1) pr_def)
-  have "k1 \<noteq> k2" 
-  by (smt (verit) Diff_iff Upts_pi \<open>\<And>thesis. (\<And>PQ. fppincid P PQ \<and> fppincid Q PQ \<and> PQ \<in> Pi_lines \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close>
-      assms(1,2,4,5) ch crossing_point free_planes_unique_join nle_le non_co not_k pqr_def subset_iff)
-  then have "k1 \<noteq> k2 \<and>
-          fppincid k1 k \<and>
-          fppincid k2 k \<and> k1 \<in> Pi_points \<and> k2 \<in> Pi_points" using k1_def k2_def by blast
-  have f:False using \<open>k1 \<noteq> k2\<close> ch k1_def k2_def by blast
-  show "\<nexists>P Q. P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points \<Longrightarrow> False " using f by blast
+  show False using  bexE configuration.base_in_base configuration.fppincid.simps(1) configuration_def distinct3_def empty_iff insertCI upqr_def
+  by (smt (verit, best))
 qed
 
 
@@ -1487,8 +1464,8 @@ lemma fpp_two_points_one: (* a level-one line contains at least two points *)
   shows "\<exists> P Q . P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
 proof -
 thm line_level2 
-thm line_level2 [of k c 1] 
-  have "k \<in> new_lines 1" using assms line_level2 [of k c 1] by presburger
+thm line_level2 [of k 1] 
+  have "k \<in> new_lines 1" using assms line_level2 [of k 1] by auto
   then obtain S T where join_def: "k = Join (Upair S T) 1 \<and> S \<noteq> T" and contents: "S \<in> Pi_points \<and> T \<in> Pi_points"  using new_lines.simps
     by (smt (verit, ccfv_threshold) One_nat_def mem_Collect_eq point_containment point_set.simps(1))
   then have "fppincid S k \<and> fppincid T k \<and> S \<in> Pi_points \<and> T \<in> Pi_points"  using join_def 
@@ -1510,7 +1487,7 @@ proof -
   show ?thesis
   proof (cases "even p")
     case True
-    have False using True new_lines.simps assms(2,4) lines_odd_or_zero n2 by fastforce
+    have False using True new_lines.simps assms(1,3) lines_odd_or_zero n2 by fastforce
     then show ?thesis by auto
   next
     case False
@@ -1528,12 +1505,11 @@ proof -
 qed
 
 lemma fpp_two_points:
-  fixes CPoints::"'a set"
-  fixes CLines::"'b set"
+
   fixes  p
   assumes "k \<in> Pi_lines"
   assumes "p = l_level k"
-  assumes "U \<subseteq> CPoints"
+  assumes "U \<subseteq> Points"
   assumes "card U = 4"
   assumes imp: "\<And> P Q R . ((distinct3 P Q R) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (pcollinear P Q R)" 
   shows "\<exists> P Q . P \<noteq> Q \<and>  fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
@@ -1542,19 +1518,18 @@ proof -
   then have "\<exists> P Q . P \<noteq> Q \<and>  fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
   proof cases
     case zero
-    then show ?thesis using fpp_two_points_zero [of c CPoints CLines incidx k U] assms by auto
+    then show ?thesis using assms fpp_two_points_zero imp by presburger
   next
     case one
-    then show ?thesis using fpp_two_points_one [of c CPoints CLines incidx k] assms by auto
+    then show ?thesis using assms fpp_two_points_one imp by presburger
   next
     case many
-    then show ?thesis using fpp_two_points_two [of c CPoints CLines incidx k p] assms by auto
+    then show ?thesis using assms fpp_two_points_two imp by simp
   qed
   then show ?thesis by auto
 qed
 
 end
-(* ======TO BE MOVED UP TO THE START LATER ==== *)
 end
 
 
