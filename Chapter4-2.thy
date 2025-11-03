@@ -143,7 +143,7 @@ theorem (in projective_plane) meet_of_quadrilateral_is_quadrangle:
   shows "cquadrangle (meet b d) (meet c d) (meet a b) (meet a c)"
 proof - 
   have lines_distinct: "a \<noteq> b \<and> a \<noteq> c \<and> a \<noteq> d \<and> b \<noteq> c \<and> b \<noteq> d \<and> c \<noteq> d" 
-    using quadrilateral_lines_distinct[of a b c d] assms by auto
+    using quadrilateral_lines_distinct[of a b c d] assms distinct4_def by metis
   let ?D = "meet b d"
   let ?F = "meet c d"
   let ?E = "meet a b"
