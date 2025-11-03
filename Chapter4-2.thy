@@ -368,8 +368,6 @@ theorem P7_dual_if_P7:
   fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
   assumes dm: \<open>dincid = mdualize incid\<close>
   shows "P7 dPoints dLines dincid"
-  sorry
-(*   INCOMPELTE PROOF UNABLE TO CLOSE
 
 proof - 
   have projective_dual: "projective_plane dPoints dLines dincid" using dual_plane_is_projective P7_def dLdef dPdef dm p7 by blast
@@ -380,10 +378,9 @@ proof -
             (projective_plane.cquadrangle_points_diag_1 dPoints dLines dincid A B C D) 
             (projective_plane.cquadrangle_points_diag_2 dPoints dLines dincid A B C D)
             (projective_plane.cquadrangle_points_diag_3 dPoints dLines dincid A B C D)))" 
-  proof (safe)
+  proof (intro allI impI)
     fix a b c d 
-    assume dassms1: "a \<in> dPoints \<and> b \<in> dPoints \<and> c \<in> dPoints \<and> d \<in> dPoints"
-      and dassms2: "projective_plane.cquadrangle dPoints dLines dincid  a b c d"
+    assume dassms1: "a \<in> dPoints \<and> b \<in> dPoints \<and> c \<in> dPoints \<and> d \<in> dPoints \<and> (projective_plane.cquadrangle dPoints dLines dincid  a b c d)"
 
     have abcd_lines: "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines" using assms dassms1 by auto
 
@@ -394,33 +391,33 @@ proof -
     (*look into these smt verit later*)
 
     have "projective_plane.cquadrangle_points_diag_1 dPoints dLines dincid a b c d = projective_plane_data.meet dPoints dLines dincid (projective_plane_data.join dPoints dLines dincid b c) (projective_plane_data.join dPoints dLines dincid a d)"
-      using projective_plane.cquadrangle_points_diag_1_def[of dPoints dLines dincid a b c d] dassms2 projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1
+      using projective_plane.cquadrangle_points_diag_1_def[of dPoints dLines dincid a b c d] dassms1 projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1
         projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_data.pcollinear_def
       by argo
 
     then have r_is_diag_1: "?r = projective_plane.cquadrangle_points_diag_1 dPoints dLines dincid a b c d" 
-      using dassms2 dLdef dPdef dm dual_join_is_meet dual_plane_is_projective mmi_eq projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1 projective_plane.p1 projective_plane_data.pcollinear_def    
+      using dassms1 dLdef dPdef dm dual_join_is_meet dual_plane_is_projective mmi_eq projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1 projective_plane.p1 projective_plane_data.pcollinear_def    
       by (smt (verit))
 
     have "projective_plane.cquadrangle_points_diag_2 dPoints dLines dincid a b c d = projective_plane_data.meet dPoints dLines dincid (projective_plane_data.join dPoints dLines dincid a c) (projective_plane_data.join dPoints dLines dincid b d)"
-      using projective_plane.cquadrangle_points_diag_2_def[of dPoints dLines dincid a b c d] dassms2 projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1
+      using projective_plane.cquadrangle_points_diag_2_def[of dPoints dLines dincid a b c d] dassms1 projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1
         projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_data.pcollinear_def
       by argo
 
     then have q_is_diag_2: "?q = projective_plane.cquadrangle_points_diag_2 dPoints dLines dincid a b c d" 
-      using dassms2 dLdef dPdef dm dual_join_is_meet dual_plane_is_projective mmi_eq projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1 projective_plane.p1 projective_plane_data.pcollinear_def    
+      using dassms1 dLdef dPdef dm dual_join_is_meet dual_plane_is_projective mmi_eq projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1 projective_plane.p1 projective_plane_data.pcollinear_def    
       by (smt (verit))    
 
     have "projective_plane.cquadrangle_points_diag_3 dPoints dLines dincid a b c d = projective_plane_data.meet dPoints dLines dincid (projective_plane_data.join dPoints dLines dincid a b) (projective_plane_data.join dPoints dLines dincid c d)"
-      using projective_plane.cquadrangle_points_diag_3_def[of dPoints dLines dincid a b c d] dassms2 projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1
+      using projective_plane.cquadrangle_points_diag_3_def[of dPoints dLines dincid a b c d] dassms1 projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1
         projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_data.pcollinear_def
       by argo
 
     then have p_is_diag_3: "?p = projective_plane.cquadrangle_points_diag_3 dPoints dLines dincid a b c d" 
-      using dassms2 dLdef dPdef dm dual_join_is_meet dual_plane_is_projective mmi_eq projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1 projective_plane.p1 projective_plane_data.pcollinear_def    
+      using dassms1 dLdef dPdef dm dual_join_is_meet dual_plane_is_projective mmi_eq projective_dual projective_plane.cquadrangle_def projective_plane.join_properties1 projective_plane.p1 projective_plane_data.pcollinear_def    
       by (smt (verit))    
 
-    have "\<not>(projective_plane_data.pcollinear dPoints dLines dincid 
+    show "\<not>(projective_plane_data.pcollinear dPoints dLines dincid 
             (projective_plane.cquadrangle_points_diag_1 dPoints dLines dincid a b c d) 
             (projective_plane.cquadrangle_points_diag_2 dPoints dLines dincid a b c d)
             (projective_plane.cquadrangle_points_diag_3 dPoints dLines dincid a b c d))"
@@ -437,22 +434,10 @@ proof -
 
       show False sorry
     qed
-
-    have "\<not>(projective_plane_data.pcollinear dPoints dLines dincid 
-            (projective_plane.cquadrangle_points_diag_1 dPoints dLines dincid a b c d) 
-            (projective_plane.cquadrangle_points_diag_2 dPoints dLines dincid a b c d)
-            (projective_plane.cquadrangle_points_diag_3 dPoints dLines dincid a b c d))" sorry
-
-    show "\<not> projective_plane_data.pcollinear dPoints dLines dincid
-          (projective_plane.cquadrangle_points_diag_1 dPoints dLines dincid a b c d)
-          (projective_plane.cquadrangle_points_diag_2 dPoints dLines dincid a b c d)
-          (projective_plane.cquadrangle_points_diag_3 dPoints dLines dincid a b c d)"
-    sorry
   qed
-
-  show ?thesis using projective_dual distinct_cquadrilateral_lines assms projective_plane.quadrilateral_lines_distinct by meson
-
-*)
+  show ?thesis unfolding P7_def
+    using projective_dual distinct_cquadrilateral_lines assms projective_plane.quadrilateral_lines_distinct by meson
+qed
 
 end
 
