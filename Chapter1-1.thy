@@ -2006,7 +2006,7 @@ begin
 definition (in projective_plane_data) meet::"'l \<Rightarrow> 'l \<Rightarrow> 'p" (infix "\<sqdot>" 60) where
 "meet n k = (if (n \<in> Lines \<and> k \<in> Lines \<and> n \<noteq> k) then THE P . P \<in> Points \<and> P \<lhd> n \<and> P \<lhd> k else undefined)"
 
-definition (in projective_plane_data) join::"'p \<Rightarrow> 'p \<Rightarrow> 'l" (infix "\<bar>" 60) where
+definition (in projective_plane_data) join::"'p \<Rightarrow> 'p \<Rightarrow> 'l" (infix "\<bar>" 75) where
 "join P Q = (if (P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q) then THE k. k \<in> Lines \<and> P \<lhd> k \<and> Q \<lhd> k else undefined)"
 
 thm p1
