@@ -418,6 +418,22 @@ proof -
         by (smt (verit, best) dLdef dPdef dm dual_collinear_is_coincident mmi_eq projective_plane_data.coincident_def
           projective_plane_data.pcollinear_def)
 
+      let ?A = "projective_plane_data.meet Points Lines incid b d"
+      let ?B = "projective_plane_data.meet Points Lines incid c d"
+      let ?C = "projective_plane_data.meet Points Lines incid a b"
+      let ?D = "projective_plane_data.meet Points Lines incid a c"
+
+      have abcd_distinct: "distinct4 a b c d" 
+        using projective_plane.quadrilateral_lines_distinct[of Points Lines incid a b c d] sorry 
+
+      have ABCD_points: "?A \<in> Points \<and> ?B \<in> Points \<and> ?C \<in> Points \<and> ?D \<in> Points" 
+        using projective_plane.meet_properties2 abcd_lines sorry
+
+      have ABCD_cquadrangle: "projective_plane.cquadrangle Points Lines incid ?A ?B ?C ?D" sorry
+
+      (*deduce the diagonal points of ABCD are collinear using algebra somehow*)
+      (*contradiction with assume P7*)
+
       show False sorry
     qed
   qed
