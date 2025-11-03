@@ -91,7 +91,7 @@ proof (rule transpI)
   assume 1: "projrel x y"
   assume 2: "projrel y z"
   show "projrel x z" using 1 2 alt_projrel cross_mult_left 
-    cross_zero_right projrel_def by (metis (lifting) ext)
+    cross_zero_right projrel_def by (metis (full_types, lifting))
 qed
 text \<open>\done\<close>
 
