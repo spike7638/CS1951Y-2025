@@ -264,7 +264,25 @@ proof -
     show ?case using h1c h6 by force
   next
     case (4 x)
-    then show ?case sorry
+    have h0: "\<And>Q. (one (PJ l) \<circ> x) Q = x Q"
+    proof -
+      fix Q
+      show "(one (PJ l) \<circ> x) Q = x Q"
+      proof (cases "Q \<in> Points \<and> Q \<lhd> l")
+        case True
+          have h1: "one (PJ l) Q = Q" by (simp add: True assms)
+          have h2: "(x Q) \<in> Points \<and> (x Q) \<lhd> l" by sledgehammer
+          then show ?thesis sorry
+        next
+        case False
+          have h1: "one (PJ l) Q = undefined" by (simp add: False assms)
+          have h2: "one (PJ l) undefined = undefined" using assms by force
+          have h3: "x Q = undefined" sorry
+          then show ?thesis using h2 by auto
+      qed
+    qed
+    then show ?case using PJ_mult assms
+      by presburger
   next
     case (5 x)
     then show ?case sorry
