@@ -397,7 +397,7 @@ proof -
         projective_plane.cquadrilateral_def by metis
 qed
 
-theorem P7_dual_if_P7:
+theorem dual_plane_P7_if_original_P7:
   fixes Points :: "'p set"
   fixes Lines :: "'l set"
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
@@ -580,6 +580,25 @@ proof -
     using projective_dual distinct_cquadrilateral_lines assms projective_plane.quadrilateral_lines_distinct by meson
 qed
 
+theorem P7_dual_if_P7:
+  fixes Points :: "'p set"
+  fixes Lines :: "'l set"
+  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  assumes p7: "P7 Points Lines incid"
+  defines dPdef: "dPoints \<equiv> Lines"
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool" (infix "d\<lhd>" 60)
+  assumes dm: \<open>dincid = mdualize incid\<close>
+  shows "((projective_plane dPoints dLines dincid) \<and> 
+        (\<forall>a b c d. (a \<in> dLines \<and> b \<in> dLines \<and> c \<in> dLines \<and> d \<in> dLines \<and> 
+                    (projective_plane.cquadrilateral dPoints dLines dincid a b c d))
+         \<longrightarrow> (\<not>(projective_plane_data.coincident dPoints dLines dincid 
+            (projective_plane.cquadrilateral_lines_1 dPoints dLines dincid a b c d) 
+            (projective_plane.cquadrilateral_lines_2 dPoints dLines dincid a b c d)
+            (projective_plane.cquadrilateral_lines_3  dPoints dLines dincid a b c d)))))"
+proof(unfold_locales)
+  show ?thesis sorry
+qed
 end
 
 
