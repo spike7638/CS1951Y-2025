@@ -7,8 +7,8 @@ begin
 text\<open> start at "Perspectivies and Projectivities" and go to end of chapter\<close>
 
 definition is_persp_data :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
-  where "is_persp_data Or l1 l2 =  (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> 
- \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2))"
+  where "is_persp_data Or l1 l2 = (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> 
+  \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2))"
 
 definition perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "perspectivity Or l1 l2 = (if is_persp_data Or l1 l2
@@ -63,7 +63,7 @@ lemma perspectivity_inj:
 
 lemma perspectivity_surj:
   fixes f Or l1 l2 Q
-  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
+  assumes data_def: "is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
   assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> l2"
   shows "\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q"
@@ -71,7 +71,7 @@ lemma perspectivity_surj:
 
 lemma perspectivity_bij:
   fixes f Or l1 l2
-  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
+  assumes data_def: "is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
   shows "bij_betw f {P \<in> Points. P \<lhd> l1} {Q \<in> Points. Q \<lhd> l2}"
 proof -
@@ -104,16 +104,11 @@ qed
 
 lemma perspectivity_of_meet_is_itself:
   fixes f Or l1 l2 P
-  assumes data_def: "Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
-  (*assumes Or_def: "Or \<in> Points"
-  assumes l1_def: "l1 \<in> Lines"
-  assumes l2_def: "l2 \<in> Lines"
-  *)
+  assumes data_def: "is_persp_data Or l1 l2"
   assumes f_def: "f = perspectivity Or l1 l2"
   assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
   assumes P_on_l2: "P \<lhd> l2"
   shows "f P = P"
-  (*using Or_def P_def P_on_l2 f_def inv_is_perspectivity l1_def l2_def by fastforce*)
 proof-
   have h1: "f = (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined)"
     using data_def f_def perspectivity_def[of Or l1 l2] by presburger
@@ -123,6 +118,28 @@ proof-
     by metis
   show ?thesis using h2 h3 by auto
 qed
+
+
+
+definition is_proj_data :: "'p list \<Rightarrow> 'l list \<Rightarrow> bool" 
+  where "is_proj_data ps ls  = True"
+
+fun projectivity2 :: "'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)" where
+  "projectivity2 ps ls = (if is_proj_data ps ls then () else undefined)"
+
+
+(*
+  "projectivity2 (Cons p []) (Cons l1 (Cons l2 [])) = (perspectivity p l1 l2)" |
+  "projectivity2 (Cons p ps) (Cons l1 (Cons l2 ls)) = (projectivity ps (Cons l2 ls)) \<circ> (perspectivity p l1 l2)" |
+  "projectivity2 [] b = undefined" |
+  "projectivity2 a [] = undefined" |
+  "projectivity2 a [v] = undefined"
+
+
+definition perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
+  where "perspectivity Or l1 l2 = (if is_persp_data Or l1 l2
+  then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
+*)
 
 (* Definition. A projectivity is a mapping of one line l into another l\<Zprime> (which may be equal to l), which can be expressed as a composition of perspectivities. 
 We write l Z l\<Zprime>, and write ABC . . . Z A\<Zprime>B\<Zprime>C\<Zprime> . . . if the projectivity that takes  points A, B, C, . . . into A\<Zprime>, B\<Zprime>, C\<Zprime>, . . . respectively. 
@@ -147,14 +164,14 @@ fun composition :: "(('p \<Rightarrow> 'p)) \<Rightarrow> (('p \<Rightarrow> 'p)
   f' = projectivity ps' ls' \<and> f' \<noteq> undefined \<and> last ls = hd ls' then
   projectivity (ps @ ps') (ls @ (tl ls')) else undefined)"
 *)
-(*
+
 lemma proj_composition_is_proj:
   fixes ps ps' ls ls' f f'
   assumes f_def: "f = projectivity ps ls"
   assumes f'_def: "f' = projectivity ps' ls'"
   assumes ls_ls'_def: "last ls = hd ls'"
   shows "f' \<circ> f = projectivity (ps @ ps') (ls @ (tl ls'))"
-  sorry*)
+  sorry
 
 definition PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
   where "PJ l = (if (l \<in> Lines) then
@@ -204,9 +221,27 @@ lemma
 proof -
   show "group (PJ l)"
   proof (unfold_locales, goal_cases)
-    case (1 x y)
-    then show ?case unfolding PJ_def sorry
+    case (1 f g)
+    obtain ps ls where f_proj: "f = projectivity ps ls" and "hd ls = l" and "last ls = l" 
+      using "1"(1) assms by auto
+    obtain ps' ls' where g_proj: "g = projectivity ps' ls' \<and> hd ls' = l \<and> last ls' = l" 
+      using "1"(2) assms by auto
+    have h1: "f \<circ> g = projectivity (ps' @ ps) (ls' @ (tl ls))" 
+      using f_proj g_proj proj_composition_is_proj by auto
+    have "ls = (Cons l (tl ls))" using \<open>hd ls = l\<close>
+    proof (cases ls)
+      case Nil
+      then have False using \<open>ls = []\<close> \<open>hd ls = l\<close> by sledgehammer
+      then show ?thesis sorry
+    next
+      case (Cons a list)
+      then show ?thesis using \<open>hd ls = l\<close> by auto
+    qed
+    have "hd (ls' @ (tl ls)) = hd ls'" by sledgehammer
+    have "hd (ls' @ (tl ls)) = l \<and> last (ls' @ (tl ls)) = l" using f_proj g_proj by sledgehammer
+    then show ?case using f_proj g_proj unfolding PJ_def sorry
   next
+    thm proj_composition_is_proj
     case (2)
     show ?case using assms by auto
   next
@@ -235,7 +270,8 @@ proof -
     then show ?case sorry
   next
     case 6
-    then show ?case sorry
+    have "\<And>f . f \<in> carrier (PJ l) \<longrightarrow> True"
+    then show ?case using inverse_persp perspectivity_bij unfolding PJ_def
   qed
 qed
 
@@ -260,7 +296,7 @@ proof-
   let ?l' = "join D C"
   have h1: "?l' \<in> Lines \<and> ?l' \<noteq> l" using AB_def C_def D_def l_def join_properties1 by blast
   have h3: "\<not> A \<lhd> ?l' \<and> \<not> B \<lhd> ?l'" 
-    using AB_def C_def D_def h1 join_properties1 l_def unique_meet by metis
+    using AB_def C_def D_def h1 join_properties1 l_def unique_meet p1 by metis
   show ?thesis using h1 h3 by auto
 qed
 
