@@ -784,10 +784,17 @@ theorem projectivisation_of_A2:
   shows "projective_plane pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
 
-interpretation RP2C: projective_plane "{OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
-  ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}" 
-  " {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}" "(mprojectivize (a2incid))"
-  using projectivisation_of_A2 by auto
+definition A2C_Points where "A2C_Points \<equiv> 
+  {OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
+    ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}"
+
+definition A2C_Lines where "A2C_Lines \<equiv> {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}"
+
+abbreviation (input) A2C_incid
+  where "A2C_incid P l \<equiv> ((mprojectivize a2incid) P l)"
+
+interpretation RP2C: projective_plane  A2C_Points A2C_Lines A2C_incid
+  unfolding A2C_Points_def A2C_Lines_def using projectivisation_of_A2 by auto
 
 text \<open>\spike\<close>
 end

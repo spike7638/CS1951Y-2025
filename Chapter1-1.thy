@@ -145,6 +145,9 @@ definition (in affine_plane_data) collinear :: "'p \<Rightarrow> 'p \<Rightarrow
     where "collinear A B C = (if A \<in> Points \<and> B \<in> Points \<and> C \<in> Points 
   then (\<exists> l. l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and>  C \<lhd> l) else undefined)"
 
+abbreviation (input) noncollinear
+  where "noncollinear A B C \<equiv> (\<not> (collinear A B C))"
+
 definition parallel::"'l \<Rightarrow> 'l \<Rightarrow> bool"  (infix "||" 50)  where
   "parallel l m = ((l \<in> Lines) \<and> (m \<in> Lines) \<and> ((l = m) \<or>  
   ((\<not> (\<exists> P. P \<in> Points \<and> P \<lhd> l \<and> P \<lhd> m)))))"
@@ -229,7 +232,7 @@ locale affine_plane =
     a2b: "\<lbrakk>P \<in> Points; l \<in> Lines\<rbrakk> \<Longrightarrow> (find_parallel l P) || l" and
     a2c: "\<lbrakk>P \<in> Points; l \<in> Lines\<rbrakk> \<Longrightarrow> P \<lhd> (find_parallel l P)" and
     a2d: "\<lbrakk>P \<in> Points; l \<in> Lines; m \<in> Lines; m || l; P \<lhd> m\<rbrakk> \<Longrightarrow> m = find_parallel l P" and
-    a3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)"
+    a3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> (noncollinear P Q R)"
 begin
 text \<open>
 It's worth looking at this collection pretty carefully. Do the required properties of \isi{join} in
@@ -498,7 +501,7 @@ lemma (in affine_plane) missed_point:
 proof -
   assume kdef: "k \<in> Lines"
   obtain P Q R where pqr: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points 
-    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
+    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> (noncollinear P Q R)" using a3 by auto
   have "(\<not> P \<lhd> k) \<or> (\<not> Q \<lhd> k) \<or> (\<not> R \<lhd> k)" 
     using kdef pqr collinear_def by auto
   then show ?thesis using pqr by auto
@@ -513,7 +516,7 @@ lemma (in affine_plane) contained_point:
 proof (rule ccontr)
   assume cd: "\<not> (\<exists>S. S \<in> Points \<and> S \<lhd> k)"
   obtain P Q R where pqr: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points 
-    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
+    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> (noncollinear P Q R)" using a3 by auto
   show False
   proof -
     have 0: "\<not> (join P Q || join Q R)" 
@@ -648,7 +651,7 @@ proposition (in affine_plane) four_points_necessary:
   \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points"
 text \<open> \George \<close>
 proof -
-  obtain P Q R where h0a: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points" and h0b: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (collinear P Q R)" using a3 by auto
+  obtain P Q R where h0a: "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points" and h0b: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> (noncollinear P Q R)" using a3 by auto
   have h1: "join Q R \<in> Lines \<and> Q \<lhd>  (join Q R)  \<and> R \<lhd>  (join Q R)" using a1a h0a h0b by auto
   let ?l = "find_parallel (join Q R) P"
   have h2a: "?l \<in> Lines" using a2a h1 h0a by auto
@@ -666,8 +669,7 @@ proof -
       have c0: "join Q R || join P Q" using parallel h2b h4b parallel_symmetric 
         parallel_transitive [of "join P Q"] by blast
       have c1: "Q \<lhd> join Q R" and "Q \<lhd> join P Q" using h1 h3 by auto
-      consider (equal) "join Q R = join P Q" 
-      | (not_equal) "join Q R \<noteq> join P Q" by auto
+      consider (equal) "join Q R = join P Q" | (not_equal) "join Q R \<noteq> join P Q" by auto
       then have c2: "join Q R = join P Q" 
       proof cases 
         case equal
@@ -685,7 +687,7 @@ proof -
     case not_parallel
     obtain S where "S \<in> Points" and "P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S" using a2c h0a h0b h1 
       h2b h3 h4b not_parallel parallel_def unfolding collinear_def by metis
-    show ?thesis using \<open>P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S\<close> \<open>S \<in> Points\<close> h0a h0b by auto
+    then show ?thesis using h0a h0b by auto
   qed
 qed
 text \<open>\done\<close>
@@ -699,9 +701,9 @@ lemma (in affine_plane) not_collinear_join:
   assumes "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
   assumes "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R"
   assumes "\<not> R \<lhd> (join P Q)"
-  shows "\<not> collinear P Q R"
+  shows "noncollinear P Q R"
 proof (rule ccontr)
-  assume cd: "\<not> (\<not> collinear P Q R)"
+  assume cd: "\<not> (noncollinear P Q R)"
   show False
   proof -
     have 0: "collinear P Q R" using cd by auto
@@ -730,10 +732,10 @@ text \<open>\done\<close>
 
 proposition (in affine_plane) four_points_noncollinear_triples: "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). 
       P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points
-\<and> \<not> collinear P Q R \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
+\<and> noncollinear P Q R \<and> noncollinear P Q S \<and> noncollinear P R S \<and> noncollinear Q R S"
 proof -
   obtain P Q R where h0: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points
-    \<and> \<not> collinear P Q R" using a3  by auto
+    \<and> noncollinear P Q R" using a3  by auto
   obtain l where h1: "l=find_parallel (join P Q) R" by auto
   obtain k where h2: "k=find_parallel (join P R) Q" by auto
   have h3: "\<not>l||k"  
@@ -750,23 +752,23 @@ proof -
   (*now we need to show that S is not equal to P Q R*)
   have h5: "P\<noteq>S\<and>R\<noteq>S\<and>Q\<noteq>S " using a1a a1b a2b a2c h3 h4 h0 h1 h2 parallel_def by metis
   (* now we need to show that S isn't collinear to PQ, PR, QR*)
-  have h6: "\<not>(collinear P Q S)"
+  have h6: "noncollinear P Q S"
   proof (rule ccontr)
-    assume ch: "\<not>\<not>(collinear P Q S)"
+    assume ch: "\<not>(noncollinear P Q S)"
     have h7: "collinear P Q S" using ch by auto
     have h8: "\<not> l||join P Q" using h7 h0 a1a a1b a2c h1 h2 h3 h4 h5 parallelE collinear_def by metis
     show "False" using h0 h1 a1a a2b h8 by auto
   qed
-  have h7: "\<not>(collinear P R S)"
+  have h7: "noncollinear P R S"
   proof (rule ccontr)
-    assume ch: "\<not>\<not>(collinear P R S)"
+    assume ch: "\<not>(noncollinear P R S)"
     have h8: "collinear P R S" using ch by auto
     have h9: "\<not> k||join P R" using h8 h0 a1a a1b a2c h1 h2 h3 h4 h5 parallelE collinear_def by metis
     show "False" using h0 h1 h2 a1a a2b h9 by metis
   qed
-  have h8: "\<not>(collinear Q R S)"
+  have h8: "noncollinear Q R S"
   proof (rule ccontr)
-    assume ch: "\<not>\<not>(collinear Q R S)"
+    assume ch: "\<not>(noncollinear Q R S)"
     have h9: "collinear Q R S" using ch by auto
     have h10: "S\<lhd>join Q R\<and>S\<lhd>k" using h0 h2 join_containsR collinear_def a1b h9 h4 by auto
     have h11: "S=Q" using a1a a2a a2c h0 h1 h10 h2 h3 h4 h5 parallel_def prop1P2 by metis
@@ -805,11 +807,11 @@ proposition (in affine_plane) four_points_parallel_pairs:
   "\<exists>(P :: 'p) (Q :: 'p) (R :: 'p) (S :: 'p). P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S 
   \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points 
   \<and> parallel (join P Q) (join R S) \<and> parallel (join P R) (join Q S) 
-  \<and> (join P Q) \<noteq> (join R S) \<and> (join P R) \<noteq> (join Q S) \<and> \<not> collinear P Q R 
-  \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
+  \<and> (join P Q) \<noteq> (join R S) \<and> (join P R) \<noteq> (join Q S) \<and> noncollinear P Q R 
+  \<and> noncollinear P Q S \<and> noncollinear P R S \<and> noncollinear Q R S"
 proof -
   obtain P Q R where pqr: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
-    \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> \<not> collinear P Q R"
+    \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> noncollinear P Q R"
     using a3 by auto
   let ?l = "find_parallel (join P R) Q"
   let ?m = "find_parallel (join P Q) R" 
@@ -842,7 +844,7 @@ proof -
     using a1a pqr sdef unfolding collinear_def by metis
   have "\<not> S \<lhd> (join P Q) \<and> \<not> S \<lhd> (join P R) \<and> \<not> S \<lhd> (join Q R)" 
     using 1 2 4 parallel_def sdef a1a a1b pqr by metis
-  then have 5: "\<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S" 
+  then have 5: "noncollinear P Q S \<and> noncollinear P R S \<and> noncollinear Q R S" 
     using sdef pqr not_collinear_join by auto
   show ?thesis using 3 4 5 pqr sdef by metis
 qed
@@ -907,8 +909,8 @@ proof (rule ccontr)
     obtain P Q R S where pqrs: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> P \<noteq> S 
       \<and> Q \<noteq> S \<and> R \<noteq> S \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points 
       \<and> parallel (join P Q) (join R S) \<and> parallel (join P R) (join Q S) 
-      \<and> (join P Q) \<noteq> (join R S) \<and> (join P R) \<noteq> (join Q S) \<and> \<not> collinear P Q R 
-      \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
+      \<and> (join P Q) \<noteq> (join R S) \<and> (join P R) \<noteq> (join Q S) \<and> noncollinear P Q R 
+      \<and> noncollinear P Q S \<and> noncollinear P R S \<and> noncollinear Q R S"
       using four_points_parallel_pairs by auto
     have rsNpq: "X \<lhd> (join R S) \<longrightarrow> \<not> X \<lhd> (join P Q)"
       and prNqs: "X \<lhd> (join P R) \<longrightarrow> \<not> X \<lhd> (join Q S)" 
@@ -1480,7 +1482,8 @@ text \<open>\done\<close>
 text\<open>\spike Now we move on to showing that the real affine plane is in fact an affine plane. 
 Everything related to this plane has the prefix 'a2' or 'A2'.\done\<close>
 datatype a2pt = A2Point "real" "real"
-datatype a2ln = A2Ordinary "real" "real" | A2Vertical "real"
+datatype a2ln = A2Ordinary "real" "real" 
+  | A2Vertical "real"
 
 definition A2Points::"a2pt set"
   where "A2Points \<equiv> (UNIV::a2pt set)"
@@ -1973,6 +1976,38 @@ Let's go ahead and make a locale description for a projective plane, as we did f
 There's no need for a \isi{find_parallel} function this time, but other things are fairly similar.
 \<close>
 
+text\<open> We're about to use distinctness of three points, and soon 
+we'll use distinctness of more than 3, and each of these uses lists,
+and unwinding that turns out to be a pain in some proofs...so I'm going
+to define a bunch of predicates to capture those ideas\<close>
+
+definition distinct3 where "distinct3 x y z \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z)"
+definition distinct4 where 
+  "distinct4 x y z w \<equiv> y \<noteq> x \<and> 
+                       z \<noteq> x \<and> z \<noteq> y \<and> 
+                       w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z"
+definition distinct5 where 
+  "distinct5 x y z w r \<equiv> y \<noteq> x \<and> 
+                       z \<noteq> x \<and> z \<noteq> y \<and> 
+                       w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
+   r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w"
+
+definition distinct6 where 
+  "distinct6 x y z w r s \<equiv> y \<noteq> x \<and> 
+                           z \<noteq> x \<and> z \<noteq> y \<and> 
+                           w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
+   r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w \<and>
+   s \<noteq> x \<and> s \<noteq> y \<and> s \<noteq> z \<and> s \<noteq> w \<and> s \<noteq> r" 
+
+definition distinct7 where 
+  "distinct7 x y z w r s t \<equiv> 
+    y \<noteq> x \<and> 
+    z \<noteq> x \<and> z \<noteq> y \<and> 
+    w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
+    r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w \<and>
+    s \<noteq> x \<and> s \<noteq> y \<and> s \<noteq> z \<and> s \<noteq> w \<and> s \<noteq> r \<and>
+    t \<noteq> x \<and> t \<noteq> y \<and> t \<noteq> z \<and> t \<noteq> w \<and> t \<noteq> r \<and> t \<noteq> s"
+
 locale projective_plane_data =
   fixes Points :: "'p set" and Lines :: "'l set" and incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool" (infix "\<lhd>" 60)
 begin
@@ -1999,10 +2034,10 @@ assumes
 begin
 
 (*Uncommented and fixed by Nick and George for use in 4-4:*)
-definition (in projective_plane_data) meet::"'l \<Rightarrow> 'l \<Rightarrow> 'p" (infix "." 60) where
+definition (in projective_plane_data) meet::"'l \<Rightarrow> 'l \<Rightarrow> 'p" (infix "\<sqdot>" 60) where
 "meet n k = (if (n \<in> Lines \<and> k \<in> Lines \<and> n \<noteq> k) then THE P . P \<in> Points \<and> P \<lhd> n \<and> P \<lhd> k else undefined)"
 
-definition (in projective_plane_data) join::"'p \<Rightarrow> 'p \<Rightarrow> 'l" (infix "\<^bold>" 60) where
+definition (in projective_plane_data) join::"'p \<Rightarrow> 'p \<Rightarrow> 'l" (infix "\<bar>" 75) where
 "join P Q = (if (P \<in> Points \<and> Q \<in> Points \<and> P \<noteq> Q) then THE k. k \<in> Lines \<and> P \<lhd> k \<and> Q \<lhd> k else undefined)"
 
 thm p1
@@ -2442,13 +2477,9 @@ lemma disjoint_pencils:
 proof (rule ccontr)
   assume contr_kn_diff: "\<not>(s \<inter> t = {})"
   obtain p where p_in_s_t: "p \<in> (s \<inter> t)" using contr_kn_diff by auto
-  have h0: "affine_plane_data.parallel Points Lines (incid) p k" 
-    using affine_plane_data.line_pencil_def p_in_s_t tdef by force
-  have h1: "affine_plane_data.parallel Points Lines (incid) p n" 
-    using affine_plane_data.line_pencil_def p_in_s_t sdef by force
-  have h2: "affine_plane_data.parallel Points Lines (incid) k n" 
-    using h0 h1 affine_plane.parallel_transitive 
-    affine_plane_data.parallel_symmetric by (metis ap)
+  have h0: "affine_plane_data.parallel Points Lines (incid) p k" using affine_plane_data.line_pencil_def p_in_s_t tdef by force
+  have h1: "affine_plane_data.parallel Points Lines (incid) p n" using affine_plane_data.line_pencil_def p_in_s_t sdef by force
+  have h2: "affine_plane_data.parallel Points Lines (incid) k n" using h0 h1 affine_plane.parallel_transitive affine_plane_data.parallel_symmetric by (metis ap)
   show "False" using h2 kn_diff by auto
 qed
 text \<open>\done\<close>

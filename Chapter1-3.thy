@@ -33,19 +33,6 @@ begin
 end
 
 text \<open>\hadi\<close>
-definition A2C_Points :: "((a2pt, a2ln) projPoint) set" where
-  "A2C_Points \<equiv> {OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. ((k \<in> A2Lines) 
-    \<and> (t = affine_plane_data.line_pencil A2Points A2Lines a2incid k))}"
-
-definition A2C_Lines :: "((a2pt, a2ln) projLine) set" where
- "A2C_Lines \<equiv> {OrdinaryL n | n. (n \<in>  A2Lines)} \<union> {Infty}"
-
-definition A2C_incid :: 
-  "((a2pt, a2ln) projPoint) \<Rightarrow> ((a2pt, a2ln) projLine) \<Rightarrow> bool" where 
-  "A2C_incid \<equiv> mprojectivize a2incid"
-text \<open>\done\<close>
-
-text \<open>\hadi\<close>
 fun rp2iso :: "rp2 \<Rightarrow> ((a2pt, a2ln) projPoint)" where
   "rp2iso V = (if ((Rep_Proj V)$3 \<noteq> 0) 
     then (OrdinaryP (A2Point 
@@ -267,21 +254,21 @@ proof -
     \<and> (rp2iso Q) \<noteq> (rp2iso R)" using p q r pqr_dist rp2iso_inj inj_on_eq_iff by metis
   then obtain k where kdef: "k \<in> A2C_Lines \<and> A2C_incid (rp2iso P) k \<and> A2C_incid (rp2iso Q) k"
     using xdef ydef RP2C.join_properties1 [of "rp2iso P" "rp2iso Q"] rp2P_to_A2CP 
-    A2C_Points_def A2C_Lines_def unfolding rp2_Points_def A2C_incid_def by blast
+    A2C_Points_def A2C_Lines_def unfolding rp2_Points_def by blast
   then obtain k0 where k0def: "k = OrdinaryL k0" using kdef projLine.exhaust 
     rp2iso.simps mprojectivize.simps(3) mem_Collect_eq UNIV_I PIQO
-    A2Lines_def A2C_incid_def ideals_def by (metis (full_types, lifting))
+    A2Lines_def ideals_def by (metis (full_types, lifting))
   have x3z: "x3 = 0" using PIQO xdef ideals_def by fastforce
   have y3nz: "y3 \<noteq> 0" using PIQO ydef rp2iso.simps vector_3(3) mem_Collect_eq 
     A2Lines_def UNIV_I unfolding ideals_def by (metis (mono_tags, lifting))
   then obtain TP Q0 where TPQ0_facts: "Q0 \<in> A2Points \<and> rp2iso P = Ideal TP 
     \<and> rp2iso Q = OrdinaryP Q0" using xdef ydef x3z A2Points_def by fastforce
   then have k0TP: "k0 \<in> TP" 
-    using kdef k0def mprojectivize.simps(2) A2C_incid_def by metis 
+    using kdef k0def mprojectivize.simps(2) by metis 
   then have Q0def: "Q0 = A2Point (y1/y3) (y2/y3)" 
     using xdef ydef y3nz TPQ0_facts by simp
   then have Q0k0: "a2incid Q0 k0" using kdef k0def TPQ0_facts 
-    mprojectivize.simps(1) A2C_incid_def by metis
+    mprojectivize.simps(1) by metis
   have IRO: "rp2iso R \<notin> ideals" using PIQO p r ldef l_equation pqr_dist 
     a1a2nz not_both_ideal ideals_def by blast
   then obtain R0::a2pt where fRR0: "rp2iso R = OrdinaryP R0" using rp2iso.elims 
@@ -301,8 +288,8 @@ proof -
     then have "(y1/y3) = (z1/z3)" using a2z y3nz z3nz frac_eq_eq mult.commute by metis
     then have "k0 = A2Vertical (z1/z3)" using Q0def Q0k0 k0TP TPdef TPQ0_facts
       A2.a2d A2Lines_def affine_plane_data.line_pencil_def by fastforce
-    then show ?thesis using k0def R0def fRR0 A2C_incid_def
-      a2incid.simps(2) mprojectivize.simps(1) by metis
+    then show ?thesis using k0def R0def fRR0 a2incid.simps(2) 
+      mprojectivize.simps(1) by metis
   next
     case x1nz: False
     then have a2nz: "a2 \<noteq> 0" and "(-a1) * x1 = a2 * x2" using a1a2nz x3z Pdl by auto
@@ -317,7 +304,7 @@ proof -
     then have "b = (-a3)/a2"
       using a2nz y3nz times_divide_eq_left nonzero_mult_div_cancel_right by metis
     then have "a2incid R0 k0" using a2nz z3nz ordk0 R0def Rdl a2nz_ord_on_j by simp
-    then show ?thesis using k0def fRR0 mprojectivize.simps(1) A2C_incid_def by metis
+    then show ?thesis using k0def fRR0 mprojectivize.simps(1) by metis
   qed
   then show ?thesis using p q r kdef rp2P_to_A2CP 
     unfolding projective_plane_data.pcollinear_def by metis
@@ -349,7 +336,7 @@ proof -
     \<and> (rp2iso Q) \<noteq> (rp2iso R)" using p q r pqr_dist rp2iso_inj inj_on_eq_iff by metis
   then obtain k where kdef: "k \<in> A2C_Lines \<and> A2C_incid (rp2iso P) k \<and> A2C_incid (rp2iso Q) k"
     using xdef ydef RP2C.join_properties1 [of "rp2iso P" "rp2iso Q"] rp2P_to_A2CP 
-    A2C_Points_def A2C_Lines_def unfolding rp2_Points_def A2C_incid_def by blast
+    A2C_Points_def A2C_Lines_def unfolding rp2_Points_def by blast
   let ?ideals = "{Ideal t | k t. ((k \<in> A2Lines) 
     \<and> (t = affine_plane_data.line_pencil A2Points A2Lines a2incid k))}"
   let ?j = "(A2Ordinary ((-a1)/a2) ((-a3)/a2))"
@@ -360,7 +347,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
     using p q pqr_dist ldef l_equation not_both_ideal by blast
   then obtain k0 where k0def: "k = OrdinaryL k0" using kdef projLine.exhaust 
     rp2iso.simps mprojectivize.simps(3) mem_Collect_eq UNIV_I
-    A2Lines_def A2C_incid_def by (metis (full_types, lifting))
+    A2Lines_def  by (metis (full_types, lifting))
   consider (PIQO) "rp2iso P \<in> ?ideals \<and> rp2iso Q \<notin> ?ideals" 
     | (POQI) "rp2iso P \<notin> ?ideals \<and> rp2iso Q \<in> ?ideals" 
     | (POQO) "rp2iso P \<notin> ?ideals \<and> rp2iso Q \<notin> ?ideals" using pq_one_idl by blast
@@ -374,7 +361,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
     then have "projective_plane_data.pcollinear A2C_Points A2C_Lines A2C_incid
       (rp2iso Q) (rp2iso P) (rp2iso R)" using a1a2nz ldef l_equation pqr_dist 
       rp2_Points_def one_ideal_coll [of Q P] by blast
-    then show ?thesis using Ipqr_dist A2C_Points_def A2C_Lines_def A2C_incid_def 
+    then show ?thesis using Ipqr_dist A2C_Points_def  
       rp2P_to_A2CP projectivisation_of_A2 rp2_Points_def UNIV_I
       RP2C.pcollinear_commute [of "rp2iso Q" "rp2iso P" "rp2iso R"] by metis
   next
@@ -387,7 +374,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
     then have P0def: "P0 = A2Point (x1/x3) (x2/x3)" 
       and Q0def: "Q0 = A2Point (y1/y3) (y2/y3)" using xdef ydef x3y3nz by simp+
     have k0join: "k0 = a2join P0 Q0" using kdef k0def P0Q0_facts Ipqr_dist A2_a1b
-      mprojectivize.simps(1) A2C_incid_def by metis
+      mprojectivize.simps(1) by metis
     have xy1or2: "(x1/x3) \<noteq> (y1/y3) \<or> (x2/x3) \<noteq> (y2/y3)" 
       using P0def Q0def P0Q0_facts Ipqr_dist by auto
     then consider 
@@ -409,7 +396,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
         then have "a2incid P0 ?j \<and> a2incid Q0 ?j \<and> a2incid R0 ?j" 
           using a2nz P0def Q0def Pdl Qdl Rdl x3y3nz z3nz a2nz_ord_on_j by simp
         then show ?thesis using RO k0def k0join P0Q0_facts Ipqr_dist A2_a1b 
-          mprojectivize.simps(1) A2C_incid_def by metis
+          mprojectivize.simps(1) by metis
       next
         case RI: (Ideal T)
         then have z3z: "z3 = 0" 
@@ -425,7 +412,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
         have "a2incid P0 ?j \<and> a2incid Q0 ?j" 
           using a2nz x3y3nz P0def Q0def Pdl Qdl a2nz_ord_on_j by simp
         then have "k0 = ?j" using k0join A2.a1b P0Q0_facts Ipqr_dist by metis
-        then show ?thesis using RI k0def jT unfolding A2C_incid_def by simp
+        then show ?thesis using RI k0def jT by simp
       qed
     next
       case vertk0
@@ -453,7 +440,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
           add_num_frac div_0 divide_divide_eq_left' add_eq_0_iff
           nonzero_mult_divide_mult_cancel_left by metis
         then show ?thesis using RO vertk0 k0def R0def P0Q0_facts   
-          a2incid.simps(2) mprojectivize.simps(1) A2C_incid_def by metis
+          a2incid.simps(2) mprojectivize.simps(1) by metis
       next
         case RI: (Ideal T)
         then have z3z: "z3 = 0" 
@@ -464,7 +451,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
         then have "k0 \<in> T" using vertk0 TVert A2.a2b a2find_parallel.simps(2)
           affine_plane_data.line_pencil_def A2Lines_def A2Points_def 
           UNIV_I mem_Collect_eq by metis
-        then show ?thesis using RI k0def unfolding A2C_incid_def by simp
+        then show ?thesis using RI k0def by simp
       qed
     qed
     then show ?thesis using p q r kdef rp2P_to_A2CP 
@@ -479,9 +466,8 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
       using xdef ydef ldef rp2_Points_def by auto
     then have "k = Infty" using p q Ipqr_dist kdef A2_affine rp2P_to_A2CP 
       two_ideal_is_infinite [of "rp2iso P" _ "rp2iso Q" _ A2Points A2Lines 
-      a2incid _ _ _ k] A2C_Points_def A2C_Lines_def A2C_incid_def by metis
-    then have "A2C_incid (rp2iso R) k" using ldef liff rp2_Points_def 
-      unfolding A2C_incid_def by simp
+      a2incid _ _ _ k] A2C_Points_def A2C_Lines_def by metis
+    then have "A2C_incid (rp2iso R) k" using ldef liff rp2_Points_def by simp
     then show ?thesis using p q r kdef rp2P_to_A2CP 
       unfolding projective_plane_data.pcollinear_def by metis
   qed
@@ -493,19 +479,6 @@ lemma real_projective_planes_isomorphic:
   shows "pp_isomorphism rp2_Points rp2_Lines rp2_incid 
     A2C_Points A2C_Lines A2C_incid rp2iso"
 proof (unfold_locales)
-  show "\<lbrakk>P \<noteq> Q; P \<in> A2C_Points; Q \<in> A2C_Points\<rbrakk>
-    \<Longrightarrow> \<exists>!k. k \<in> A2C_Lines \<and> A2C_incid P k \<and> A2C_incid Q k" for P Q
-    using A2C_Lines_def A2C_Points_def A2C_incid_def RP2C.p1 by simp
-  show "\<lbrakk>k \<in> A2C_Lines; n \<in> A2C_Lines\<rbrakk> 
-    \<Longrightarrow>  \<exists>P. P \<in> A2C_Points \<and> A2C_incid P k \<and> A2C_incid P n" for k n
-    using A2C_Lines_def A2C_Points_def A2C_incid_def RP2C.p2 by simp
-  show "\<exists>P Q R. P \<in> A2C_Points \<and> Q \<in> A2C_Points \<and> R \<in> A2C_Points 
-    \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
-    \<and> \<not> (projective_plane_data.pcollinear A2C_Points A2C_Lines A2C_incid P Q R)"
-    using A2C_Lines_def A2C_Points_def A2C_incid_def RP2C.p3 by simp
-  show "\<lbrakk>k \<in> A2C_Lines; U = {P. (P \<in> A2C_Points \<and> A2C_incid P k)}\<rbrakk> 
-    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]" for k U 
-    using A2C_Lines_def A2C_Points_def A2C_incid_def RP2C.p4 by simp
   show "P \<in> rp2_Points \<Longrightarrow> rp2iso P \<in> A2C_Points" for P using rp2P_to_A2CP by simp
   show "\<lbrakk>P \<in> rp2_Points; Q \<in> rp2_Points; R \<in> rp2_Points; RP2Q.pcollinear P Q R\<rbrakk> 
     \<Longrightarrow> projective_plane_data.pcollinear A2C_Points A2C_Lines A2C_incid
@@ -521,8 +494,8 @@ proof (unfold_locales)
       then show ?thesis using p q r pqr_coll rp2iso_coll_to_coll by simp
     next
       case False 
-      then show ?thesis using p q r rp2P_to_A2CP projective_plane.pcollinear_degeneracy 
-        A2C_Points_def A2C_Lines_def A2C_incid_def projectivisation_of_A2 by metis
+      then show ?thesis using p q r rp2P_to_A2CP projectivisation_of_A2
+        projective_plane.pcollinear_degeneracy A2C_Points_def A2C_Lines_def by metis
     qed
   qed
   show "bij_betw rp2iso rp2_Points A2C_Points" using rp2iso_inj rp2iso_surj 
