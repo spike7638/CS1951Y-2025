@@ -110,7 +110,7 @@ proof
         using ord_pencil_slopes A2Lines_def by blast
       then have "(x2/x1) = (y2/y1)" unfolding affine_plane_data.line_pencil_def
         affine_plane_data.parallel_def A2Lines_def by simp
-      then obtain t::real where "t \<noteq> 0 \<and> x1 = t * y1 \<and> x2 = t * y2" 
+      then obtain t::real where "t \<noteq> 0 \<and> x1 = t*y1 \<and> x2 = t*y2" 
         using x1nz y1nz eq_divide_eq divide_eq_0_iff mult.left_commute by metis
       then have "projrel (Rep_Proj P) (Rep_Proj Q)" using idl xdef ydef rep_P_nz 
         cross3_def cross_nz [of "Rep_Proj P" "Rep_Proj Q"] by fastforce

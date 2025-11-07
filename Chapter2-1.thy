@@ -97,7 +97,6 @@ proof -
   then show ?thesis using kdef by auto
 qed
 
-text \<open>\hadi\<close>
 lemma (in projective_space) extra_point:
   fixes P Q H
   assumes "H \<in> Planes"
@@ -110,7 +109,6 @@ proof -
   then have pqr: "\<not> collinear P Q R" using assms S1b collinear_def by auto
   show ?thesis sorry
 qed
-text \<open>\done\<close>
 
 text \<open>\hadi\<close>
 lemma (in projective_space) two_point_line_in_plane:
@@ -293,7 +291,6 @@ proof -
   then show ?thesis using pexist by auto
 qed
 text \<open>\done\<close>
-
 
 text \<open>\hadi\<close>
 theorem (in projective_space) Desargues_case_1:
