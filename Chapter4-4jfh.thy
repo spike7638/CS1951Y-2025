@@ -19,7 +19,7 @@ lemma  persp_data_sym [sym]:
   unfolding is_persp_data_def by auto 
 
 lemma perspectivity_nice: 
-  fixes P l1 l2
+  fixes Or P l1 l2
   assumes "P \<in> Points \<and>  P \<lhd> l1"
   assumes "is_persp_data Or l1 l2"
   shows "(perspectivity Or l1 l2 P) \<in> Points \<and> (perspectivity Or l1 l2 P) \<lhd> l2"
@@ -32,6 +32,25 @@ proof -
     using meet_properties2 join_properties1[of Or P] assms is_persp_data_def[of Or l1 l2] by blast
   show ?thesis using ss st su perspectivity_def assms by auto
 qed
+
+lemma perspectivity_nice2: 
+  fixes Or l1 l2
+  assumes "(perspectivity Or l1 l2) \<noteq> undefined"
+  shows "is_persp_data Or l1 l2"
+proof (rule ccontr)
+  assume ch: "\<not> is_persp_data Or l1 l2"
+  show False using assms ch perspectivity_def by force
+qed
+
+(*
+lemma perspectivity_nice3: 
+  fixes Or l1 l2 
+  assumes "\<forall> P . ((P \<in> Points \<and>  P \<lhd> l1) \<longrightarrow> (perspectivity Or l1 l2) P \<noteq> undefined)" 
+  shows "is_persp_data Or l1 l2"
+proof (rule ccontr)
+  assume ch: "\<not> is_persp_data Or l1 l2"
+  show False using assms ch perspectivity_def by sledgehammer
+qed*)
 
 lemma inverse_persp:
   fixes f Or l1 l2  Q
@@ -120,12 +139,12 @@ proof-
 qed
 
 
-
+(*
 definition is_proj_data :: "'p list \<Rightarrow> 'l list \<Rightarrow> bool" 
   where "is_proj_data ps ls  = True"
 
 fun projectivity2 :: "'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)" where
-  "projectivity2 ps ls = (if is_proj_data ps ls then () else undefined)"
+  "projectivity2 ps ls = (if is_proj_data ps ls then () else undefined)"*)
 
 
 (*
@@ -144,12 +163,88 @@ definition perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> 
 (* Definition. A projectivity is a mapping of one line l into another l\<Zprime> (which may be equal to l), which can be expressed as a composition of perspectivities. 
 We write l Z l\<Zprime>, and write ABC . . . Z A\<Zprime>B\<Zprime>C\<Zprime> . . . if the projectivity that takes  points A, B, C, . . . into A\<Zprime>, B\<Zprime>, C\<Zprime>, . . . respectively. 
 Note that a projectivity also is always one-to-one and onto. *)
-fun projectivity :: "'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)" where
-  "projectivity (Cons p []) (Cons l1 (Cons l2 [])) = (perspectivity p l1 l2)" |
-  "projectivity (Cons p ps) (Cons l1 (Cons l2 ls)) = (projectivity ps (Cons l2 ls)) \<circ> (perspectivity p l1 l2)" |
-  "projectivity [] b = undefined" |
-  "projectivity a [] = undefined" |
-  "projectivity a [v] = undefined"
+
+(*datatype ('l1, 'p1, 'l2) persp_data = Line 'l1*)
+
+type_synonym ('p1, 'l1) persp_data = "('p1 \<times> 'l1 \<times> 'l1)"
+
+fun is_persp_data2 :: "('p, 'l) persp_data \<Rightarrow> bool" 
+  where "is_persp_data2 (Or, l1, l2) = (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> 
+  \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2))"
+
+fun perspectivity2 :: "('p, 'l) persp_data \<Rightarrow> ('p \<Rightarrow> 'p)"
+  where "perspectivity2 (Or, l1, l2) = (if is_persp_data2 (Or, l1, l2)
+  then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
+
+type_synonym ('d) proj_data = "'d list"
+
+fun is_proj_data :: "(('p, 'l) persp_data) proj_data \<Rightarrow> bool" where
+  "is_proj_data (Cons d []) = (is_persp_data2 d)" |
+  "is_proj_data (Cons (Or, l1, l2) (Cons (Or', l1', l2') ds)) = 
+    (is_persp_data2 (Or, l1, l2) \<and> l2 = l1' \<and> is_proj_data (Cons (Or', l1', l2') ds))" |
+  "is_proj_data [] = False"
+
+fun projectivity :: "(('p, 'l) persp_data) proj_data \<Rightarrow> ('p \<Rightarrow> 'p)" where
+  "projectivity (Cons d []) = (perspectivity2 d)" |
+  "projectivity (Cons d ds) = (projectivity ds) \<circ> (perspectivity2 d)" |
+  "projectivity [] = (\<lambda> Q . Q)"
+
+lemma projectivity_nice: 
+  fixes ds P
+ (*  assumes "last ((Or, l1, l2) # ds) = (Or', l1', l2')" *)
+  shows "is_proj_data ds \<Longrightarrow> P \<in> Points \<and> P \<lhd> (fst (snd (hd ds))) \<Longrightarrow>
+        projectivity ds P \<in> Points \<and> 
+        projectivity ds P \<lhd> (snd (snd (last ds)))"
+proof (induction ds)
+  case Nil
+  then have "False" using Nil.prems(1) is_proj_data.simps(3) by auto
+  then show ?case by auto
+next
+  case (Cons a qs)
+  show ?case
+  proof (clarsimp)
+    have p1:"(qs = [] \<longrightarrow> perspectivity2 a P \<in> Points \<and> perspectivity2 a P \<lhd> snd (snd a))"
+      by (smt (z3) Cons.prems(1,2) fst_conv is_persp_data2.elims(2) is_persp_data_def is_proj_data.simps(1)
+        list.sel(1) perspectivity2.simps perspectivity_def perspectivity_nice snd_conv)
+    have p2: "(qs \<noteq> [] \<longrightarrow>
+     projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))"
+    proof -
+      have "projectivity (a # qs) P = ((projectivity qs) \<circ> (perspectivity2 a)) P"
+        by (smt (verit, ccfv_threshold) fun.map_ident_strong projectivity.cases
+          projectivity.simps(1,2,3))
+      also have "... = (projectivity qs) ((perspectivity2 a) P)" by auto
+      finally have "projectivity (a # qs) P = (projectivity qs) ((perspectivity2 a) P)" .
+      have "((perspectivity2 a P) \<in> Points) \<and> ((perspectivity2 a P) \<lhd> fst (snd (hd qs)))"
+        using \<open>is_proj_data (a # qs)\<close> by sledgehammer
+      show ?thesis sorry
+    then show "(qs = [] \<longrightarrow> perspectivity2 a P \<in> Points \<and> perspectivity2 a P \<lhd> snd (snd a)) \<and>
+    (qs \<noteq> [] \<longrightarrow>
+     projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))" using p1 p2 by blast
+  qed    
+qed
+
+proof -
+  have "projectivity ((Or, l1, l2) # []) P \<in> Points \<and> 
+         projectivity ((Or, l1, l2) # []) P \<lhd> l2'" sorry
+  assume "projectivity ((Or, l1, l2) # qs) P \<in> Points \<and> 
+         projectivity ((Or, l1, l2) # qs) P \<lhd> l2'"
+  have "projectivity ((Or, l1, l2) # (a#qs)) P \<in> Points \<and> 
+         projectivity ((Or, l1, l2) # (a#qs)) P \<lhd> l2'" sorry
+
+  show ?thesis by sledgehammer
+  case Nil
+  have False by sledgehammer
+  then have "(Or, l1, l2) # ds = Nil" by sledgehammer
+  then have "ds = Nil" using Nil by sledgehammer
+  then have 
+    by sledgehammer
+  then show ?case sorry
+next
+  case (Cons a ds)
+  then show ?case sorry
+qed
+
+
 (*
 fun composition :: "'p list \<Rightarrow> 'l list \<Rightarrow> 'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "composition ps ls ps' ls' = (if projectivity ps ls \<noteq> undefined \<and> projectivity ps' ls' \<noteq> undefined \<and>
@@ -231,14 +326,15 @@ proof -
     have "ls = (Cons l (tl ls))" using \<open>hd ls = l\<close>
     proof (cases ls)
       case Nil
-      then have False using \<open>ls = []\<close> \<open>hd ls = l\<close> by sledgehammer
+      have "hd [] = undefined" by (simp add: hd_def)
+      then have False using \<open>ls = []\<close> \<open>hd ls = l\<close>
       then show ?thesis sorry
     next
       case (Cons a list)
       then show ?thesis using \<open>hd ls = l\<close> by auto
     qed
-    have "hd (ls' @ (tl ls)) = hd ls'" by sledgehammer
-    have "hd (ls' @ (tl ls)) = l \<and> last (ls' @ (tl ls)) = l" using f_proj g_proj by sledgehammer
+    have "hd (ls' @ (tl ls)) = hd ls'" sorry
+    have "hd (ls' @ (tl ls)) = l \<and> last (ls' @ (tl ls)) = l" using f_proj g_proj sorry
     then show ?case using f_proj g_proj unfolding PJ_def sorry
   next
     thm proj_composition_is_proj
