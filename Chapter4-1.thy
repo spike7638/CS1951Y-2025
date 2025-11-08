@@ -485,4 +485,116 @@ proof -
   then show ?thesis using fbij by auto
 qed
 text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+definition nonfano :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool" where
+  "nonfano Points Lines incid \<equiv> projective_plane Points Lines incid
+    \<and> (\<forall>A B C D. distinct[A,B,C,D] 
+    \<and> A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points
+    \<and> \<not> projective_plane_data.pcollinear Points Lines incid A B C 
+    \<and> \<not> projective_plane_data.pcollinear Points Lines incid A B D
+    \<and> \<not> projective_plane_data.pcollinear Points Lines incid A C D
+    \<and> \<not> projective_plane_data.pcollinear Points Lines incid B C D
+    \<longrightarrow> (\<not> projective_plane_data.pcollinear Points Lines incid
+      (projective_plane_data.meet Points Lines incid
+        (projective_plane_data.join Points Lines incid A B)
+        (projective_plane_data.join Points Lines incid C D))
+      (projective_plane_data.meet Points Lines incid
+        (projective_plane_data.join Points Lines incid A C)
+        (projective_plane_data.join Points Lines incid B D))
+      (projective_plane_data.meet Points Lines incid
+        (projective_plane_data.join Points Lines incid A D)
+        (projective_plane_data.join Points Lines incid B C))))"
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+theorem dual_plane_is_nonfano:
+  fixes Points :: "'p set"
+  fixes Lines :: "'l set"
+  fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  assumes proj_fano: "nonfano Points Lines incid"
+  defines dPdef: "dPoints \<equiv> Lines"
+  defines dLdef: "dLines \<equiv> Points"
+  fixes dincid :: "'l \<Rightarrow> 'p \<Rightarrow> bool"
+  assumes dm: "dincid = mdualize incid"
+  shows "nonfano dPoints dLines dincid" unfolding nonfano_def
+proof
+  show dualp: "projective_plane dPoints dLines dincid" 
+    using assms dual_plane_is_projective unfolding nonfano_def by auto
+  show "\<forall>A B C D. distinct[A,B,C,D] 
+    \<and> A \<in> dPoints \<and> B \<in> dPoints \<and> C \<in> dPoints \<and> D \<in> dPoints
+    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid A B C 
+    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid A B D
+    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid A C D
+    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid B C D
+    \<longrightarrow> (\<not> projective_plane_data.pcollinear dPoints dLines dincid
+      (projective_plane_data.meet dPoints dLines dincid
+        (projective_plane_data.join dPoints dLines dincid A B)
+        (projective_plane_data.join dPoints dLines dincid C D))
+      (projective_plane_data.meet dPoints dLines dincid
+        (projective_plane_data.join dPoints dLines dincid A C)
+        (projective_plane_data.join dPoints dLines dincid B D))
+      (projective_plane_data.meet dPoints dLines dincid
+        (projective_plane_data.join dPoints dLines dincid A D)
+        (projective_plane_data.join dPoints dLines dincid B C)))"
+  proof (clarify)
+    fix A B C D
+    assume alldist: "distinct[A,B,C,D]"
+    and a:"A \<in> dPoints" and b:"B \<in> dPoints" and c:"C \<in> dPoints" and d:"D \<in> dPoints"
+    and abc: "\<not> projective_plane_data.pcollinear dPoints dLines dincid A B C" 
+    and abd: "\<not> projective_plane_data.pcollinear dPoints dLines dincid A B D"
+    and acd: "\<not> projective_plane_data.pcollinear dPoints dLines dincid A C D"
+    and bcd: "\<not> projective_plane_data.pcollinear dPoints dLines dincid B C D"
+    let ?P = "projective_plane_data.meet dPoints dLines dincid
+      (projective_plane_data.join dPoints dLines dincid A B)
+      (projective_plane_data.join dPoints dLines dincid C D)"
+    let ?Q = "projective_plane_data.meet dPoints dLines dincid
+      (projective_plane_data.join dPoints dLines dincid A C)
+      (projective_plane_data.join dPoints dLines dincid B D)"
+    let ?R = "projective_plane_data.meet dPoints dLines dincid
+      (projective_plane_data.join dPoints dLines dincid A D)
+      (projective_plane_data.join dPoints dLines dincid B C)"
+    show "projective_plane_data.pcollinear dPoints dLines dincid ?P ?Q ?R \<Longrightarrow> False"
+    proof -
+      assume pqr: "projective_plane_data.pcollinear dPoints dLines dincid ?P ?Q ?R"
+      obtain A0 B0 C0 D0 where a0: "A0 \<in> Points \<and> incid A0 B \<and> incid A0 D"
+        and b0: "B0 \<in> Points \<and> incid B0 C \<and> incid B0 D"
+        and c0: "C0 \<in> Points \<and> incid C0 A \<and> incid C0 B"
+        and d0: "D0 \<in> Points \<and> incid D0 A \<and> incid D0 C"
+        using a b c d dm dualp dp_p2 [of _ _ dincid] mmi_eq dLdef by fastforce+
+      have alldist0: "distinct[A0,B0,C0,D0]" using a b c d abc abd acd bcd a0 b0 c0 d0 
+        dLdef dm projective_plane_data.pcollinear_def [of _ _ dincid] by fastforce
+      have a0b0c0: "\<not> projective_plane_data.pcollinear Points Lines incid A0 B0 C0" 
+        and a0b0d0: "\<not> projective_plane_data.pcollinear Points Lines incid A0 B0 D0" 
+        and a0c0d0: "\<not> projective_plane_data.pcollinear Points Lines incid A0 C0 D0" 
+        and b0c0d0: "\<not> projective_plane_data.pcollinear Points Lines incid B0 C0 D0" 
+        using a b c d alldist a0 b0 c0 d0 alldist0 dPdef dLdef dm dualp mmi_eq
+          dual_plane_is_projective distinct_length_2_or_more 
+          projective_plane.unique_meet [of _ _ incid] unfolding 
+          projective_plane_data.pcollinear_def by metis+
+      let ?P0 = "projective_plane_data.meet Points Lines incid
+        (projective_plane_data.join Points Lines incid A0 B0)
+        (projective_plane_data.join Points Lines incid C0 D0)"
+      let ?Q0 = "projective_plane_data.meet Points Lines incid
+        (projective_plane_data.join Points Lines incid A0 C0)
+        (projective_plane_data.join Points Lines incid B0 D0)"
+      let ?R0 = "projective_plane_data.meet Points Lines incid
+        (projective_plane_data.join Points Lines incid A0 D0)
+        (projective_plane_data.join Points Lines incid B0 C0)"
+      have p0q0r0: "\<not> projective_plane_data.pcollinear Points Lines incid ?P0 ?Q0 ?R0"
+        using a0 b0 c0 d0 alldist0 a0b0c0 a0b0d0 a0c0d0 b0c0d0 proj_fano
+        unfolding nonfano_def by simp
+      have da0b0: "D = projective_plane_data.join Points Lines incid A0 B0" 
+        and ac0d0: "A = projective_plane_data.join Points Lines incid C0 D0"
+        and ba0c0: "B = projective_plane_data.join Points Lines incid A0 C0"
+        and cb0d0: "C = projective_plane_data.join Points Lines incid B0 D0"
+        using a b c d a0 b0 c0 d0 alldist0 dLdef dPdef dm dualp dual_plane_is_projective
+          mmi_eq distinct_length_2_or_more projective_plane.join_properties2 by metis+
+      
+      have "projective_plane_data.pcollinear Points Lines incid ?P0 ?Q0 ?R0" sorry
+      then show False using p0q0r0 by simp
+    qed
+  qed
+qed
+text \<open>\done\<close>
 end
