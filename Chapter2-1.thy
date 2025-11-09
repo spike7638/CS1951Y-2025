@@ -177,7 +177,7 @@ qed
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
-lemma (in projective_space) crossing_lines: (* two distinct lines through a point determine a unique plane *)
+lemma (in projective_space) crossing_lines:
   fixes k n P
   assumes "k \<in> Lines" and "n \<in> Lines"
   assumes "k \<noteq> n"
@@ -201,32 +201,27 @@ qed
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
-lemma (in projective_space) point_in_plane_not_in_line:
-  fixes H l
-  assumes "H \<in> Planes" and "l \<in> Lines"
-  assumes "l \<subseteq> H"
-  shows "\<exists>R. R \<in> H \<and> R \<notin> l"
-proof (rule ccontr, simp)
-  assume "\<forall>R. R \<in> H \<longrightarrow> R \<in> l"
-  then have Heql: "H = l" using assms by auto
-  obtain P Q R where PQRdef: "P \<in> l \<and> Q \<in> l \<and> R \<in> l \<and> distinct3 P Q R"
-    using assms S6 [of l] by auto
-  then have "\<forall>X \<in> Points. X \<notin> H \<longrightarrow> H = H \<inter> (plane_through P Q X)" 
-    using assms Heql all_extra_points two_point_line_in_plane S0a S1b S2a 
-    Int_absorb2 unfolding distinct3_def by (smt (verit))
-  then have "\<forall>X \<in> Points. X \<notin> H \<longrightarrow> H \<subseteq> (plane_through P Q X)" by auto
-  then have cd: "\<forall>N \<in> Planes. P \<in> N \<and> Q \<in> N \<longrightarrow> H \<subseteq> N" using assms PQRdef Heql S0b 
-    int_line_plane_unique distinct3_def by metis
-  obtain U V where UVdef: "U \<in> Planes \<and> V \<in> Planes \<and> P \<in> U \<and> Q \<in> U \<and> P \<in> V \<and> Q \<in> V 
-    \<and> U \<noteq> V" using assms PQRdef Heql S0b S2a extra_point distinct3_def by metis
-  then have "H \<subseteq> U \<and> H \<subseteq> V" using cd by simp
-  obtain k where kdef: "k \<in> Lines \<and> \<not> (k \<subseteq> H)" 
-    using assms PQRdef Heql S0b S1a point_outside_plane subset_iff by metis
-  then obtain S where Sdef: "S \<in> k \<and> S \<in> H" using assms(1) S3 by auto
-  then obtain W where Wdef: "W \<in> Planes \<and> k \<subseteq> W \<and> H \<subseteq> W" 
-    using assms kdef Heql S0b crossing_lines [of k H S] by blast
-  obtain S' where S'def: "S' \<in> k \<and> S' \<in> U" using S3 UVdef kdef by blast
-  then have "S' \<in> H" sorry
+lemma (in projective_space) planes_are_not_lines:
+  fixes H
+  assumes HP: "H \<in> Planes"
+  shows "H \<notin> Lines"
+proof
+  assume HL: "H \<in> Lines"
+  obtain X where Xdef: "X \<in> Points \<and> X \<notin> H" using HP point_outside_plane by auto
+  then obtain U V where UVdef: "U \<in> Planes \<and> V \<in> Planes \<and> H \<subseteq> U \<and> H \<subseteq> V 
+    \<and> distinct3 H U V" using HP HL plane_through_point_line [of _ H] 
+    point_outside_plane subset_iff unfolding distinct3_def by (smt (verit))
+  obtain P Q R where PQRdef: "P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> distinct3 P Q R"
+    using HL S6 [of H] by auto
+  then have Pint: "\<forall>T. T \<in> H \<inter> (join P X) \<longrightarrow> T = P" 
+    using Xdef HL S0a S1a S1b IntE by metis
+  obtain S where Sdef: "S \<in> Points \<and> S \<in> (join P X) \<and> distinct3 P X S"
+    using Xdef PQRdef HP S0a S0b S1a S6 distinct3_def by metis
+  then have SnH: "S \<notin> H" using Pint IntI distinct3_def by metis
+  then have PQSncoll: "\<not> collinear P Q S" 
+    using PQRdef Sdef HP all_extra_points S0b distinct3_def by metis
+  obtain N where Ndef: "N \<in> Planes \<and> H \<subseteq> N \<and> S \<in> N" 
+    using HL Sdef SnH plane_through_point_line [of S H] by auto
   then show False sorry
 qed
 text \<open>\done\<close>
@@ -278,8 +273,8 @@ proof -
       plane_through_point_line [of X k] plane_through_point_line [of X n] by auto
     then have k_int: "k \<in> Lines \<and> k \<subseteq> H \<and> k \<subseteq> U" using khl HLdef by simp
     then obtain S where Sdef: "S \<in> k \<and> S \<in> V" using Vdef S3 by blast
-    then have "S \<in> n" using nhl Xdef Vdef k_int plane_through_point_line [of S]
-      S0b HP HLdef mem_Collect_eq in_mono by (metis (lifting))
+    then have "S \<in> n" 
+      using nhl Xdef Vdef k_int plane_through_point_line S0b HP HLdef by blast
     then show ?thesis using khl nhl Sdef Vdef k_int S0b HPdef Hidef by auto
   qed
 qed
@@ -324,15 +319,12 @@ proof (rule ccontr)
   then have cd: "\<forall>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<in> H \<and> Q \<in> H 
     \<and> R \<in> H \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<longrightarrow> collinear P Q R" using HPdef by simp
   obtain P Q where pqdef: "P \<in> H \<and> Q \<in> H \<and> P \<noteq> Q" 
-    unfolding distinct3_def using S3 [of H] S4 [of H] S6 HP subset_eq 
-    by (metis distinct3_def)
+    using S3 [of H] S4 [of H] S6 HP subset_eq distinct3_def by metis
   then have pqh: "(join P Q) \<subseteq> H" using S0b two_point_line_in_plane HP by auto
   then have "\<forall>R. R \<in> H \<longrightarrow> collinear P Q R" using cd pqdef S0b S1a HP
     unfolding collinear_def by metis
-  then have "\<forall>R. R \<in> H \<longrightarrow> R \<in> (join P Q)" 
-    using pqdef S0b S1b HP collinear_def by auto
-  then have "H = (join P Q)" using pqh by auto
-  then show False using pqdef pqh point_in_plane_not_in_line S0b S1a HP by metis
+  then have "H = (join P Q)" using pqh pqdef S0b S1b HP collinear_def by auto
+  then show False using pqdef pqh planes_are_not_lines S0b S1a HP by metis
 qed
 text \<open>\done\<close>
 
