@@ -486,7 +486,7 @@ proof -
 qed
 text \<open>\done\<close>
 
-text \<open>\hadi\<close>
+(*text \<open>\hadi\<close>
 definition nonfano :: "('p set) \<Rightarrow> ('l set) \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> bool" where
   "nonfano Points Lines incid \<equiv> projective_plane Points Lines incid
     \<and> (\<forall>A B C D. distinct[A,B,C,D] 
@@ -596,5 +596,5 @@ proof
     qed
   qed
 qed
-text \<open>\done\<close>
+text \<open>\done\<close>*)
 end
