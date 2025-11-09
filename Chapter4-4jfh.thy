@@ -6,40 +6,42 @@ context projective_plane
 begin
 text\<open> start at "Perspectivies and Projectivities" and go to end of chapter\<close>
 
-definition is_persp_data :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> bool" 
-  where "is_persp_data Or l1 l2 = (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> 
+type_synonym ('p1, 'l1) persp_data = "('p1 \<times> 'l1 \<times> 'l1)"
+
+fun is_persp_data :: "('p, 'l) persp_data \<Rightarrow> bool" 
+  where "is_persp_data (Or, l1, l2) = (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> 
   \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2))"
 
-definition perspectivity :: "'p \<Rightarrow> 'l \<Rightarrow> 'l \<Rightarrow> ('p \<Rightarrow> 'p)"
-  where "perspectivity Or l1 l2 = (if is_persp_data Or l1 l2
+fun perspectivity :: "('p, 'l) persp_data \<Rightarrow> ('p \<Rightarrow> 'p)"
+  where "perspectivity (Or, l1, l2) = (if is_persp_data (Or, l1, l2)
   then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
 
 lemma  persp_data_sym [sym]: 
-  "is_persp_data Or l1 l2 \<Longrightarrow> is_persp_data Or l2 l1"
-  unfolding is_persp_data_def by auto 
+  "is_persp_data (Or, l1, l2) \<Longrightarrow> is_persp_data (Or, l2, l1)"
+  by simp 
 
 lemma perspectivity_nice: 
   fixes Or P l1 l2
   assumes "P \<in> Points \<and>  P \<lhd> l1"
-  assumes "is_persp_data Or l1 l2"
-  shows "(perspectivity Or l1 l2 P) \<in> Points \<and> (perspectivity Or l1 l2 P) \<lhd> l2"
+  assumes "is_persp_data (Or, l1, l2)"
+  shows "(perspectivity (Or, l1, l2) P) \<in> Points \<and> (perspectivity (Or, l1, l2) P) \<lhd> l2"
 proof -
-  have ss: "((perspectivity Or l1 l2 P) \<in> Points) \<equiv> ((Or \<bar> P \<sqdot> l2)  \<in> Points)" 
-    using assms is_persp_data_def perspectivity_def assms by auto
-  have st: "(Or \<bar> P \<sqdot> l2)  \<in> Points" using meet_properties2 join_properties1 join_properties2
-    by (metis assms is_persp_data_def assms) 
+  have ss: "((perspectivity (Or, l1, l2) P) \<in> Points) \<equiv> ((Or \<bar> P \<sqdot> l2)  \<in> Points)" 
+    using assms assms by auto
+  have st: "(Or \<bar> P \<sqdot> l2)  \<in> Points" using meet_properties2 join_properties1 join_properties2 is_persp_data.simps
+    by (metis assms(1,2))
   have su: "(Or \<bar> P \<sqdot> l2) \<lhd> l2" 
-    using meet_properties2 join_properties1[of Or P] assms is_persp_data_def[of Or l1 l2] by blast
-  show ?thesis using ss st su perspectivity_def assms by auto
+    using meet_properties2 join_properties1[of Or P] assms is_persp_data.simps by auto
+  show ?thesis using ss st su perspectivity.simps assms by auto
 qed
 
 lemma perspectivity_nice2: 
   fixes Or l1 l2
-  assumes "(perspectivity Or l1 l2) \<noteq> undefined"
-  shows "is_persp_data Or l1 l2"
+  assumes "(perspectivity (Or, l1, l2)) \<noteq> undefined"
+  shows "is_persp_data (Or, l1, l2)"
 proof (rule ccontr)
-  assume ch: "\<not> is_persp_data Or l1 l2"
-  show False using assms ch perspectivity_def by force
+  assume ch: "\<not> is_persp_data (Or, l1, l2)"
+  show False using assms ch perspectivity.simps by auto
 qed
 
 (*
@@ -54,26 +56,26 @@ qed*)
 
 lemma inverse_persp:
   fixes f Or l1 l2  Q
-  assumes data_def: "is_persp_data Or l1 l2"
-  assumes f_def: "f = perspectivity Or l1 l2"
-  assumes g_def: "g = perspectivity Or l2 l1"
+  assumes data_def: "is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
+  assumes g_def: "g = perspectivity (Or, l2, l1)"
   assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> l1"
   shows "(g (f Q)) = Q"
 proof -
-  have f2: "(f Q) = (Or \<bar> Q) \<sqdot> l2" unfolding f_def g_def perspectivity_def using assms by auto
+  have f2: "(f Q) = (Or \<bar> Q) \<sqdot> l2" unfolding f_def g_def perspectivity.simps using assms by auto
   then have fQnice: "(f Q) \<in> Points \<and> (f Q) \<lhd> l2" unfolding f_def using perspectivity_nice [of Q l1 Or l2] Q_facts data_def by auto
-  have gdata_def: "is_persp_data Or l2 l1" using data_def is_persp_data_def by blast
+  have gdata_def: "is_persp_data (Or, l2, l1)" using data_def is_persp_data.simps by blast
   have g1: "g (f Q) = (Or \<bar> (f Q)) \<sqdot> l1"
-    unfolding f_def g_def perspectivity_def using fQnice f2 Q_facts gdata_def assms by auto
+    unfolding f_def g_def perspectivity.simps using fQnice f2 Q_facts gdata_def assms by auto
   then have "g (f Q) = (Or \<bar> ((Or \<bar> Q) \<sqdot> l2)) \<sqdot> l1" using f2 by auto
   then show ?thesis 
-    by (smt (verit) Q_facts data_def is_persp_data_def join_properties1 meet_properties2 unique_meet)
+    by (smt (verit) Q_facts data_def is_persp_data.simps join_properties1 meet_properties2 unique_meet)
 qed
 
 lemma perspectivity_inj:
   fixes f Or l1 l2 P Q
-  assumes data_def: "is_persp_data Or l1 l2"
-  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes data_def: "is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
   assumes P_fact: "P \<in> Points \<and> P \<lhd> l1"
   assumes Q_fact: "Q \<in> Points \<and> Q \<lhd> l1"
   assumes equal_image: "f P = f Q"
@@ -82,16 +84,16 @@ lemma perspectivity_inj:
 
 lemma perspectivity_surj:
   fixes f Or l1 l2 Q
-  assumes data_def: "is_persp_data Or l1 l2"
-  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes data_def: "is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
   assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> l2"
   shows "\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q"
   using inverse_persp assms by (meson persp_data_sym perspectivity_nice)
 
 lemma perspectivity_bij:
   fixes f Or l1 l2
-  assumes data_def: "is_persp_data Or l1 l2"
-  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes data_def: "is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
   shows "bij_betw f {P \<in> Points. P \<lhd> l1} {Q \<in> Points. Q \<lhd> l2}"
 proof -
   have inj: "inj_on f {P \<in> Points. P \<lhd> l1}" 
@@ -123,17 +125,17 @@ qed
 
 lemma perspectivity_of_meet_is_itself:
   fixes f Or l1 l2 P
-  assumes data_def: "is_persp_data Or l1 l2"
-  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes data_def: "is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
   assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
   assumes P_on_l2: "P \<lhd> l2"
   shows "f P = P"
 proof-
   have h1: "f = (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined)"
-    using data_def f_def perspectivity_def[of Or l1 l2] by presburger
+    using data_def f_def perspectivity.simps by presburger
   have h2: "f P = (meet (join Or P) l2)" using h1 P_def by auto
   have h3: "(meet (join Or P) l2) = P" 
-    using P_on_l2 P_def data_def is_persp_data_def join_properties1 meet_properties2 unique_meet
+    using P_on_l2 P_def data_def is_persp_data.simps join_properties1 meet_properties2 unique_meet
     by metis
   show ?thesis using h2 h3 by auto
 qed
@@ -166,27 +168,17 @@ Note that a projectivity also is always one-to-one and onto. *)
 
 (*datatype ('l1, 'p1, 'l2) persp_data = Line 'l1*)
 
-type_synonym ('p1, 'l1) persp_data = "('p1 \<times> 'l1 \<times> 'l1)"
-
-fun is_persp_data2 :: "('p, 'l) persp_data \<Rightarrow> bool" 
-  where "is_persp_data2 (Or, l1, l2) = (Or \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> 
-  \<not> (Or \<lhd> l1) \<and> \<not> (Or \<lhd> l2))"
-
-fun perspectivity2 :: "('p, 'l) persp_data \<Rightarrow> ('p \<Rightarrow> 'p)"
-  where "perspectivity2 (Or, l1, l2) = (if is_persp_data2 (Or, l1, l2)
-  then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
-
 type_synonym ('d) proj_data = "'d list"
 
 fun is_proj_data :: "(('p, 'l) persp_data) proj_data \<Rightarrow> bool" where
-  "is_proj_data (Cons d []) = (is_persp_data2 d)" |
+  "is_proj_data (Cons d []) = (is_persp_data d)" |
   "is_proj_data (Cons (Or, l1, l2) (Cons (Or', l1', l2') ds)) = 
-    (is_persp_data2 (Or, l1, l2) \<and> l2 = l1' \<and> is_proj_data (Cons (Or', l1', l2') ds))" |
+    (is_persp_data (Or, l1, l2) \<and> l2 = l1' \<and> is_proj_data (Cons (Or', l1', l2') ds))" |
   "is_proj_data [] = False"
 
 fun projectivity :: "(('p, 'l) persp_data) proj_data \<Rightarrow> ('p \<Rightarrow> 'p)" where
-  "projectivity (Cons d []) = (perspectivity2 d)" |
-  "projectivity (Cons d ds) = (projectivity ds) \<circ> (perspectivity2 d)" |
+  "projectivity (Cons d []) = (perspectivity d)" |
+  "projectivity (Cons d ds) = (projectivity ds) \<circ> (perspectivity d)" |
   "projectivity [] = (\<lambda> Q . Q)"
 
 lemma projectivity_nice: 
@@ -201,28 +193,32 @@ proof (induction ds)
   then show ?case by auto
 next
   case (Cons a qs)
-  show ?case
-  proof (clarsimp)
-    have p1:"(qs = [] \<longrightarrow> perspectivity2 a P \<in> Points \<and> perspectivity2 a P \<lhd> snd (snd a))"
-      by (smt (z3) Cons.prems(1,2) fst_conv is_persp_data2.elims(2) is_persp_data_def is_proj_data.simps(1)
-        list.sel(1) perspectivity2.simps perspectivity_def perspectivity_nice snd_conv)
+  show ?case sorry
+  (*proof (clarsimp)
+    have p1:"(qs = [] \<longrightarrow> perspectivity a P \<in> Points \<and> perspectivity a P \<lhd> snd (snd a))"
+      by (smt (z3) Cons.prems(1,2) fst_conv is_persp_data.elims(2) is_persp_data.simps is_proj_data.simps(1)
+        list.sel(1) perspectivity.simps perspectivity.simps perspectivity_nice snd_conv)
     have p2: "(qs \<noteq> [] \<longrightarrow>
-     projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))"
+      projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))"
     proof -
-      have "projectivity (a # qs) P = ((projectivity qs) \<circ> (perspectivity2 a)) P"
+      have "projectivity (a # qs) P = ((projectivity qs) \<circ> (perspectivity a)) P"
         by (smt (verit, ccfv_threshold) fun.map_ident_strong projectivity.cases
           projectivity.simps(1,2,3))
-      also have "... = (projectivity qs) ((perspectivity2 a) P)" by auto
-      finally have "projectivity (a # qs) P = (projectivity qs) ((perspectivity2 a) P)" .
-      have "((perspectivity2 a P) \<in> Points) \<and> ((perspectivity2 a P) \<lhd> fst (snd (hd qs)))"
-        using \<open>is_proj_data (a # qs)\<close> by sledgehammer
+      also have "... = (projectivity qs) ((perspectivity a) P)" by auto
+      finally have "projectivity (a # qs) P = (projectivity qs) ((perspectivity a) P)" .
+      have "((perspectivity a P) \<in> Points) \<and> ((perspectivity a P) \<lhd> fst (snd (hd qs)))"
+        using \<open>is_proj_data (a # qs)\<close> sorry
       show ?thesis sorry
-    then show "(qs = [] \<longrightarrow> perspectivity2 a P \<in> Points \<and> perspectivity2 a P \<lhd> snd (snd a)) \<and>
+    qed
+    then show ?case sorry
+  qed
+  show ?thesis sorry
+    (*then show "(qs = [] \<longrightarrow> perspectivity a P \<in> Points \<and> perspectivity a P \<lhd> snd (snd a)) \<and>
     (qs \<noteq> [] \<longrightarrow>
-     projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))" using p1 p2 by blast
-  qed    
+     projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))" using p1 p2 by blast*)*)
 qed
 
+(* This is the old proof. Can delete when the one above^ is fixed.
 proof -
   have "projectivity ((Or, l1, l2) # []) P \<in> Points \<and> 
          projectivity ((Or, l1, l2) # []) P \<lhd> l2'" sorry
@@ -242,10 +238,13 @@ proof -
 next
   case (Cons a ds)
   then show ?case sorry
-qed
+qed*)
 
 
-(*
+(* Need to write a working comp function
+fun comp :: "(('p, 'l) persp_data) proj_data \<Rightarrow> (('p, 'l) persp_data) proj_data \<Rightarrow> ('p \<Rightarrow> 'p)" where
+  "comp 
+
 fun composition :: "'p list \<Rightarrow> 'l list \<Rightarrow> 'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "composition ps ls ps' ls' = (if projectivity ps ls \<noteq> undefined \<and> projectivity ps' ls' \<noteq> undefined \<and>
   last ls = hd ls' then projectivity (ps @ ps') (ls @ (tl ls')) else undefined)"
@@ -259,6 +258,11 @@ fun composition :: "(('p \<Rightarrow> 'p)) \<Rightarrow> (('p \<Rightarrow> 'p)
   f' = projectivity ps' ls' \<and> f' \<noteq> undefined \<and> last ls = hd ls' then
   projectivity (ps @ ps') (ls @ (tl ls')) else undefined)"
 *)
+
+fun projectivity :: "(('p, 'l) persp_data) proj_data \<Rightarrow> ('p \<Rightarrow> 'p)" where
+  "projectivity (Cons d []) = (perspectivity d)" |
+  "projectivity (Cons d ds) = (projectivity ds) \<circ> (perspectivity d)" |
+  "projectivity [] = (\<lambda> Q . Q)"
 
 lemma proj_composition_is_proj:
   fixes ps ps' ls ls' f f'
@@ -352,9 +356,9 @@ proof -
     have h2: "P \<in> Points \<and> P \<lhd> l \<longrightarrow> meet (join Or P) l = P" for P 
       using unique_meet Or_def assms by auto
     have h3: "P \<in> Points \<and> P \<lhd> l \<longrightarrow> ?f P = P" for P 
-      using Or_def assms is_persp_data_def perspectivity_of_meet_is_itself by auto
+      using Or_def assms is_persp_data.simps perspectivity_of_meet_is_itself by auto
     have h4: "\<not>(P \<in> Points \<and> P \<lhd> l) \<longrightarrow> ?f P = undefined" for P 
-      using perspectivity_def[of Or l l] Or_def assms is_persp_data_def by force
+      using perspectivity.simps Or_def assms is_persp_data.simps by force
     have h5: "?f = (\<lambda>P. if P \<in> Points \<and> P \<lhd> l then P else undefined)" using h3 h4 by auto
     have h6: "?f = one (PJ l)" using h5 assms by auto
     show ?case using h1c h6 by force
@@ -464,8 +468,8 @@ qed
 lemma perspectivity_hquad_to_hquad:
   fixes A B C D f
   assumes ABCD_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> harmonic_quadruple A B C D"
-  assumes data_def: "Q \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data Or l1 l2"
-  assumes f_def: "f = perspectivity Or l1 l2"
+  assumes data_def: "Q \<in> Points \<and> l1 \<in> Lines \<and> l2 \<in> Lines \<and> is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
   assumes ABCD'_def: "A' = f A \<and> B' = f B \<and> C' = f C \<and> D' = f D"
   shows "harmonic_quadruple A' B' C' D'"
 proof -
@@ -492,7 +496,7 @@ proof -
   have "meet (join X B') ?l'' = D"
   proof -
     have "C \<in> Points \<and> C \<lhd> (join Q C')"
-      using C'_def perspectivity_def join_properties1 join_properties2 meet_properties2 sorry
+      using C'_def perspectivity.simps join_properties1 join_properties2 meet_properties2 sorry
 
     have "meet (join ?X B') ?l'' = D"
       using ABCD_def A'_def B'_def C'_def D'_def sorry
@@ -539,6 +543,7 @@ locale perspectivity =
      p2: "l1 \<in> Lines \<and> l2 \<in> Lines" and
      p3: "(\<not> (incid Or l1) \<and> \<not> (incid Or l2))"
 end*)
+
 end
 end
 
