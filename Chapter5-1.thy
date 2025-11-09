@@ -1,5 +1,5 @@
 theory "Chapter5-1"
-  imports "Chapter4-4"
+  imports "Chapter4-4jfh"
 begin
 text \<open>Everything up to and including Proposition 5.2\<close>
 
@@ -12,9 +12,9 @@ definition FTPL :: "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarrow> 
     \<and> distinct3 A B C \<and> distinct3 A' B' C' 
     \<and> incid A l \<and> incid B l \<and> incid C l 
     \<and> incid A' l \<and> incid B' l \<and> incid C' l 
-    \<longrightarrow> (\<exists>(f::('p \<Rightarrow> 'p)). \<exists>ps ls. 
-      (f = projective_plane.projectivity Points Lines incid ps ls) 
-      \<and> (hd ls = l) \<and> (last ls = l)
+    \<longrightarrow> (\<exists>(f::('p \<Rightarrow> 'p)) Or ls.
+      (f = projective_plane.projectivity Points Lines incid ls) 
+      \<and> (hd ls = (Or, l, l)) \<and> (last ls = (Or, l, l))
       \<and> (f A = A') \<and> (f B = B') \<and> (f C = C'))))"
 text \<open>\done\<close>
 
