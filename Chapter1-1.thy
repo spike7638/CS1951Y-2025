@@ -2074,9 +2074,7 @@ lemma (in projective_plane) pcollinear_degeneracy:
   assumes "P = Q \<or> P = R \<or> Q = R"
   shows "pcollinear P Q R" 
   using assms p1 p3 unfolding pcollinear_def by metis
-text \<open>\done\<close>
 
-text \<open>\hadi\<close>
 lemma (in projective_plane) pcollinear_commute:
   fixes P Q R::'p
   assumes "P \<in> Points" and "Q \<in> Points" and "R \<in> Points"
@@ -2085,8 +2083,14 @@ lemma (in projective_plane) pcollinear_commute:
   using assms pcollinear_def by auto
 text \<open>\done\<close>
 
-(* right above here is where many small theorems about projective planes should go, theorems like "any
-two lines in a projective plane have the same cardinality", etc. -- Spike *)
+text \<open>\hadi\<close>
+lemma (in projective_plane) mjj_point:
+  fixes A B C D::'p
+  assumes "A \<in> Points" and "B \<in> Points" and "C \<in> Points" and "D \<in> Points"
+  assumes "A \<noteq> B" and "C \<noteq> D" and "(join A B) \<noteq> (join C D)"
+  shows "(meet (join A B) (join C D)) \<in> Points" 
+  using assms join_properties1 meet_properties2 by simp
+text \<open>\done\<close>
 
 text \<open>
 \hartshorne
