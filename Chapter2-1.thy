@@ -54,6 +54,11 @@ assumes
     S0b: "\<lbrakk>H \<in> Planes; P \<in> H\<rbrakk> \<Longrightarrow> P \<in> Points"
 begin
 
+find_theorems name: map_ident_strong
+
+theorem
+  shows "finite Points \<Longrightarrow> (card Points > 12)" by nitpick
+
 text \<open>\hadi\<close>
 lemma S5_dist:
   fixes P Q R S
