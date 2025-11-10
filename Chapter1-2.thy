@@ -67,7 +67,6 @@ proof
     then have "(\<exists> t::real . (t \<noteq>0) \<and> u =  t *\<^sub>R  v)" using sr  divide_eq_0_iff by blast
     then show "projrel u v" using projrel_def ah2 assms by blast
   qed
-  
 text \<open>\done\<close>
 
 lemma vt:
@@ -118,13 +117,12 @@ find_theorems name: "Quotient3_rp2"
 
 lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .((x \<noteq> zvec) \<and> projrel x x))"
 proof -
-  have "projrel x x \<longrightarrow> x  \<noteq> zvec" for x using projrel_def by blast
+  have "projrel x x \<longrightarrow> x \<noteq> zvec" for x using projrel_def by blast
   then show ?thesis using projrel_def rp2.domain by auto 
 qed
 
 lemma rep_P_nz:
-  fixes P
-  assumes a1: "P \<in> rp2_Points" 
+  fixes P :: rp2
   shows "Rep_Proj P \<noteq> zvec" 
   using projrel_def Quotient_rel_rep Quotient_rp2 by metis
 
@@ -176,12 +174,29 @@ lemma incid_commute:
   shows "rp2_incid A B \<longleftrightarrow> rp2_incid B A"
   by (simp add: inner_commute rp2_incid.rep_eq)
 text \<open>\done\<close>
-(*
-    p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k . k \<in> Lines \<and> P \<lhd> k  \<and> Q \<lhd>  k)" and
-    p2: "\<lbrakk>k \<in> Lines; n \<in> Lines\<rbrakk> \<Longrightarrow> \<exists> P . (P \<in> Points \<and> P \<lhd> k \<and> P \<lhd> n)" and
-    p3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (pcollinear P Q R)" and
-    p4: "\<lbrakk>k \<in> Lines; U = { P . (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
-*)
+
+text \<open>\hadi\<close>
+lemma exists_rp2_coords:
+  fixes V :: rp2
+  assumes "V \<in> rp2_Points"
+  shows "\<exists>x y z::real. Rep_Proj V = (vector[x,y,z]::v3)"
+  using forall_vector_3 by fastforce
+
+lemma rp2_line_equation:
+  fixes l::rp2
+  assumes "l \<in> rp2_Lines"
+  shows "\<exists>a1 a2 a3::real. (\<forall>V \<in> rp2_Points. rp2_incid V l
+    \<longleftrightarrow> ((a1 * (Rep_Proj V)$1) + (a2 * (Rep_Proj V)$2) + (a3 * (Rep_Proj V)$3) = 0))"
+proof -
+  obtain l1 l2 l3::real where lcoords: "Rep_Proj l = (vector[l1,l2,l3]::v3)"
+    using exists_rp2_coords rp2_Points_def by blast
+  have "\<forall>V \<in> rp2_Points. rp2_incid V l
+    \<longleftrightarrow> ((l1 * (Rep_Proj V)$1) + (l2 * (Rep_Proj V)$2) + (l3 * (Rep_Proj V)$3) = 0)"
+    using exists_rp2_coords lcoords rp2_incid.rep_eq vector_3 inner_commute sum_3 
+      inner_real_def unfolding inner_vec_def by (metis (lifting))
+  then show ?thesis by auto
+qed
+text \<open>\done\<close>
 
 definition join :: "real^3 \<Rightarrow> real^3 \<Rightarrow> real^3"
   where "join P Q = (if P \<times> Q = zvec then vector[0,0,1] else P \<times> Q)"
@@ -345,7 +360,7 @@ text \<open>\done \spike\<close>
 
 lemma orthog_implies_not_projrel:
   fixes v w::v3
-  assumes wnz: "w \<noteq>zvec"
+  assumes wnz: "w \<noteq> zvec"
   assumes dotz: "v \<bullet> w = 0"
   shows "\<not> projrel v w"
 (* sledgehammer:   by (metis alt_projrel assms(2) cross_refl exists_projrel_refl norm_and_cross_eq_0 projrel_def) *)
@@ -368,7 +383,7 @@ lemma e_dots:
   shows "e1 \<bullet> e2 = 0 \<and> e1 \<bullet> e3 = 0 \<and> e2 \<bullet> e3 = 0"
   using e1_def e2_def e3_def vector_3  inner_vec_def[of e1 e2]inner_vec_def[of e1 e3] inner_vec_def[of e2 e3]
     by (metis inner_zero_left inner_zero_right pth_7(1) sum_3)
-  
+
 lemma rp2_P3:
   shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R 
     \<and> Q \<noteq> R \<and> \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
@@ -391,10 +406,6 @@ proof -
       rp2_Points_def rp2_incid.abs_eq)
   show ?thesis using basics1 basics2 adv by blast
 qed
-
-text \<open>\done\<close>
-
-  text \<open>\George\<close>
 
 text \<open>\Jiayi\Luke\<close>
 lemma vector_3_eq_iff:
@@ -740,9 +751,6 @@ proof -
     then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
   qed
 qed
-
-text \<open>\done\done\<close>
-
 text \<open>\done\done\<close>
 
 text \<open>\hadi\<close>
@@ -776,20 +784,17 @@ theorem projectivisation_of_A2:
   shows "projective_plane pPoints pLines pincid"
   using "Chapter1-1.projectivization_is_projective" A2_affine assms(1,2,3) by blast
 
-definition completed_points where "completed_points \<equiv> 
+definition A2C_Points where "A2C_Points \<equiv> 
   {OrdinaryP P | P. (P \<in> A2Points)} \<union> {Ideal t | k t. 
     ((k \<in> A2Lines) \<and> (t = affine_plane_data.line_pencil A2Points A2Lines (a2incid) k))}"
-definition completed_lines where "completed_lines \<equiv> {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}"
 
-interpretation RP2C: projective_plane  completed_points completed_lines  "(mprojectivize (a2incid))"
-  unfolding completed_points_def completed_lines_def using projectivisation_of_A2 by auto
+definition A2C_Lines where "A2C_Lines \<equiv> {OrdinaryL n | n. (n \<in> A2Lines)} \<union> {Infty}"
 
+abbreviation (input) A2C_incid
+  where "A2C_incid P l \<equiv> ((mprojectivize a2incid) P l)"
 
-(* need definition of isomorphism, and proof that RP2Q is isomorphic to RP2C; 
-place these Chapter 1-3. *)
+interpretation RP2C: projective_plane  A2C_Points A2C_Lines A2C_incid
+  unfolding A2C_Points_def A2C_Lines_def using projectivisation_of_A2 by auto
 
 text \<open>\spike\<close>
-
-
-
 end
