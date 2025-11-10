@@ -462,7 +462,7 @@ proof -
         projective_plane.cquadrilateral_def by metis
 qed
 
-theorem dual_plane_P7_if_original_P7:
+theorem P7_dual:
   fixes Points :: "'p set"
   fixes Lines :: "'l set"
   fixes incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
@@ -602,15 +602,16 @@ proof -
 
         have U_in_FG: "incid U ?fg" using U_props r_is_fg by auto
 
-        have "incid ?E ?fg" using e_is_U U_in_FG by auto
+        have e_in_fg: "incid ?E ?fg" using e_is_U U_in_FG by auto
       
         have "?F \<noteq> ?G" 
         by (smt (verit, ccfv_SIG) AB_is_d AC_is_b abcd_distinct dPdef dassms1 distinct4_def f_is_bc g_is_ad
             given_plane_projective projective_plane.meet_properties2 projective_plane.unique_meet)
-        then have efg_in_fg: "incid ?F ?fg \<and> incid ?G ?fg" 
+        then have fg_in_fg: "incid ?F ?fg \<and> incid ?G ?fg" 
           using  abcd_distinct dPdef dassms1 distinct4_def f_is_bc g_is_ad given_plane_projective
               projective_plane.join_properties1 projective_plane.meet_properties2
           by metis
+        then have efg_in_fg: "incid ?F ?fg \<and> incid ?G ?fg \<and> incid ?E ?fg" using e_in_fg by auto
 
         have fg_line: "?fg \<in> Lines" using pqr_lines r_is_fg by auto
         have efg_points: "?E \<in> Points \<and> ?F \<in> Points \<and> ?G \<in> Points" 
