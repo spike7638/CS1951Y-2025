@@ -16,20 +16,26 @@ fun perspectivity :: "('p, 'l) persp_data \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "perspectivity (Or, l1, l2) = (if is_persp_data (Or, l1, l2)
   then (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else undefined)"
 
+fun persp_domain :: "('p, 'l) persp_data \<Rightarrow> 'l"
+  where "persp_domain (Or, l1, l2) = (if is_persp_data (Or, l1, l2) then l1 else undefined)"
+
+fun persp_range :: "('p, 'l) persp_data \<Rightarrow> 'l"
+  where "persp_range (Or, l1, l2) = (if is_persp_data (Or, l1, l2) then l2 else undefined)"
+
 lemma  persp_data_sym [sym]: 
   "is_persp_data (Or, l1, l2) \<Longrightarrow> is_persp_data (Or, l2, l1)"
   by simp 
 
 lemma perspectivity_nice: 
   fixes Or P l1 l2
-  assumes "P \<in> Points \<and>  P \<lhd> l1"
+  assumes "P \<in> Points \<and>  P \<lhd> persp_domain (Or, l1, l2)"
   assumes "is_persp_data (Or, l1, l2)"
-  shows "(perspectivity (Or, l1, l2) P) \<in> Points \<and> (perspectivity (Or, l1, l2) P) \<lhd> l2"
+  shows "(perspectivity (Or, l1, l2) P) \<in> Points \<and> (perspectivity (Or, l1, l2) P) \<lhd> persp_range (Or, l1, l2)"
 proof -
   have ss: "((perspectivity (Or, l1, l2) P) \<in> Points) \<equiv> ((Or \<bar> P \<sqdot> l2)  \<in> Points)" 
     using assms assms by auto
-  have st: "(Or \<bar> P \<sqdot> l2)  \<in> Points" using meet_properties2 join_properties1 join_properties2 is_persp_data.simps
-    by (metis assms(1,2))
+  have st: "(Or \<bar> P \<sqdot> l2)  \<in> Points" using assms persp_domain.simps meet_properties2 
+    join_properties1 join_properties2 is_persp_data.simps by metis
   have su: "(Or \<bar> P \<sqdot> l2) \<lhd> l2" 
     using meet_properties2 join_properties1[of Or P] assms is_persp_data.simps by auto
   show ?thesis using ss st su perspectivity.simps assms by auto
@@ -63,7 +69,8 @@ lemma inverse_persp:
   shows "(g (f Q)) = Q"
 proof -
   have f2: "(f Q) = (Or \<bar> Q) \<sqdot> l2" unfolding f_def g_def perspectivity.simps using assms by auto
-  then have fQnice: "(f Q) \<in> Points \<and> (f Q) \<lhd> l2" unfolding f_def using perspectivity_nice [of Q l1 Or l2] Q_facts data_def by auto
+  then have fQnice: "(f Q) \<in> Points \<and> (f Q) \<lhd> l2" 
+    using Q_facts data_def join_properties1 meet_properties2 by auto
   have gdata_def: "is_persp_data (Or, l2, l1)" using data_def is_persp_data.simps by blast
   have g1: "g (f Q) = (Or \<bar> (f Q)) \<sqdot> l1"
     unfolding f_def g_def perspectivity.simps using fQnice f2 Q_facts gdata_def assms by auto
@@ -73,48 +80,51 @@ proof -
 qed
 
 lemma perspectivity_inj:
-  fixes f Or l1 l2 P Q
-  assumes data_def: "is_persp_data (Or, l1, l2)"
-  assumes f_def: "f = perspectivity (Or, l1, l2)"
-  assumes P_fact: "P \<in> Points \<and> P \<lhd> l1"
-  assumes Q_fact: "Q \<in> Points \<and> Q \<lhd> l1"
+  fixes f d P Q
+  assumes data_def: "is_persp_data d"
+  assumes f_def: "f = perspectivity d"
+  assumes P_fact: "P \<in> Points \<and> P \<lhd> persp_domain d"
+  assumes Q_fact: "Q \<in> Points \<and> Q \<lhd> persp_domain d"
   assumes equal_image: "f P = f Q"
   shows "P = Q"
-  using inverse_persp by (metis P_fact Q_fact data_def equal_image f_def)
+  using inverse_persp P_fact Q_fact data_def equal_image f_def is_persp_data.elims(2) persp_domain.simps
+    by metis
 
 lemma perspectivity_surj:
-  fixes f Or l1 l2 Q
-  assumes data_def: "is_persp_data (Or, l1, l2)"
-  assumes f_def: "f = perspectivity (Or, l1, l2)"
-  assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> l2"
-  shows "\<exists> P . P \<in> Points \<and> P \<lhd> l1 \<and> f P = Q"
-  using inverse_persp assms by (meson persp_data_sym perspectivity_nice)
+  fixes f d Q
+  assumes data_def: "is_persp_data d"
+  assumes f_def: "f = perspectivity d"
+  assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> persp_range d"
+  shows "\<exists> P . P \<in> Points \<and> P \<lhd> persp_domain d \<and> f P = Q"
+  using inverse_persp assms
+  by (metis is_persp_data.elims(2) persp_data_sym persp_domain.simps persp_range.simps perspectivity_nice)
 
 lemma perspectivity_bij:
-  fixes f Or l1 l2
-  assumes data_def: "is_persp_data (Or, l1, l2)"
-  assumes f_def: "f = perspectivity (Or, l1, l2)"
-  shows "bij_betw f {P \<in> Points. P \<lhd> l1} {Q \<in> Points. Q \<lhd> l2}"
+  fixes f d
+  assumes data_def: "is_persp_data d"
+  assumes f_def: "f = perspectivity d"
+  shows "bij_betw f {P \<in> Points. P \<lhd> persp_domain d} {Q \<in> Points. Q \<lhd> persp_range d}"
 proof -
-  have inj: "inj_on f {P \<in> Points. P \<lhd> l1}" 
+  have inj: "inj_on f {P \<in> Points. P \<lhd> persp_domain d}" 
     using perspectivity_inj assms inj_on_def by (smt (verit, best)
     mem_Collect_eq)
 
-  have surj: "f ` {P \<in> Points. P \<lhd> l1} = {Q \<in> Points. Q \<lhd> l2}"
+  have surj: "f ` {P \<in> Points. P \<lhd> persp_domain d} = {Q \<in> Points. Q \<lhd> persp_range d}"
   proof
-    show "f ` {P \<in> Points. P \<lhd> l1} \<subseteq> {Q \<in> Points. Q \<lhd> l2}" 
-      using perspectivity_nice data_def f_def by blast
+    show "f ` {P \<in> Points. P \<lhd> persp_domain d} \<subseteq> {Q \<in> Points. Q \<lhd> persp_range d}" 
+      using perspectivity_nice data_def f_def
+      by (smt (verit, best) image_Collect_subsetI is_persp_data.elims(2) mem_Collect_eq)
   next
-    show "{Q \<in> Points. Q \<lhd> l2} \<subseteq> f ` {P \<in> Points. P \<lhd> l1}"
+    show "{Q \<in> Points. Q \<lhd> persp_range d} \<subseteq> f ` {P \<in> Points. P \<lhd> persp_domain d}"
     proof
-      fix x assume "x \<in> {Q \<in> Points. Q \<lhd> l2}"
-      then have h: "x \<in> Points \<and> x \<lhd> l2"
+      fix x assume "x \<in> {Q \<in> Points. Q \<lhd> persp_range d}"
+      then have h: "x \<in> Points \<and> x \<lhd> persp_range d"
         using mem_Collect_eq by auto
 
-      from h obtain P where "P \<in> Points \<and> P \<lhd> l1 \<and> f P = x"
+      from h obtain P where "P \<in> Points \<and> P \<lhd> persp_domain d \<and> f P = x"
         using perspectivity_surj assms by blast
 
-      thus "x \<in> f ` {P \<in> Points. P \<lhd> l1}"
+      thus "x \<in> f ` {P \<in> Points. P \<lhd> persp_domain d}"
         by blast
     qed
   qed
@@ -127,17 +137,17 @@ lemma perspectivity_of_meet_is_itself:
   fixes f Or l1 l2 P
   assumes data_def: "is_persp_data (Or, l1, l2)"
   assumes f_def: "f = perspectivity (Or, l1, l2)"
-  assumes P_def: "P \<in> Points \<and> P \<lhd> l1"
-  assumes P_on_l2: "P \<lhd> l2"
+  assumes P_def: "P \<in> Points \<and> P \<lhd> persp_domain (Or, l1, l2)"
+  assumes P_on_l2: "P \<lhd> persp_range (Or, l1, l2)"
   shows "f P = P"
 proof-
   have h1: "f = (\<lambda>P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined)"
     using data_def f_def perspectivity.simps by presburger
-  have h2: "f P = (meet (join Or P) l2)" using h1 P_def by auto
+  have h2: "f P = (meet (join Or P) l2)" using h1 P_def persp_domain.simps persp_range.simps data_def by auto
   have h3: "(meet (join Or P) l2) = P" 
     using P_on_l2 P_def data_def is_persp_data.simps join_properties1 meet_properties2 unique_meet
-    by metis
-  show ?thesis using h2 h3 by auto
+    persp_domain.simps persp_range.simps by metis
+  show ?thesis using h2 h3 persp_domain.simps persp_range.simps by auto
 qed
 
 
@@ -181,33 +191,59 @@ fun projectivity :: "(('p, 'l) persp_data) proj_data \<Rightarrow> ('p \<Rightar
   "projectivity (Cons d ds) = (projectivity ds) \<circ> (perspectivity d)" |
   "projectivity [] = (\<lambda> Q . Q)"
 
+fun proj_domain :: "(('p, 'l) persp_data) proj_data \<Rightarrow> 'l" where
+  "proj_domain (Cons d []) = persp_domain d" |
+  "proj_domain (Cons d ds) = persp_domain d" |
+  "proj_domain [] = undefined"
+
+fun proj_range :: "(('p, 'l) persp_data) proj_data \<Rightarrow> 'l" where
+  "proj_range (Cons d []) = persp_range d" |
+  "proj_range (Cons d ds) = proj_range ds" |
+  "proj_range [] = undefined"
+
+lemma proj_domain_cons [sym]:
+  fixes d ds
+  assumes "is_persp_data d"
+  assumes "is_proj_data ds"
+  assumes "ds \<noteq> []"
+  shows "proj_domain (d # ds) = persp_domain d"
+  by (metis assms(3) list.exhaust proj_domain.simps(2))
+
+lemma proj_range_cons [sym]:
+  fixes d ds
+  assumes "is_persp_data d"
+  assumes "is_proj_data ds"
+  assumes "ds \<noteq> []"
+  shows "proj_range (d # ds) = proj_range ds"
+  by (metis assms(3) list.exhaust proj_range.simps(2))
+
 lemma projectivity_nice: 
   fixes ds P
  (*  assumes "last ((Or, l1, l2) # ds) = (Or', l1', l2')" *)
-  shows "is_proj_data ds \<Longrightarrow> P \<in> Points \<and> P \<lhd> (fst (snd (hd ds))) \<Longrightarrow>
+  shows "is_proj_data ds \<Longrightarrow> P \<in> Points \<and> P \<lhd> proj_domain ds \<Longrightarrow>
         projectivity ds P \<in> Points \<and> 
-        projectivity ds P \<lhd> (snd (snd (last ds)))"
+        projectivity ds P \<lhd> proj_range ds"
 proof (induction ds)
   case Nil
   then have "False" using Nil.prems(1) is_proj_data.simps(3) by auto
   then show ?case by auto
 next
   case (Cons a qs)
-  show ?case sorry
-  (*proof (clarsimp)
-    have p1:"(qs = [] \<longrightarrow> perspectivity a P \<in> Points \<and> perspectivity a P \<lhd> snd (snd a))"
-      by (smt (z3) Cons.prems(1,2) fst_conv is_persp_data.elims(2) is_persp_data.simps is_proj_data.simps(1)
-        list.sel(1) perspectivity.simps perspectivity.simps perspectivity_nice snd_conv)
+  show ?case
+  proof -
+    have p1:"(qs = [] \<longrightarrow> perspectivity a P \<in> Points \<and> perspectivity a P \<lhd> proj_range (a # qs))"
+      using Cons.prems(1,2) is_persp_data.elims(2) is_proj_data.simps(1) perspectivity_nice 
+        proj_domain.simps proj_range.simps by (smt (verit, del_insts) persp_domain.simps)
     have p2: "(qs \<noteq> [] \<longrightarrow>
-      projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))"
+      projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> proj_range qs)"
     proof -
       have "projectivity (a # qs) P = ((projectivity qs) \<circ> (perspectivity a)) P"
         by (smt (verit, ccfv_threshold) fun.map_ident_strong projectivity.cases
           projectivity.simps(1,2,3))
       also have "... = (projectivity qs) ((perspectivity a) P)" by auto
       finally have "projectivity (a # qs) P = (projectivity qs) ((perspectivity a) P)" .
-      have "((perspectivity a P) \<in> Points) \<and> ((perspectivity a P) \<lhd> fst (snd (hd qs)))"
-        using \<open>is_proj_data (a # qs)\<close> sorry
+      have "((perspectivity a P) \<in> Points) \<and> ((perspectivity a P) \<lhd> proj_domain qs)"
+        using \<open>is_proj_data (a # qs)\<close> proj_domain.simps sledgehammer
       show ?thesis sorry
     qed
     then show ?case sorry
@@ -215,7 +251,7 @@ next
   show ?thesis sorry
     (*then show "(qs = [] \<longrightarrow> perspectivity a P \<in> Points \<and> perspectivity a P \<lhd> snd (snd a)) \<and>
     (qs \<noteq> [] \<longrightarrow>
-     projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))" using p1 p2 by blast*)*)
+     projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> snd (snd (last qs)))" using p1 p2 by blast*)
 qed
 
 (* This is the old proof. Can delete when the one above^ is fixed.
