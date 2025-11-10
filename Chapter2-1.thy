@@ -77,7 +77,7 @@ lemma (in projective_space) point_outside_plane: (* For any plane H, there's a p
 lemma (in projective_space) crossing_planes: (* two distinct planes intersect in exactly a line. *) 
   assumes "H \<in> Planes \<and> K \<in> Planes"
   assumes "H \<noteq> K"
-  shows "\<exists> n \<in> Lines . (n = (H \<inter> K))"
+  shows "\<exists>!n \<in> Lines . (n = (H \<inter> K))"
 proof -
   from S4 obtain k where kdef: "k \<in> Lines \<and> k \<subseteq> H \<and> k \<subseteq> K" using assms by blast
   from S6 obtain A B where abdef: "A \<in> k \<and> B \<in> k \<and> A \<noteq> B" using kdef distinct3_def by metis
@@ -97,11 +97,11 @@ proof -
   then show ?thesis using kdef by auto
 qed
 
-text \<open>\hadi\<close>
 lemma (in projective_space) extra_point:
   fixes P Q H
   assumes "H \<in> Planes"
   assumes "P \<in> Points" and "Q \<in> Points"
+  assumes "P \<in> H" and "Q \<in> H"
   assumes "P \<noteq> Q"
   shows "\<exists>R \<in> Points. ((\<not> collinear P Q R) \<and> (R \<notin> H))"
 proof -
@@ -110,7 +110,6 @@ proof -
   then have pqr: "\<not> collinear P Q R" using assms S1b collinear_def by auto
   show ?thesis sorry
 qed
-text \<open>\done\<close>
 
 text \<open>\hadi\<close>
 lemma (in projective_space) two_point_line_in_plane:
@@ -126,6 +125,104 @@ proof -
   then obtain l where ldef: "l \<in> Lines \<and> l = H \<inter> (plane_through P Q R)" 
     using assms S2a crossing_planes [of H] by auto
   then show ?thesis using assms S1b S2a rdef ldef by simp
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma (in projective_space) int_line_plane_unique:
+  fixes H l
+  assumes "H \<in> Planes" and "l \<in> Lines"
+  assumes "\<not> (l \<subseteq> H)"
+  shows "\<exists>!P \<in> Points. P \<in> H \<and> P \<in> l"
+proof -
+  obtain P where Pdef: "P \<in> H \<and> P \<in> l" using assms S3 by auto
+  then have "Q \<in> H \<and> Q \<in> l \<longrightarrow> P = Q" for Q 
+    using assms S0a S1b two_point_line_in_plane by metis
+  then show ?thesis using assms Pdef S0b by auto
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma (in projective_space) all_extra_points:
+  fixes P Q R H
+  assumes "H \<in> Planes"
+  assumes "P \<in> Points" and "Q \<in> Points" and "R \<in> Points"
+  assumes "P \<in> H" and "Q \<in> H" and "R \<notin> H"
+  assumes "P \<noteq> Q"
+  shows "\<not> collinear P Q R"
+proof -
+  have "(join P Q) \<subseteq> H" using assms two_point_line_in_plane by simp
+  then show ?thesis using assms S1b collinear_def by auto
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma (in projective_space) plane_through_point_line:
+  fixes P l
+  assumes "P \<in> Points" and "l \<in> Lines"
+  assumes "P \<notin> l"
+  shows "\<exists>!H \<in> Planes. P \<in> H \<and> l \<subseteq> H"
+proof -
+  obtain Q R where QRdef: "Q \<in> Points \<and> R \<in> Points \<and> Q \<noteq> R \<and> l = (join Q R)" 
+    using assms S0a S1b S6 distinct3_def by metis
+  then have pqrncoll: "\<not> collinear P Q R" using assms S1b 
+    unfolding collinear_def by metis
+  then obtain H where 
+    Hdef: "H \<in> Planes \<and> H = (plane_through P Q R) \<and> P \<in> H \<and> l \<subseteq> H" 
+    using assms QRdef pqrncoll two_point_line_in_plane S2a by auto
+  then have "N \<in> Planes \<and> P \<in> N \<and> l \<subseteq> N \<longrightarrow> N = H" for N
+    using assms S1a S2b QRdef pqrncoll in_mono by metis
+  then show ?thesis using Hdef by metis
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma (in projective_space) crossing_lines:
+  fixes k n P
+  assumes "k \<in> Lines" and "n \<in> Lines"
+  assumes "k \<noteq> n"
+  assumes "P \<in> Points"
+  assumes "P \<in> k \<inter> n"
+  shows "\<exists>!H. H \<in> Planes \<and> k \<subseteq> H \<and> n \<subseteq> H"
+proof -
+  obtain Q where qdef: "Q \<in> k \<and> Q \<notin> n" using assms S0a S1b S6 
+    distinct3_def by metis
+  obtain R where rdef: "R \<in> n \<and> R \<notin> k" using assms S0a S1b S6 
+    distinct3_def by metis
+  then have pqr: "\<not> collinear P Q R" using assms qdef S0a S1b Int_iff
+    unfolding collinear_def by metis
+  then obtain H where hdef: "H = plane_through P Q R" by simp
+  then have hkn: "H \<in> Planes \<and> k \<subseteq> H \<and> n \<subseteq> H" using assms qdef rdef pqr S0a S1b S2a
+    two_point_line_in_plane Int_iff by metis
+  have "N \<in> Planes \<and> k \<subseteq> N \<and> n \<subseteq> N \<Longrightarrow> H = N" for N using assms hdef qdef rdef pqr
+    S0a S2b Int_iff subsetD by metis
+  then show ?thesis using hkn by metis
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma (in projective_space) planes_are_not_lines:
+  fixes H
+  assumes HP: "H \<in> Planes"
+  shows "H \<notin> Lines"
+proof
+  assume HL: "H \<in> Lines"
+  obtain X where Xdef: "X \<in> Points \<and> X \<notin> H" using HP point_outside_plane by auto
+  then obtain U V where UVdef: "U \<in> Planes \<and> V \<in> Planes \<and> H \<subseteq> U \<and> H \<subseteq> V 
+    \<and> distinct3 H U V" using HP HL plane_through_point_line [of _ H] 
+    point_outside_plane subset_iff unfolding distinct3_def by (smt (verit))
+  obtain P Q R where PQRdef: "P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> distinct3 P Q R"
+    using HL S6 [of H] by auto
+  then have Pint: "\<forall>T. T \<in> H \<inter> (join P X) \<longrightarrow> T = P" 
+    using Xdef HL S0a S1a S1b IntE by metis
+  obtain S where Sdef: "S \<in> Points \<and> S \<in> (join P X) \<and> distinct3 P X S"
+    using Xdef PQRdef HP S0a S0b S1a S6 distinct3_def by metis
+  then have SnH: "S \<notin> H" using Pint IntI distinct3_def by metis
+  then have PQSncoll: "\<not> collinear P Q S" 
+    using PQRdef Sdef HP all_extra_points S0b distinct3_def by metis
+  obtain N where Ndef: "N \<in> Planes \<and> H \<subseteq> N \<and> S \<in> N" 
+    using HL Sdef SnH plane_through_point_line [of S H] by auto
+  then show False sorry
 qed
 text \<open>\done\<close>
 
@@ -158,16 +255,50 @@ lemma (in projective_space) proj_space_plane_p2:
   defines HLdef: "HLines \<equiv> {L. L \<in> Lines \<and> L \<subseteq> H}"
   defines Hidef: "Hincid \<equiv> (\<lambda>P L. (if P \<in> HPoints \<and> L \<in> HLines then P \<in> L else undefined))"
   shows "\<lbrakk>k \<in> HLines; n \<in> HLines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> HPoints \<and> Hincid P k \<and> Hincid P n)"
-proof (rule ccontr)
+proof -
   fix k n
   assume khl: "k \<in> HLines" and nhl: "n \<in> HLines"
-  assume cd: "\<not> (\<exists>P. (P \<in> HPoints \<and> Hincid P k \<and> Hincid P n))"
-  have "\<forall>P. P \<in> HPoints \<and> Hincid P k \<longrightarrow> \<not> Hincid P n"
-    and "\<forall>P. P \<in> HPoints \<and> Hincid P n \<longrightarrow> \<not> Hincid P k" using cd by auto
-  then have kton: "\<forall>P. P \<in> Points \<and> P \<in> H \<and> P \<in> k \<longrightarrow> \<not> P \<in> n"
-    and ntok: "\<forall>P. P \<in> Points \<and> P \<in> H \<and> P \<in> n \<longrightarrow> \<not> P \<in> k" 
-    using khl nhl HPdef Hidef by simp+
-  then show False sorry
+  then obtain Pk Qk Rk where k_pts: "Pk \<in> k \<and> Qk \<in> k \<and> Rk \<in> k \<and> distinct3 Pk Qk Rk" 
+    using S6 [of k] HLdef by auto
+  show "\<exists>P. (P \<in> HPoints \<and> Hincid P k \<and> Hincid P n)"
+  proof (cases "k = n")
+    case True
+    then show ?thesis using khl k_pts S0a HPdef HLdef Hidef by auto
+  next
+    case kndist: False
+    obtain X where Xdef: "X \<in> Points \<and> X \<notin> H" using HP point_outside_plane by auto
+    then have "X \<notin> k \<and> X \<notin> n"  using khl nhl HLdef by auto
+    then obtain U V where Udef: "U \<in> Planes \<and> X \<in> U \<and> k \<subseteq> U" 
+      and Vdef: "V \<in> Planes \<and> X \<in> V \<and> n \<subseteq> V" using Xdef khl nhl HLdef
+      plane_through_point_line [of X k] plane_through_point_line [of X n] by auto
+    then have k_int: "k \<in> Lines \<and> k \<subseteq> H \<and> k \<subseteq> U" using khl HLdef by simp
+    then obtain S where Sdef: "S \<in> k \<and> S \<in> V" using Vdef S3 by blast
+    then have "S \<in> n" 
+      using nhl Xdef Vdef k_int plane_through_point_line S0b HP HLdef by blast
+    then show ?thesis using khl nhl Sdef Vdef k_int S0b HPdef Hidef by auto
+  qed
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma (in projective_space) crossing_lines_2:
+  fixes k n H
+  assumes "k \<in> Lines" and "n \<in> Lines"
+  assumes "k \<noteq> n"
+  assumes "H \<in> Planes"
+  assumes "k \<subseteq> H \<and> n \<subseteq> H"
+  shows "\<exists>!P. P \<in> Points \<and> P \<in> k \<and> P \<in> n"
+proof -
+  let ?HPoints = "{P. P \<in> Points \<and> P \<in> H}"
+  let ?HLines = "{L. L \<in> Lines \<and> L \<subseteq> H}"
+  let ?Hincid = "\<lambda>P L. (if P \<in> ?HPoints \<and> L \<in> ?HLines then P \<in> L else undefined)"
+  have "\<exists>P. (P \<in> ?HPoints \<and> ?Hincid P k \<and> ?Hincid P n)" 
+    using assms proj_space_plane_p2 [of H] by simp
+  then have pexist: "\<exists>P. P \<in> Points \<and> P \<in> k \<and> P \<in> n" using assms by auto
+  then obtain P where "P \<in> Points \<and> P \<in> k \<and> P \<in> n" by auto
+  then have "Q \<in> Points \<and> Q \<in> k \<and> Q \<in> n \<longrightarrow> Q = P" for Q 
+    using assms S1b [of Q P] by auto
+  then show ?thesis using pexist by auto
 qed
 text \<open>\done\<close>
 
@@ -188,15 +319,12 @@ proof (rule ccontr)
   then have cd: "\<forall>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<in> H \<and> Q \<in> H 
     \<and> R \<in> H \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<longrightarrow> collinear P Q R" using HPdef by simp
   obtain P Q where pqdef: "P \<in> H \<and> Q \<in> H \<and> P \<noteq> Q" 
-    unfolding distinct3_def using S3 [of H] S4 [of H] S6 HP subset_eq 
-    by (metis distinct3_def)
+    using S3 [of H] S4 [of H] S6 HP subset_eq distinct3_def by metis
   then have pqh: "(join P Q) \<subseteq> H" using S0b two_point_line_in_plane HP by auto
   then have "\<forall>R. R \<in> H \<longrightarrow> collinear P Q R" using cd pqdef S0b S1a HP
     unfolding collinear_def by metis
-  then have "\<forall>R. R \<in> H \<longrightarrow> R \<in> (join P Q)" 
-    using pqdef S0b S1b HP collinear_def by auto
-  then have "H = (join P Q)" using pqh by auto
-  then show False sorry
+  then have "H = (join P Q)" using pqh pqdef S0b S1b HP collinear_def by auto
+  then show False using pqdef pqh planes_are_not_lines S0b S1a HP by metis
 qed
 text \<open>\done\<close>
 
@@ -247,53 +375,6 @@ proof -
     using assms proj_space_plane_p4 by simp
 qed
 text \<open>\done\<close>
-
-text \<open>\hadi\<close>
-lemma (in projective_space) crossing_lines: (* two distinct lines through a point determine a unique plane *)
-  fixes k n P
-  assumes "k \<in> Lines" and "n \<in> Lines"
-  assumes "k \<noteq> n"
-  assumes "P \<in> Points"
-  assumes "P \<in> k \<inter> n"
-  shows "\<exists>!H. H \<in> Planes \<and> k \<subseteq> H \<and> n \<subseteq> H"
-proof -
-  obtain Q where qdef: "Q \<in> k \<and> Q \<notin> n" using assms S0a S1b S6 
-    distinct3_def by metis
-  obtain R where rdef: "R \<in> n \<and> R \<notin> k" using assms S0a S1b S6 
-    distinct3_def by metis
-  then have pqr: "\<not> collinear P Q R" using assms qdef S0a S1b Int_iff
-    unfolding collinear_def by metis
-  then obtain H where hdef: "H = plane_through P Q R" by simp
-  then have hkn: "H \<in> Planes \<and> k \<subseteq> H \<and> n \<subseteq> H" using assms qdef rdef pqr S0a S1b S2a
-    two_point_line_in_plane Int_iff by metis
-  have "N \<in> Planes \<and> k \<subseteq> N \<and> n \<subseteq> N \<Longrightarrow> H = N" for N using assms hdef qdef rdef pqr
-    S0a S2b Int_iff subsetD by metis
-  then show ?thesis using hkn by metis
-qed
-text \<open>\done\<close>
-
-text \<open>\hadi\<close>
-lemma (in projective_space) crossing_lines_2:
-  fixes k n H
-  assumes "k \<in> Lines" and "n \<in> Lines"
-  assumes "k \<noteq> n"
-  assumes "H \<in> Planes"
-  assumes "k \<subseteq> H \<and> n \<subseteq> H"
-  shows "\<exists>!P. P \<in> Points \<and> P \<in> k \<and> P \<in> n"
-proof -
-  let ?HPoints = "{P. P \<in> Points \<and> P \<in> H}"
-  let ?HLines = "{L. L \<in> Lines \<and> L \<subseteq> H}"
-  let ?Hincid = "\<lambda>P L. (if P \<in> ?HPoints \<and> L \<in> ?HLines then P \<in> L else undefined)"
-  have "\<exists>P. (P \<in> ?HPoints \<and> ?Hincid P k \<and> ?Hincid P n)" 
-    using assms proj_space_plane_p2 [of H] by simp
-  then have pexist: "\<exists>P. P \<in> Points \<and> P \<in> k \<and> P \<in> n" using assms by auto
-  then obtain P where "P \<in> Points \<and> P \<in> k \<and> P \<in> n" by auto
-  then have "Q \<in> Points \<and> Q \<in> k \<and> Q \<in> n \<longrightarrow> Q = P" for Q 
-    using assms S1b [of Q P] by auto
-  then show ?thesis using pexist by auto
-qed
-text \<open>\done\<close>
-
 
 text \<open>\hadi\<close>
 theorem (in projective_space) Desargues_case_1:
@@ -1361,7 +1442,7 @@ theorem free_planes_meet: (* two distinct lines have a point in common in fpp wh
   shows " \<exists>P. P \<in> Pi_points \<and>
                fppincid P k \<and>
                fppincid P m"
-  by (metis assms crossing_point linorder_linear)
+  by (metis assms(2,3,4) crossing_point linorder_linear)
 
 theorem non_collinear_persistence:(*if P Q R in the configuration are not collinear, then they are also not collinear in the free projective plane. *)
   fixes CPoints::"'a set"
