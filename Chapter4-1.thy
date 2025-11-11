@@ -8,6 +8,11 @@ text \<open>Everything up to the Principle of Duality and the remarks after it.
 text \<open>\hadi\<close>
 fun mdualize :: "('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('l \<Rightarrow> 'p \<Rightarrow> bool)" 
   where "mdualize (incid) (l::'l) (P::'p) = incid P l"
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma mmi_eq: "incid = (mdualize (mdualize incid))" by fastforce
+text \<open>\done\<close>
 
 lemma mmi_eq: "incid = (mdualize (mdualize incid))" by fastforce
 text \<open>\done\<close>
