@@ -1983,6 +1983,32 @@ lemma distinct7_def [iff]:
   "distinct[x,y,z,w,r,s,t] = (y \<noteq> x \<and> z \<noteq> x \<and> z \<noteq> y \<and> w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z 
     \<and> r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w \<and> s \<noteq> x \<and> s \<noteq> y \<and> s \<noteq> z \<and> s \<noteq> w \<and> s \<noteq> r 
     \<and> t \<noteq> x \<and> t \<noteq> y \<and> t \<noteq> z \<and> t \<noteq> w \<and> t \<noteq> r \<and> t \<noteq> s)" by auto
+definition distinct3 where "distinct3 x y z \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z)"
+definition distinct4 where 
+  "distinct4 x y z w \<equiv> y \<noteq> x \<and> 
+                       z \<noteq> x \<and> z \<noteq> y \<and> 
+                       w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z"
+definition distinct5 where 
+  "distinct5 x y z w r \<equiv> y \<noteq> x \<and> 
+                       z \<noteq> x \<and> z \<noteq> y \<and> 
+                       w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
+   r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w"
+
+definition distinct6 where 
+  "distinct6 x y z w r s \<equiv> y \<noteq> x \<and> 
+                           z \<noteq> x \<and> z \<noteq> y \<and> 
+                           w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
+   r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w \<and>
+   s \<noteq> x \<and> s \<noteq> y \<and> s \<noteq> z \<and> s \<noteq> w \<and> s \<noteq> r" 
+
+definition distinct7 where 
+  "distinct7 x y z w r s t \<equiv> 
+    y \<noteq> x \<and> 
+    z \<noteq> x \<and> z \<noteq> y \<and> 
+    w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
+    r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w \<and>
+    s \<noteq> x \<and> s \<noteq> y \<and> s \<noteq> z \<and> s \<noteq> w \<and> s \<noteq> r \<and>
+    t \<noteq> x \<and> t \<noteq> y \<and> t \<noteq> z \<and> t \<noteq> w \<and> t \<noteq> r \<and> t \<noteq> s"
 
 locale projective_plane_data =
   fixes Points :: "'p set" and Lines :: "'l set" and incid :: "'p \<Rightarrow> 'l \<Rightarrow> bool" (infix "\<lhd>" 60)
