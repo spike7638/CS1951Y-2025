@@ -8,6 +8,7 @@ text\<open>an ordered quadruple of distinct points A,B,C,D on a line is a harmon
 is a complete quadrangle X,Y,Z,W such that A and B are diagonal points of the complete quadrangle. 
 This is denoted H(AB,CD) if A,B,C,D form a harmonic quadruple\<close>
 
+(*
 text\<open>\jackson \oliver\<close>
 (* WE SHOULD COMMENT THIS OUT UPON PUSH -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
 proposition (in projective_plane) P5:
@@ -62,6 +63,7 @@ proposition (in projective_plane) P7:
                        (meet (join X Y) (join Z W))"
   sorry
 text\<open>\done\<close>
+*)
 
 text\<open>\jackson \oliver\<close>
 lemma (in projective_plane) quadrangle_order:
@@ -147,6 +149,66 @@ proof -
   show ?thesis using assms by (metis join_properties1 p3 pcollinear_def)
 qed
 text\<open>\done\<close>
+
+
+text\<open>\Jackson\Oliver\<close>
+lemma (in projective_plane) four_points_noncollinear_triples:
+  fixes A :: "'p"
+  assumes "A \<in> Points"
+  shows "\<exists> Q R S. Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points \<and>
+         A \<noteq> Q \<and> A \<noteq> R \<and> Q \<noteq> R \<and> S \<noteq> A \<and> S \<noteq> Q \<and> S \<noteq> R \<and> 
+         \<not> (pcollinear A Q R) \<and> \<not> (pcollinear A Q S) \<and> \<not> (pcollinear Q R S) \<and> \<not> (pcollinear A R S)"
+proof -
+  obtain Q R  
+      where three_pts: " Q \<in> Points \<and> R \<in> Points \<and> A \<noteq> Q \<and> A \<noteq> R \<and> Q \<noteq> R \<and> \<not> (pcollinear A Q R)" 
+    using p3 assms join_properties2 pcollinear_def by (smt (verit)) 
+
+  obtain D 
+    where d_fact: "D \<in> Points \<and> incid D (join R Q) \<and> D \<noteq> R \<and> D \<noteq> Q"
+      using p4[of "(join R Q)" _] join_def[of R Q]
+      by (metis (no_types, lifting) distinct_length_2_or_more join_properties1 mem_Collect_eq three_pts)
+
+  obtain S where s_fact: "S \<in> Points \<and> incid S (join A D) \<and> S \<noteq> A \<and> S \<noteq> D \<and> S \<noteq> Q \<and> S \<noteq> R"
+    using p4[of "(join A D)" _] join_def[of A D] d_fact 
+    by (smt (verit) assms distinct_length_2_or_more incid_join_collinear join_properties1 join_properties2 mem_Collect_eq
+        three_pts)
+
+  have 0: "\<not>(pcollinear A Q S)" using three_pts d_fact s_fact
+    by (smt (verit) assms join_properties2 p1 pcollinear_def)
+
+  have 1: "\<not>(pcollinear Q R S)" using three_pts d_fact s_fact
+    by (smt (verit) assms join_properties1 pcollinear_def unique_meet)
+
+  have 2: "\<not>(pcollinear A R S)" using three_pts d_fact s_fact
+    by (smt (verit) assms incid_join_collinear join_properties2 pcollinear_def)
+
+  show ?thesis using three_pts s_fact 0 1 2 by auto
+qed
+text\<open>\done\<close>
+
+text\<open>\Jackson\Oliver\<close>
+lemma (in projective_plane) point_on_three_lines:
+  fixes A :: "'p"
+  assumes "A \<in> Points"
+  shows "\<exists>l m n. l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines \<and> incid A l \<and> incid A m \<and> incid A n
+        \<and> l \<noteq> m \<and> l \<noteq> n \<and> m \<noteq> n"
+proof -
+  obtain Q R S
+    where four_pts:  "Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points \<and>
+         A \<noteq> Q \<and> A \<noteq> R \<and> Q \<noteq> R \<and> S \<noteq> A \<and> S \<noteq> Q \<and> S \<noteq> R \<and> 
+         \<not> (pcollinear A Q R) \<and> \<not> (pcollinear A Q S) \<and> \<not> (pcollinear Q R S) \<and> \<not> (pcollinear A R S)"
+    using assms four_points_noncollinear_triples by presburger
+
+
+  obtain l m n 
+    where lines: "l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines \<and> l = (join A Q) \<and> m = (join A R) \<and> n = (join A S)"
+    using assms four_pts join_def join_properties1 by auto
+
+  show ?thesis using lines assms four_pts join_properties1 pcollinear_def by metis
+qed
+text\<open>\done\<close>
+
+
 
 text\<open>\jackson \oliver\<close>
 lemma (in projective_plane) cquadrangle_joins_distinct:
@@ -264,9 +326,9 @@ text\<open>\done\<close>
 
 
 text\<open>\jackson \oliver\<close>
-lemma (in projective_plane) diagonal_points_noncollinear:
-  fixes A B C D Q::"'p"
-  fixes X Y Z W::"'p"
+lemma (in projective_plane_7) diagonal_points_noncollinear:
+  fixes A B C D Q
+  fixes X Y Z W
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points" "Q \<in> Points"
   assumes "X \<in> Points" "Y \<in> Points" "Z \<in> Points" "W \<in> Points"
   assumes "cquadrangle X Y Z W"
@@ -286,8 +348,8 @@ proof (rule ccontr)
     (* diag_l is the line containing the three diagonal points of quadrangle XYZW *)
     obtain diag_l where 1: "diag_l \<in> Lines \<and> incid A diag_l \<and> incid B diag_l \<and> incid Q diag_l" using 0 by auto
 
-    have 2: "\<not>pcollinear Q B A" using assms P7[of X Y Z W] by (smt (verit, ccfv_threshold) meet_def meet_properties2 unique_meet)
-    show ?thesis using 0 1 2 assms P7[of X Y Z W] pcollinear_def by auto
+    have 2: "\<not>pcollinear Q B A" using assms p7[of X Y Z W] by (smt (verit, ccfv_threshold) meet_def meet_properties2 unique_meet)
+    show ?thesis using 0 1 2 assms p7[of X Y Z W] pcollinear_def by auto
   qed
 qed
 text\<open>\done\<close>
@@ -341,8 +403,8 @@ text\<open>\done\<close>
 
 text\<open>Proposition 4.5. $H(AB,CD)\iff H(BA,CD)\iff H(AB,DC)\iff H(BA,DC).$\<close>
 text\<open>\jackson \oliver\<close>
-theorem (in projective_plane) p4_5:
-  fixes A B C D::"'p"
+theorem (in projective_plane_7) p4_5:
+  fixes A B C D
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
  (* assume P7 *)
   shows "harmonic_quadruple A B C D \<longleftrightarrow> 
@@ -361,8 +423,8 @@ text\<open>Proposition 4.6. A,B,C are distinct points on a line. Assume p7. Ther
 H(AB,CD). Also, assuming P5, D is unique.\<close>
 
 text\<open>\oliver \jackson\<close>
-theorem (in projective_plane) p4_6_existence:
-  fixes A B C ::"'p"
+theorem (in projective_plane_7) p4_6_existence:
+  fixes A B C
   assumes "A \<in> Points" and "B \<in> Points" and "C \<in> Points"
   assumes "pcollinear A B C"
   assumes "distinct [A,B,C]"
@@ -373,73 +435,183 @@ proof -
   obtain h where collin: "h \<in> Lines \<and> (incid A h)  \<and> (incid B h)  \<and> (incid C h)" using assms pcollinear_def by auto
 
   obtain l m where 
-    0: "l \<in> Lines \<and> m \<in> Lines \<and> (incid A l) \<and> (incid A m) \<and> l \<noteq> m \<and> l \<noteq> h \<and> h \<noteq> m " using assms sorry
+    lm_fact: "l \<in> Lines \<and> m \<in> Lines \<and> (incid A l) \<and> (incid A m) \<and> l \<noteq> m \<and> l \<noteq> h \<and> h \<noteq> m " 
+    using assms(1) collin point_on_three_lines[of A] by auto
 
-  obtain n where 1: "n \<in> Lines \<and> (incid C n) \<and> n \<noteq> h" using 0 collin sorry
+  obtain n where n_fact: "n \<in> Lines \<and> (incid C n) \<and> n \<noteq> h" using assms(3) collin point_on_three_lines[of C] by auto
 
   obtain r where r_fact: "r \<in> Lines \<and> r = (join B (meet l n))" 
-    by (metis 0 1 assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 meet_properties2 unique_meet) 
+    by (metis lm_fact n_fact assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 meet_properties2 unique_meet) 
 
   obtain s where s_fact: "s \<in> Lines \<and> s = (join B (meet m n))" 
-    by (metis 0 1 assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 meet_properties2 unique_meet)
+    by (metis lm_fact n_fact assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 meet_properties2 unique_meet)
 
-  obtain t where t_fact: "t \<in> Lines \<and> t = (join (meet r m) (meet s l))" using r_fact s_fact 0 
-    by (smt (z3) 1 assms(1,3,5) collin distinct_length_2_or_more join_properties1 local.join_def meet_properties2
+  obtain t where t_fact: "t \<in> Lines \<and> t = (join (meet r m) (meet s l))" using r_fact s_fact lm_fact 
+    by (smt (z3) n_fact assms(1,3,5) collin distinct_length_2_or_more join_properties1 local.join_def meet_properties2
         unique_meet)
 
   obtain D where d_fact: "D \<in> Points \<and> D = meet t h" 
-    by (smt (z3) 0 1 assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 projective_plane.meet_properties2
+    by (smt (z3) lm_fact n_fact assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 projective_plane.meet_properties2
         projective_plane.unique_meet projective_plane_axioms r_fact s_fact t_fact)
 
-  (*have 1: "h \<noteq> r" 
-    by (metis "0" "1" assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 meet_properties2 r_fact
-        unique_meet)*)
+  have d_fact2: "(incid D h)" using d_fact meet_implies_incid 
+    by (smt (z3) assms(1,2,3,5) collin distinct_length_2_or_more join_properties2 lm_fact n_fact
+        join_properties1 meet_properties2 projective_plane_axioms r_fact s_fact t_fact)
 
-  (* I think we need to build a quadrangle to show the next two statements *)
-  have 1: "distinct[A, B, C, D]" 
+  have 0: "h \<in> Lines \<and> (incid A h) \<and> (incid B h) \<and> (incid C h) \<and> (incid D h)" using collin d_fact d_fact2 by auto
+
+
+  have 1: "distinct[l, h, m, n, s, r, t]" 
   proof (rule ccontr)
-    assume ch: "\<not>distinct[A, B, C, D]"
+    assume ch: "\<not>distinct[l, h, m, n, s, r, t]"
     show False
     proof -
-      consider
-        (AD) "A = D" 
-        |(BD) "B = D"
-        |(CD) "C = D" using assms ch by auto
+      have 0: "l = n \<or> l = s \<or> l = r \<or> l = t \<or>
+               h = n \<or> h = s \<or> h = r \<or> h = t \<or>
+               m = n \<or> m = s \<or> m = r \<or> m = t \<or>
+               n = s \<or> n = r \<or> n = t \<or> 
+               s = r \<or> s = t \<or> 
+               r = t" using ch lm_fact by auto
+      consider 
+         (ln) "l = n" | (ls) "l = s" | (lr) "l = r" | (lt) "l = t" | (hn) "h = n"
+       | (hs) "h = s" | (hr) "h = r" | (ht) "h = t" | (mn) "m = n" | (ms) "m = s"
+       | (mr) "m = r" | (mt) "m = t" | (ns) "n = s" | (nr) "n = r" | (nt) "n = t"
+       | (sr) "s = r" | (st) "s = t" | (rt) "r = t"
+        using 0 by blast
       then show ?thesis
-      proof (cases)
-        case AD
-        then show ?thesis
-          by (smt (verit) 0 1 assms(2,3,5) collin d_fact distinct_length_2_or_more join_properties1 meet_properties2
-              projective_plane.unique_meet projective_plane_axioms r_fact s_fact t_fact)
-      next
-        case BD (* sledgehammer can do this case on its own but provided no proof *)
-        then show ?thesis sorry
-      next
-        case CD
-        obtain X Y Z W (* IDEA: XYZW is a qudrangle, whose diagonal points are ABC (under the assumption CD, which violates P7*)
-          where quad: "X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
-                       X = meet s n \<and> Y = meet r t \<and> Z = meet t l \<and> W = meet l n" 
-          by (metis (no_types) 0 1 CD assms(1,2,5) collin d_fact distinct_length_2_or_more meet_properties2
-              projective_plane.join_properties1 projective_plane_axioms r_fact s_fact t_fact unique_meet)
-        then show ?thesis sorry
-      qed
+        apply (cases)
+        using assms(1,3,5) collin lm_fact n_fact unique_meet apply auto[1]
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms s s_fact)
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms r_fact unique_meet)
+        apply (smt (z3) assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact p1
+            join_properties1 projective_plane_axioms r_fact s_fact t_fact)
+        using n_fact apply auto[1]
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 lm_fact meet_properties2 n_fact 
+            s_fact unique_meet)
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 lm_fact meet_properties2 n_fact r_fact
+            unique_meet)
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 lm_fact meet_properties2 n_fact r_fact
+            s_fact t_fact unique_meet)
+        using assms(1,3,5) collin lm_fact n_fact unique_meet apply auto[1]
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more join_properties1 lm_fact meet_properties2 n_fact s_fact
+            unique_meet)
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact p1
+            projective_plane.join_properties1 projective_plane_axioms r_fact)
+        apply (smt (verit) assms(1,2,3,5) collin distinct_length_2_or_more join_properties2 lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms r_fact s_fact t_fact)
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms s_fact unique_meet)
+        apply (metis assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms r_fact unique_meet)
+        apply (smt (verit) assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            join_properties1 projective_plane_axioms r_fact s s_fact t_fact)
+        apply (smt (verit, ccfv_SIG) assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms r_fact s s_fact)
+        apply (smt (z3) assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms r_fact s s_fact t_fact)
+        by (smt (verit, ccfv_SIG) assms(1,2,3,5) collin distinct_length_2_or_more lm_fact meet_properties2 n_fact
+            projective_plane.join_properties1 projective_plane_axioms r_fact s s_fact t_fact)
     qed
   qed
-  show ?thesis sorry
+
+  obtain X where x_fact: "X \<in> Points \<and> X = meet m s" using 1 lm_fact meet_properties2 s_fact by force
+  obtain Y where y_fact: "Y \<in> Points \<and> Y = meet m r" using 1 lm_fact meet_properties2 r_fact by force
+  obtain Z where z_fact: "Z \<in> Points \<and> Z = meet l s" using 1 lm_fact meet_properties2 s_fact by force
+  obtain W where w_fact: "W \<in> Points \<and> W = meet l r" using 1 lm_fact meet_properties2 r_fact by force
+
+  have cquad_helper1: "\<not>pcollinear X Y Z" using x_fact y_fact z_fact lm_fact s_fact r_fact 1 
+    by (smt (verit) assms(2) distinct_length_2_or_more join_properties1 join_properties2 meet_properties2 n_fact
+        pcollinear_def)
+  have cquad_helper2: "\<not>pcollinear X Y W" using x_fact y_fact w_fact lm_fact s_fact r_fact 1
+    by (smt (verit) assms(2) distinct_length_2_or_more join_properties1 join_properties2 meet_def meet_properties2
+        pcollinear_def)
+  have cquad_helper3: "\<not>pcollinear X Z W" using x_fact z_fact w_fact lm_fact s_fact r_fact 1
+    by (smt (verit) assms(2) distinct_length_2_or_more n_fact pcollinear_def join_properties1 
+        meet_properties2 unique_meet projective_plane_axioms)
+  have cquad_helper4: "\<not>pcollinear Y Z W" using y_fact z_fact w_fact lm_fact s_fact r_fact 1 
+    by (smt (verit) distinct_length_2_or_more join_properties1 join_properties2 join_def meet_def meet_properties2
+        pcollinear_def)
+
+  (* May be able to reformulate statement "2" as a contradiction, where the 4 helpers are cases and use apply to solve all at once *)
+  have 2: "cquadrangle X Y Z W" 
+    using x_fact y_fact z_fact w_fact cquad_helper1 cquad_helper2 cquad_helper3 cquad_helper4
+    unfolding cquadrangle_def by auto
+  have three_helper1: "incid A (join X Y)"
+    by (metis 1 cquad_helper2 distinct_length_2_or_more join_properties2 lm_fact meet_properties2 pcollinear_degeneracy
+        r_fact s_fact w_fact x_fact y_fact)
+  have three_helper2: "incid A (join Z W)"
+    by (metis 1 cquad_helper3 distinct_length_2_or_more join_properties2 lm_fact meet_properties2 pcollinear_degeneracy
+        r_fact s_fact w_fact x_fact z_fact)
+  have 3: "A = meet (join X Y) (join Z W)" using three_helper1 three_helper2
+    by (smt (verit, del_insts) 2 assms(1) cquadrangle_def incid_join_collinear join_properties1 lm_fact meet_properties2 p1
+        meet_properties2 projective_plane_axioms quadrangle_order r_fact w_fact x_fact y_fact)
+  have 4: "B = meet (join X Z) (join Y W)"
+    by (smt (z3) 1 assms(2) distinct_length_2_or_more join_properties2 lm_fact n_fact join_properties1
+        meet_properties2 projective_plane_axioms r_fact s_fact w_fact x_fact y_fact z_fact)
+  have 5: "incid C (join X W)"
+    by (smt (verit) 3 4 assms(2,3) collin cquad_helper1 cquad_helper3 join_properties2 lm_fact meet_properties2 n_fact p1
+        pcollinear_degeneracy r_fact s s_fact t_fact w_fact x_fact y_fact z_fact)
+  have 6: "incid D (join Y Z)"
+    by (metis collin d_fact d_fact2 lm_fact meet_properties2 r_fact s_fact t_fact unique_meet y_fact z_fact)
+
+
+  have 7: "distinct[A, B, C, D]" 
+    proof (rule ccontr)
+      assume ch: "\<not>distinct[A, B, C, D]"
+      show False
+      proof -
+        consider
+          (AD) "A = D" 
+          |(BD) "B = D"
+          |(CD) "C = D" using assms ch by auto
+        then show ?thesis
+        proof (cases)
+          case AD
+          then show ?thesis
+            by (smt (verit) lm_fact n_fact assms(2,3,5) collin d_fact distinct_length_2_or_more join_properties1 meet_properties2
+                projective_plane.unique_meet projective_plane_axioms r_fact s_fact t_fact)
+        next
+          case BD 
+          then show ?thesis
+            by (smt (z3) 2 4 6 incid_join_collinear join_properties1 meet_properties2 p1 projective_plane.cquadrangle_def
+                cquadrangle_joins_distinct projective_plane_axioms quadrangle_order)
+        next
+          case CD
+            (* IDEA: XYZW is a qudrangle, whose diagonal points are ABC (under the assumption CD, which violates P7*)
+          have use_P7: "\<not> pcollinear  (meet (join Y Z) (join X W))
+                       (meet (join X Z) (join Y W))
+                       (meet (join X Y) (join Z W))" using p7 x_fact y_fact z_fact w_fact 2 by auto
+          have d_fact2: "D = meet (join Y Z) (join X W)" 
+            using d_fact x_fact y_fact z_fact w_fact
+            by (smt (z3) 3 4 5 6 CD assms(5) distinct_length_2_or_more join_properties1 lm_fact local.join_def meet_def
+                meet_properties2 unique_meet)
+
+          have 8: "\<not> pcollinear A B D" using use_P7 d_fact2 3 4 pcollinear_def by auto
+
+          then show ?thesis using CD assms(4) by auto
+        qed
+      qed
+    qed
+
+  show ?thesis 
+    using assms(1, 2, 3) 0 2 3 4 5 6 7 d_fact x_fact y_fact z_fact w_fact
+    unfolding harmonic_quadruple_def by metis
 qed
 
 text\<open>\jackson \oliver\<close>
-theorem (in projective_plane) p4_6_uniqueness:
-  fixes A B C D E ::"'p"
-  fixes l :: "'l"
+theorem (in projective_plane_7) p4_6_uniqueness:
+  fixes A B C D E
+  fixes l
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points"
-  assumes "l\<in>Lines"
+  assumes "l \<in> Lines"
   assumes "incid A l" and "incid B l" and "incid C l"
   assumes "desarguesian Points Lines incid"
   (* Assume P7 *)
   assumes "harmonic_quadruple A B C D"
   assumes "harmonic_quadruple A B C E"
-  shows "D=E"
+  shows "D = E"
   sorry 
 
 
@@ -448,8 +620,8 @@ text\<open>Definition: fourth harmonic point of A,B,C is the D satisfying 4.6.\<
 text\<open>\oliver \jackson\<close>
 text\<open>Proposition 4.7. AB,CD are four harmonic points. Assuming P5, then CD,AB are four harmonic
 points.\<close>
-theorem (in projective_plane) p4_7a:
-  fixes A B C D ::"'p"
+theorem (in projective_plane_7) p4_7a:
+  fixes A B C D
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points"
   assumes "desarguesian Points Lines incid"
   (* Assume P7 *)
@@ -694,23 +866,85 @@ proof -
    (* line l = m in desarg thm *)
 
   (* n = not, dc = dual collinear, m = line l, ap = a' *)
-  have distinct3: "distinct[a, a', b, b', c, c', (join X Y)]" 
+  have distinct3: "distinct[a, a', b, b', c, c', l]" 
   proof (rule ccontr)
-    assume ch: "\<not>distinct[a, a', b, b', c, c', (join  X Y)]"
+    assume ch: "\<not>distinct[a, a', b, b', c, c', l]"
     show False
     proof -
+      have temp: "a' \<noteq> b'" 
+        by (smt (z3) ap_fact bp_fact cquadrangle_def distinct_length_2_or_more harmon incid_join_collinear meet_implies_incid p1
+            projective_plane.join_properties2 projective_plane_axioms quadrangle_points_distinct t)
+      have temp2: "b' \<noteq> c" 
+        by (metis bp_fact c_fact cquadrangle_def distinct2 distinct_length_2_or_more harmon incid_join_collinear join_properties1
+            quadrangle_order u)
+      have temp3: "a' \<noteq> l"
+        by (metis ap_fact assms(1,3) diagonal_points_noncollinear distinct_length_2_or_more distinctt harmon
+            projective_plane.join_properties1 projective_plane_axioms t)
+      have temp4: "b \<noteq> l" 
+        by (smt (verit) assms(1) b_fact distinct distinct_length_2_or_more harmon join_properties1
+            unique_meet projective_plane_axioms)
+      have temp5: "b' \<noteq> l"
+        by (smt (verit) assms(1) bp_fact distinct distinct_length_2_or_more harmon join_properties1
+            projective_plane.unique_meet projective_plane_axioms)
+      have 0:
+        "a = a' \<or> a = b \<or> a = b' \<or> a = c \<or> a = c' \<or> a = l \<or>
+         a' = b \<or> a' = b' \<or> a' = c \<or> a' = c' \<or> a' = l \<or>
+         b = b' \<or> b = c \<or> b = c' \<or> b = l \<or>
+         b' = c \<or> b' = c' \<or> b' = l \<or>
+         c = c' \<or> c = l \<or> c' =l" using ch by auto
       (* IDEA: Split into the 21 cases and use apply to solve many cases at once (see section 4.1.thy) *)
-      show ?thesis sorry
-  qed
+     consider
+      (aa') "a = a'" | (ab) "a = b" | (ab') "a = b'" | (ac) "a = c" | (ac') "a = c'" | (al) "a = l" |
+      (a'b) "a' = b" | (a'b') "a' = b'" | (a'c) "a' = c" | (a'c') "a' = c'" | (a'l) "a' = l" |
+      (bb') "b = b'" | (bc) "b = c" | (bc') "b = c'" | (bl) "b = l" |
+      (b'c) "b' = c" | (b'c') "b' = c'" | (b'l) "b' = l" |
+      (cc') "c = c'" | (cl) "c  =l" | (c'l) "c' = l"
+       using 0 by auto
+     then show False
+       apply cases
+       apply (metis (no_types, lifting) a_fact ap_fact distinct_length_2_or_more distinctt harmon join_properties1 ncXTU
+           pcollinear_def t u) 
+       apply (metis a_fact b_fact bp_fact fact cquadrangle_def harmon incid_join_collinear join_properties1 ncXUZ pcollinear_def u)
+       apply (metis a_fact bp_fact cquadrangle_def harmon incid_join_collinear join_properties1 ncXTU t tnequ u)
+       apply (metis a_fact c_fact distinct_length_2_or_more distinctt harmon incid_join_collinear join_properties1 ncXUZ
+           u)
+       apply (metis a_fact cp_fact distinct_length_2_or_more distinctt harmon incid_join_collinear join_properties1
+        join_properties2 ncXTU t tnequ u)
+       apply (smt (z3) a_fact assms(1) distinct distinct_length_2_or_more harmon projective_plane.join_properties1
+           projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_axioms u)
+       apply (metis ap_fact b_fact cquadrangle_def distinct_length_2_or_more distinctt harmon incid_join_collinear
+           join_properties1 quadrangle_order t)   
+       using temp apply blast
+       apply (smt (z3) ap_fact assms(1) c_fact distinct distinct_length_2_or_more harmon projective_plane.join_properties1
+           projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_axioms t u)
+       apply (metis ap_fact bp_fact cp_fact distinct distinct_length_2_or_more harmon join_properties1 t temp
+           unique_meet)
+       
+       using temp3 apply blast
+       apply (simp add: b_fact bp_fact cquadrangle_joins_distinct harmon quadrangle_order)
+       apply (metis b_fact c_fact distinct_length_2_or_more distinctt harmon incid_join_collinear join_properties1 ncXUZ
+        u)
+       apply (metis ap_fact b_fact bp_fact cp_fact cquadrangle_def harmon incid_join_collinear join_properties1 quadrangle_order
+        t temp)
+       using temp4 apply blast
+       using temp2 apply blast
+       apply (metis ap_fact bp_fact cp_fact distinct2 distinct_length_2_or_more harmon join_properties1 p1 t temp)
+       using temp5 apply blast
+       apply (metis ap_fact bp_fact c_fact cp_fact harmon incid_join_collinear join_properties1 ncTUZ t temp u)
+       using c_fact distinct2 harmon incid_join_collinear join_properties1 ncXUZ u apply auto
+       apply (smt (z3) assms(1) meet_implies_incid quadrangle_order quadrangle_points_distinct unique_meet) 
+       by (metis assms(1,3) cp_fact diagonal_points_noncollinear t)
+   qed
 qed
+
 
   have dcmaap_helper: "incid D l \<and> incid D a \<and> incid D a'"
     by (smt (z3) a_fact ap_fact assms(1) distinct2 distinct_length_2_or_more harmon projective_plane.join_properties1
         projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_axioms t u)
-  have dcmaap: "projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) l a a'" 
+  have dcmaap: "projective_plane_data.pcollinear Lines Points (mdualize incid) l a a'" 
     unfolding projective_plane_data.pcollinear_def 
     using a_fact ap_fact assms(1) dcmaap_helper harmon by auto
-  have dcmbbp: "projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) l b b'" 
+  have dcmbbp: "projective_plane_data.pcollinear Lines Points (mdualize incid) l b b'" 
     by (metis b_fact bp_fact dual_join_is_meet dual_plane_is_projective harmon mdualize.elims(3)
         projective_plane.incid_join_collinear projective_plane_axioms)
   have dcmccp_helper1: "incid C l" using harmon by blast
@@ -725,15 +959,15 @@ qed
   have dcmccp_helper4: "incid C c" using dcmccp_helper3
     by (smt (verit) assms(1) c_fact cquadrangle_joins_distinct harmon incid_join_collinear meet_implies_incid ncTUZ
         pcollinear_def projective_plane.join_properties2 projective_plane_axioms quadrangle_points_distinct t)
-  have dcmccp: "projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) l c c'" 
+  have dcmccp: "projective_plane_data.pcollinear Lines Points (mdualize incid) l c c'" 
     using dcmccp_helper1 dcmccp_helper2 dcmccp_helper4
     using assms(1) c_fact cp_fact harmon projective_plane_data.pcollinear_def by fastforce
-  have ndcabc: "\<not>projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) a b c"
+  have ndcabc: "\<not>projective_plane_data.pcollinear Lines Points (mdualize incid) a b c"
   proof (rule ccontr)
-    assume ch: "\<not>\<not>projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) a b c"
+    assume ch: "\<not>\<not>projective_plane_data.pcollinear Lines Points (mdualize incid) a b c"
     show False
     proof -
-      have 0: "projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) a b c" using ch by auto
+      have 0: "projective_plane_data.pcollinear Lines Points (mdualize incid) a b c" using ch by auto
       obtain P
         where p_fact: "P \<in> Points \<and> (mdualize incid) a P  \<and> (mdualize incid) b P  \<and> (mdualize incid) c P" 
         using 0 by (meson a_fact b_fact c_fact projective_plane_data.pcollinear_def)
@@ -743,12 +977,12 @@ qed
         by metis
     qed
   qed
-  have ndcapbpcp: "\<not>projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) a' b' c'" 
+  have ndcapbpcp: "\<not>projective_plane_data.pcollinear Lines Points (mdualize incid) a' b' c'" 
   proof (rule ccontr)
-    assume ch: "\<not>\<not>projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) a' b' c'"
+    assume ch: "\<not>\<not>projective_plane_data.pcollinear Lines Points (mdualize incid) a' b' c'"
     show False
     proof -
-      have 0: "projective_plane_data.pcollinear Lines Points (mdualize (\<lhd>)) a' b' c'" using ch by auto
+      have 0: "projective_plane_data.pcollinear Lines Points (mdualize incid) a' b' c'" using ch by auto
       obtain P
         where p_fact: "P \<in> Points \<and> (mdualize incid) a' P  \<and> (mdualize incid) b' P  \<and> (mdualize incid) c' P" 
         using 0 by (meson ap_fact bp_fact cp_fact projective_plane_data.pcollinear_def)
@@ -760,56 +994,73 @@ qed
 
 
 
-
   (* e = equals, m = meet, ap = a prime*)
   (* I may have setup the following stuff wrong (l is not the dual meet of X, Y? *)
   (* Also, one of these facts uses distinct3, so we should ensure that distinct3 is true before moving forward *)
   (* I think some smt proofs that were excluded dont use distinct3 here and reduce runtime *)
-  have lemabapbp_helper1: "X = (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a b)" 
+  have lemabapbp_helper1: "X = (projective_plane_data.join Lines Points (mdualize incid) a b)" 
     using a_fact b_fact harmon
     by (metis dual_plane_is_projective fact join_properties1 mdualize.elims(3) ncXUZ pcollinear_def
         projective_plane.join_properties2 projective_plane_axioms u)
-  have lemabapbp_helper2: "Y = (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a' b')" 
+  have lemabapbp_helper2: "Y = (projective_plane_data.join Lines Points (mdualize incid) a' b')" 
     using ap_fact bp_fact harmon
     by (metis distinct3 distinct_length_2_or_more distinctt dual_plane_is_projective join_properties1 mdualize.elims(3)
         projective_plane.join_properties2 projective_plane_axioms t)
-  have XYemabapbp: "(join X Y) = (projective_plane_data.meet Lines Points (mdualize (\<lhd>))
-         (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a b)
-         (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a' b'))" 
+  have XYemabapbp: "(join X Y) = (projective_plane_data.meet Lines Points (mdualize incid)
+         (projective_plane_data.join Lines Points (mdualize incid) a b)
+         (projective_plane_data.join Lines Points (mdualize incid) a' b'))" 
     using dual_meet_is_join lemabapbp_helper1 lemabapbp_helper2 projective_plane_axioms by fastforce
-  have UTemacapcp_helper1: "U = (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a c)" 
+  have UTemacapcp_helper1: "U = (projective_plane_data.join Lines Points (mdualize incid) a c)" 
     using a_fact c_fact u 
     by (metis assms(1) cquadrangle_def dcmaap_helper dcmccp_helper4 distinct2 distinct_length_2_or_more dual_join_is_meet
       harmon incid_join_collinear join_properties1 join_properties2 projective_plane_axioms)
-  have UTemacapcp_helper2: "T = (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a' c')"
+  have UTemacapcp_helper2: "T = (projective_plane_data.join Lines Points (mdualize incid) a' c')"
     using ap_fact cp_fact t
     by (metis distinct2 distinct3 distinct_length_2_or_more dual_meet_is_join dual_plane_is_projective harmon
         projective_plane.join_properties2 projective_plane.meet_properties2 projective_plane_axioms)
-  have UTemacapcp: "(join U T) = (projective_plane_data.meet Lines Points (mdualize (\<lhd>))
-         (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a c)
-         (projective_plane_data.join Lines Points (mdualize (\<lhd>)) a' c'))" 
+  have UTemacapcp: "(join U T) = (projective_plane_data.meet Lines Points (mdualize incid)
+         (projective_plane_data.join Lines Points (mdualize incid) a c)
+         (projective_plane_data.join Lines Points (mdualize incid) a' c'))" 
     using UTemacapcp_helper1 UTemacapcp_helper2 dual_meet_is_join projective_plane_axioms by fastforce
-  have ZWembcbpcp_helper1: "Z = (projective_plane_data.join Lines Points (mdualize (\<lhd>)) b c)"
+  have ZWembcbpcp_helper1: "Z = (projective_plane_data.join Lines Points (mdualize incid) b c)"
     using b_fact c_fact harmon (* For simplicty we may say Z = meet b c first, then the dual statement *)
     by (smt (verit) UTemacapcp_helper1 a_fact dual_join_is_meet ncXUZ projective_plane.join_properties1
         meet_properties2 unique_meet projective_plane_axioms projective_plane_data.pcollinear_def u)
   have ZWembcbpcp_helper2: "W = meet b' c'"
     using bp_fact cp_fact harmon 
     by (metis (full_types) distinct2 distinct3 distinct_length_2_or_more join_properties1 meet_properties2 p1 t)
-  have ZWembcbpcp_helper3: "W = (projective_plane_data.join Lines Points (mdualize (\<lhd>)) b' c')"
+  have ZWembcbpcp_helper3: "W = (projective_plane_data.join Lines Points (mdualize incid) b' c')"
     using  ZWembcbpcp_helper2 dual_join_is_meet projective_plane_axioms by metis
-  have ZWembcbpcp: "(join Z W) = (projective_plane_data.meet Lines Points (mdualize (\<lhd>))
-         (projective_plane_data.join Lines Points (mdualize (\<lhd>)) b c)
-         (projective_plane_data.join Lines Points (mdualize (\<lhd>)) b' c'))" 
+  have ZWembcbpcp: "(join Z W) = (projective_plane_data.meet Lines Points (mdualize incid)
+         (projective_plane_data.join Lines Points (mdualize incid) b c)
+         (projective_plane_data.join Lines Points (mdualize incid) b' c'))" 
     using ZWembcbpcp_helper1 ZWembcbpcp_helper3 dual_meet_is_join projective_plane_axioms by fastforce
-  
 
-  have "desarguesian Lines Points (mdualize (\<lhd>))" using P5 dual_plane_is_desarguesian[of Points Lines incid "mdualize incid"]
+  have deaap: "D = projective_plane_data.join Lines Points (mdualize incid) a a'"
+    by (metis (no_types, opaque_lifting) a_fact ap_fact assms(1) dcmaap_helper distinct3 distinct_length_2_or_more
+        dual_join_is_meet meet_properties2 p1 projective_plane_axioms)
+  have bebbp: "B = projective_plane_data.join Lines Points (mdualize incid) b b'"
+    by (metis b_fact bp_fact dual_join_is_meet harmon projective_plane_axioms)
+  have ceccp: "C = projective_plane_data.join Lines Points (mdualize incid) c c'"
+    by (metis assms(1) c_fact cp_fact dcmccp_helper2 dcmccp_helper4 distinct3 distinct_length_2_or_more
+        dual_plane_is_projective mdualize.elims(3) projective_plane.join_properties2 projective_plane_axioms)
+
+  (* last lemma needed for dual P5 (distinct dual joins of sides of the two triangles) *)
+  have daapbbpccp: "distinct
+         [projective_plane_data.join Lines Points (mdualize incid) a a',
+          projective_plane_data.join Lines Points (mdualize incid) b b',
+          projective_plane_data.join Lines Points (mdualize incid) c c']" 
+    using deaap bebbp ceccp harmon by auto
+
+
+  have helper1: "desarguesian Lines Points (mdualize incid)" using dual_plane_is_desarguesian[of Points Lines incid "mdualize incid"]
     using assms(2) by auto
-  then have 1: "projective_plane_data.pcollinear Lines Points (mdualize incid) (join X Y) (join U T) (join Z W)" 
-    using a_fact ap_fact b_fact bp_fact c_fact cp_fact distinct3 dcmaap dcmbbp dcmccp ndcabc ndcapbpcp
-      XYemabapbp UTemacapcp ZWembcbpcp
-    unfolding desarguesian_def[of Lines Points "mdualize incid"] sorry 
+  have helper2: "l \<in> Lines" using harmon by auto
+  have helper3: "projective_plane Lines Points (mdualize incid)" using assms desarguesian_def helper1 by auto
+  have 1: "projective_plane_data.pcollinear Lines Points (mdualize incid) (join X Y) (join U T) (join Z W)" 
+    using  helper1 helper3 helper2 a_fact ap_fact b_fact bp_fact c_fact cp_fact distinct3 dcmaap dcmbbp dcmccp ndcabc ndcapbpcp
+      XYemabapbp UTemacapcp ZWembcbpcp daapbbpccp
+    unfolding desarguesian_def[of Lines Points "mdualize incid"] sorry
 
   obtain P where p_fact: "P \<in> Points \<and> (mdualize incid) (join X Y) P \<and> (mdualize incid) (join U T) P \<and> (mdualize incid) (join Z W) P"
     unfolding projective_plane_data.pcollinear_def 
@@ -830,7 +1081,7 @@ qed
   have 8: "C = meet (join X T) (join U Z)" 
     by (smt (z3) assms(1) distinct distinct_length_2_or_more harmon projective_plane.join_properties1
         projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_axioms t u)
-  have 9: "D = meet (join T Z) (join X U)"
+  have 9: "D = meet (join X U) (join T Z)"
     by (smt (z3) assms(1) distinct distinct_length_2_or_more harmon meet_properties2 projective_plane.join_properties1
         projective_plane.unique_meet projective_plane_axioms t u)
  (* Idea: Break up harmon and harmonic_def of A B C D and show the individual statements rather than using the entirety of harmon *)
@@ -848,8 +1099,8 @@ qed
 text\<open>\oliver \jackson\<close>
 text\<open>Proposition 4.7B. Inverse direction of p4_7\<close>
 
-theorem (in projective_plane) p4_7b:
-  fixes A B C D::"'p"
+theorem (in projective_plane_7) p4_7b:
+  fixes A B C D
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
   (* Assume P5 *)
   (* Assume P7 *)
@@ -862,8 +1113,8 @@ text\<open>\done\<close>
 
 text\<open>\oliver \jackson\<close>
 text\<open>Proposition 4.7C. The really big implication after Proposition 4.7. Hopefully will be useful for harmonic stuff\<close>
-theorem (in projective_plane) p4_7c:
-  fixes A B C D::"'p"
+theorem (in projective_plane_7) p4_7c:
+  fixes A B C D
   assumes "A \<in> Points" "B \<in> Points" "C \<in> Points" "D \<in> Points"
   (* Assume P5 *)
   (* Assume P7 *)

@@ -2,6 +2,9 @@ theory "Chapter4-2"
   imports Complex_Main  "Chapter4-1" "Chapter1-2"
 
 begin
+
+
+
 text\<open> start at definition of complete quadrangle; stop just before "Harmonic points"\<close>
 
 definition (in projective_plane) cquadrangle :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> bool"
@@ -26,6 +29,29 @@ definition (in projective_plane) cquadrangle_points :: "'p \<Rightarrow> 'p \<Ri
   else undefined)"
 
 
+locale projective_plane_7 = projective_plane  Points Lines incid
+  for Points Lines incid + 
+  assumes
+  p7: "(cquadrangle A B C D) \<Longrightarrow> \<not> (pcollinear ((B\<bar>C) \<sqdot> (A\<bar>D)) ((A\<bar>C) \<sqdot> (B\<bar>D)) ((A\<bar>B) \<sqdot> (C\<bar>D)))"
+begin
+end
+
+locale projective_plane_5_7 = projective_plane_7 Points Lines incid
+  for Points Lines incid + 
+  assumes
+  p5:"\<lbrakk>U \<in> Points; A \<in> Points; B \<in> Points; C \<in> Points; 
+    A' \<in> Points; B' \<in> Points; C' \<in> Points;
+    distinct7 U A B C A' B' C';
+    pcollinear A A' U; pcollinear B B' U; pcollinear C C' U;
+    \<not>pcollinear A B C; \<not>pcollinear A' B' C'; 
+    join A B \<noteq> join A' B'; join A C \<noteq> join A' C'; join B C \<noteq> join B' C';
+    P = meet (join A B) (join A' B');
+    Q = meet (join A C) (join A' C');
+    R = meet (join B C)  (join B' C')\<rbrakk> \<Longrightarrow> pcollinear P Q R"
+begin
+end
+
+(*
 lemma P7:
   fixes A B C D
   fixes E F G
@@ -34,6 +60,7 @@ lemma P7:
   assumes "{E, F, G} = cquadrangle_points A B C D"
   shows "\<not>pcollinear E F G"
   sorry
+*)
 
 theorem rp2_P7:
   fixes A B C D
