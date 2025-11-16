@@ -8,34 +8,7 @@ definition distinct4 where
   "distinct4 x y z w \<equiv> y \<noteq> x \<and> 
                        z \<noteq> x \<and> z \<noteq> y \<and> 
                        w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z"
-definition distinct5 where 
-  "distinct5 x y z w r \<equiv> y \<noteq> x \<and> 
-                       z \<noteq> x \<and> z \<noteq> y \<and> 
-                       w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
-   r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w"
 
-definition distinct6 where 
-  "distinct6 x y z w r s \<equiv> y \<noteq> x \<and> 
-                           z \<noteq> x \<and> z \<noteq> y \<and> 
-                           w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
-   r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w \<and>
-   s \<noteq> x \<and> s \<noteq> y \<and> s \<noteq> z \<and> s \<noteq> w \<and> s \<noteq> r" 
-
-definition distinct7 where 
-  "distinct7 x y z w r s t \<equiv> 
-    y \<noteq> x \<and> 
-    z \<noteq> x \<and> z \<noteq> y \<and> 
-    w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z \<and>
-    r \<noteq> x \<and> r \<noteq> y \<and> r \<noteq> z \<and> r \<noteq> w \<and>
-    s \<noteq> x \<and> s \<noteq> y \<and> s \<noteq> z \<and> s \<noteq> w \<and> s \<noteq> r \<and>
-    t \<noteq> x \<and> t \<noteq> y \<and> t \<noteq> z \<and> t \<noteq> w \<and> t \<noteq> r \<and> t \<noteq> s"
-
-declare [[smt_timeout = 1500]]
-declare [[smt_reconstruction_step_timeout = 1500]]
-
-(* hide_const join *)
-
-section \<open>Desargues Introduction, Projective 3-Spaces\<close>
 locale projective_space_data =
   fixes Points :: "'p set" and Lines :: "'p set set" and Planes:: "'p set set" 
   fixes join:: "'p \<Rightarrow> 'p \<Rightarrow> 'p set"
@@ -318,35 +291,78 @@ proof (rule ccontr)
        \<open>l = join A B\<close> cd empty_iff inf_commute inf_le2 insert_commute insert_iff 
        insert_subset ldef by metis
   qed
-  have "\<exists>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} \<and> X0 \<notin> ?AB
+  then have "\<forall>X0 Y0. {X0,Y0} \<subseteq> {X,Y,Z,W} \<and> X0 \<noteq> Y0 \<and> X0 \<in> ?AB \<longrightarrow> Y0 \<notin> ?AB"
+    by metis
+  then have "\<forall>X0. X0 \<in> {X,Y,Z,W} \<and> X0 \<in> ?AB \<longrightarrow> (\<nexists>Y0. Y0 \<in> {X,Y,Z,W} \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0)"
+    by (metis insert_subset subsetI)
+  then have "\<exists>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} \<and> X0 \<notin> ?AB
     \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0"
-  proof (rule ccontr)
-    assume cd2: "\<not> (\<exists>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} \<and> X0 \<notin> ?AB
-      \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0)"
-    then have "\<forall>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} \<and> X0 \<notin> ?AB \<and> Y0 \<notin> ?AB
-      \<and> distinct3 X0 Y0 Z0 \<longrightarrow> Z0 \<in> ?AB" by meson
-    then have "\<exists>X0 Y0. {X0,Y0} \<subseteq> {X,Y,Z,W} \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0"
-      sorry
-    then show False using X00 by blast
-  qed
+    by (smt (verit, del_insts) XYZWdist bot.extremum distinct3_def distinct4_def
+        insert_mono insert_subset)
   then obtain X0 Y0 Z0 where X0Y0Z0def: "{X0,Y0,Z0} \<subseteq> {X,Y,Z,W} \<and> X0 \<notin> ?AB
     \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0" by presburger
   then obtain W0 where W0def: "W0 \<in> {X,Y,Z,W} \<and> distinct4 X0 Y0 Z0 W0"
     by (metis XYZWdist distinct3_def distinct4_def insertCI)
-  then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0"
-      using X0Y0Z0def XYZWdef coplanar_def unfolding distinct4_def sorry
+  then have Oeq0: "{X0,Y0,Z0,W0} = {X,Y,Z,W}" using X0Y0Z0def distinct4_def by fastforce
+  then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0" 
+    using XYZWdef insert_iff singletonD unfolding coplanar_def by (smt (verit))
   have X0Y0Z0ncoll: "\<not> collinear X0 Y0 Z0" and X0Y0W0ncoll: "\<not> collinear X0 Y0 W0"
     and X0Z0W0ncoll: "\<not> collinear X0 Z0 W0" and Y0Z0W0ncoll: "\<not> collinear Y0 Z0 W0"
-    using X0Y0Z0def XYZWdef W0def collinear_def sorry
-  have "X0 \<in> P \<and> Y0 \<in> P \<and> Z0 \<in> P" using X0Y0Z0def CABCP
+    using Oeq0 XYZWdef insert_iff singletonD unfolding collinear_def
+    by (smt (verit, best) XYZWdist distinct4_def)+
+  have XYZP: "X0 \<in> P \<and> Y0 \<in> P \<and> Z0 \<in> P" using X0Y0Z0def CABCP
     using XYZWdef by blast
   then have X0Y0Z0P: "(plane_through X0 Y0 Z0) = P" using X0Y0Z0ncoll
     using S0b S2b assms(1) by auto
-  then have "W0 \<notin> (plane_through X0 Y0 Z0)"
-    using S0b X0Y0Z0W0ncop \<open>X0 \<in> P \<and> Y0 \<in> P \<and> Z0 \<in> P\<close> assms(1) coplanar_def
-    by force
+  then have W0notinXYZ: "W0 \<notin> (plane_through X0 Y0 Z0)"
+    using S0b X0Y0Z0W0ncop XYZP assms(1) coplanar_def by force
   then have W0AB: "W0 \<in> ?AB" using CABCP W0def X0Y0Z0P XYZWdef by blast
-  then show False sorry
+  have W0nAoB: "W0 \<noteq> A \<and> W0 \<noteq> B" using W0notinXYZ X0Y0Z0P assms(4,5) by auto
+  then have ABisAW: "?AB = (join A W0)" by (metis S0a S1a S1b W0AB assms(2,3,6))
+  then have AXWncoll: "\<not> collinear A X0 W0" and AYWncoll: "\<not> collinear A Y0 W0" 
+    by (smt (verit, best) S1b X0Y0W0ncoll X0Y0Z0def W0nAoB assms(2) collinear_def)+
+  have AXWeqAYW: "(plane_through A X0 W0) = (plane_through A Y0 W0)"
+  proof (rule ccontr)
+    assume cd: "\<not> ((plane_through A X0 W0) = (plane_through A Y0 W0))"
+    then have "?AB = (plane_through A X0 W0) \<inter> (plane_through A Y0 W0)"
+      by (smt (verit) Int_iff S0a S0b S1a S1b S2a W0AB W0nAoB XYZP AXWncoll
+          AYWncoll assms(1,2,3,6) crossing_planes)
+    then have "(plane_through A X0 W0) = P" and "(plane_through A Y0 W0) = P"
+      by (metis AXWncoll AYWncoll Int_iff Punq S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))+
+    then show False using cd by auto
+  qed
+  then have "Y0 \<in> (plane_through A X0 W0)"
+    by (metis AYWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
+  then have "(plane_through X0 Y0 W0) = (plane_through A X0 W0)"
+    by (metis AXWncoll S0a S0b S1a S2a S2b W0AB X0Y0W0ncoll XYZP
+        assms(1,2,3,6))
+  then have AinXYW: "A \<in> (plane_through X0 Y0 W0)"
+    by (metis AXWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
+  
+  have ABisBW: "?AB = (join B W0)" by (metis ABisAW S0a S1a S1b W0AB W0nAoB assms(2,3))
+  then have BXWncoll: "\<not> collinear B X0 W0" and BYWncoll: "\<not> collinear B Y0 W0" 
+    by (metis S1b W0nAoB X0Y0W0ncoll X0Y0Z0def assms(3) collinear_def)+
+  have BXWeqBYW: "(plane_through B X0 W0) = (plane_through B Y0 W0)"
+  proof (rule ccontr)
+    assume cd: "\<not> ((plane_through B X0 W0) = (plane_through B Y0 W0))"
+    then have "?AB = (plane_through B X0 W0) \<inter> (plane_through B Y0 W0)"
+      using ABisBW 
+      by (smt (verit, ccfv_SIG) BXWncoll BYWncoll Int_iff S0a S0b S1a S1b S2a W0AB W0nAoB
+          XYZP assms(1,2,3,6) crossing_planes)
+    then have "(plane_through B X0 W0) = P" and "(plane_through B Y0 W0) = P"
+      by (metis BXWncoll BYWncoll Int_iff Punq S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))+
+    then show False using cd by auto
+  qed
+  then have "Y0 \<in> (plane_through B X0 W0)"
+    by (metis BYWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
+  then have "(plane_through X0 Y0 W0) = (plane_through B X0 W0)"
+    by (metis BXWncoll S0a S0b S1a S2a S2b W0AB X0Y0W0ncoll XYZP assms(1,2,3,6))
+  then have "B \<in> (plane_through X0 Y0 W0)"
+    by (metis BXWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
+  then have "P = (plane_through X0 Y0 W0)" 
+    by (metis Punq AinXYW S0a S0b S1a S2a W0AB X0Y0W0ncoll XYZP assms(1,2,3,6))
+  then show False 
+    by (metis S0a S0b S1a S2a W0AB W0notinXYZ X0Y0W0ncoll X0Y0Z0P XYZP assms(1,2,3,6))
 qed
 
 end
