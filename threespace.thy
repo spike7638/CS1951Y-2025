@@ -3,17 +3,16 @@ theory threespace
 
 begin
 
-definition distinct3 where "distinct3 x y z \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z)"
+definition distinct3 where 
+  "distinct3 x y z \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z)"
+
 definition distinct4 where 
-  "distinct4 x y z w \<equiv> y \<noteq> x \<and> 
-                       z \<noteq> x \<and> z \<noteq> y \<and> 
-                       w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z"
+  "distinct4 x y z w \<equiv> y \<noteq> x \<and> z \<noteq> x \<and> z \<noteq> y \<and> w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z"
 
 locale projective_space_data =
   fixes Points :: "'p set" and Lines :: "'p set set" and Planes:: "'p set set" 
   fixes join:: "'p \<Rightarrow> 'p \<Rightarrow> 'p set"
   fixes plane_through:: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p set"
-
 begin
 
 definition collinear :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> bool" where 
@@ -54,13 +53,6 @@ assumes
     S0b: "\<lbrakk>H \<in> Planes; P \<in> H\<rbrakk> \<Longrightarrow> P \<in> Points"
 begin
 
-lemma S2_exists_unique:
-  fixes P Q R
-  assumes "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
-  assumes "\<not> collinear P Q R"
-  shows "\<exists>! H . H \<in> Planes \<and> P \<in> H \<and> Q \<in> H \<and> R \<in> H" 
-  using assms S2a S2b by blast
-
 text \<open>\hadi\<close>
 lemma S5_dist:
   fixes P Q R S
@@ -70,33 +62,23 @@ lemma S5_dist:
   shows "distinct4 P Q R S" 
   using assms S2a distinct4_def unfolding coplanar_def by metis
 
+lemma coplanar_commute:
+  fixes P Q R S
+  assumes "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points"
+  assumes "coplanar P Q R S"
+  shows "coplanar Q P R S" and "coplanar P R Q S" and "coplanar P Q S R"
+    and "coplanar S Q R P" using assms coplanar_def by auto
+
 lemma collinear_commute:
   fixes P Q R
+  assumes "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
   assumes "collinear P Q R"
-  shows "collinear Q P R \<and> collinear P R Q"
+  shows "collinear Q P R" and "collinear P R Q" and "collinear R Q P"
   using assms collinear_def by auto
-
-lemma joins_eq_collinear:
-  fixes P Q R
-  assumes "P \<in> Points" and "Q \<in> Points" and "R \<in> Points"
-  assumes "P \<noteq> Q" and "Q \<noteq> R"
-  assumes "(join P Q) = (join Q R)"
-  shows "collinear P Q R" 
-  using assms S1a collinear_def by auto
-
-lemma join_commute:
-  fixes P Q
-  assumes "P \<in> Points" and "Q \<in> Points" and "P \<noteq> Q"
-  shows "(join P Q) = (join Q P)"
-  using assms S1a S1b by auto
 text \<open>\done\<close>
 
-lemma point_outside_plane: (* for any plane H, there's a point P not on it *)
-  assumes "H \<in> Planes"
-  obtains P where "P \<in> Points \<and> P \<notin> H"
-  using assms S2a S2b S5 unfolding coplanar_def by metis
-
-lemma crossing_planes: (* two distinct planes intersect in exactly one line *) 
+text \<open>\spike\<close>
+lemma crossing_planes:
   assumes "H \<in> Planes \<and> K \<in> Planes"
   assumes "H \<noteq> K"
   shows "\<exists>!n \<in> Lines . (n = (H \<inter> K))"
@@ -118,55 +100,22 @@ proof -
   have "H \<inter> K = k" using empty_diff kdef by auto
   then show ?thesis using kdef by auto
 qed
+text \<open>\done\<close>
 
-
-lemma S5alt:
-  shows "\<exists> A B C D . (A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in>  Points \<and>                                   
-(\<not> coplanar A B C D) \<and> 
-(\<not> collinear A B C) \<and> 
-(\<not> collinear A B D) \<and> 
-(\<not> collinear A C D) \<and> 
-(\<not> collinear B C D))" using S5 coplanar_def collinear_def by metis
+text \<open>\robert\<close>
+lemma S2_exists_unique:
+  fixes P Q R
+  assumes "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
+  assumes "\<not> collinear P Q R"
+  shows "\<exists>!H. H \<in> Planes \<and> P \<in> H \<and> Q \<in> H \<and> R \<in> H" 
+  using assms S2a S2b by blast
 
 lemma collinear_join [iff] :
   fixes P Q X
   assumes "P \<in> Points \<and> Q \<in> Points \<and> X \<in> Points"
   assumes "P \<noteq> Q"
   shows "collinear P Q X \<longleftrightarrow> X \<in> join P Q"
-  using assms collinear_def S1a S1b by fastforce
-
-
-lemma distinct3_alt [simp]:
-  "distinct[A,B,C] \<longleftrightarrow> (A \<noteq> B \<and> A \<noteq> C \<and> B \<noteq> C)" 
-  by auto
-
-lemma fargle:
-  fixes S T
-  assumes "S \<noteq> T"
-  assumes "S \<in> Planes \<and> T \<in> Planes"
-  shows "\<exists> k . (k \<in> Lines \<and> k = (S \<inter> T))"
-proof -
-  obtain k where kfacts: "(k \<in> Lines \<and> k \<subseteq> (S \<inter> T))" using assms S4[of S T] by auto
-  obtain  P Q where pqfacts: "P\<in> Points \<and> Q \<in> Points \<and> P \<in> k \<and> Q \<in> k \<and> P \<noteq> Q" using kfacts S6[of k] S0a
-  by (metis distinct3_def)
-  have u: "P \<in> S \<and> Q \<in> S \<and> P \<in>T \<and> Q\<in> T" using kfacts pqfacts by auto
-  fix X 
-  have  a0: "X \<in> S\<inter>T \<Longrightarrow> collinear P Q X" for X
-  proof (rule ccontr) (* classical contradiction *)
-    assume ch: "\<not>collinear P Q X"
-    assume minor: "X \<in> S \<inter> T"
-    have d: "distinct[P,Q,X]" using pqfacts ch collinear_def kfacts by force
-    have b: "\<exists>! H . H \<in> Planes \<and> P \<in> H \<and> Q \<in> H \<and> X \<in> H" using S2a[of P Q X] S2b[of P Q X] d ch distinct3_alt[of P Q X] 
-    by (metis Int_iff S0b assms(2) minor u)
-    then have "S = T" using assms u ch b minor by auto 
-    then show False using assms by auto
-  qed
-  have a1: "X \<in> S\<inter>T \<Longrightarrow> X \<in> join P Q" using a0 pqfacts
-  using S0b assms(2) by auto
-  then have a2: "S \<inter> T = join P Q" using S1b a0 kfacts pqfacts
-  by (meson IntI assms(1,2) crossing_planes u)
-  then show ?thesis by (simp add: S1a pqfacts)
-qed
+  using assms S1a S1b unfolding collinear_def by auto
 
 lemma same_joins:
   fixes a b x y
@@ -174,8 +123,7 @@ lemma same_joins:
   assumes "x \<in> join a b \<and> y \<in> join a b"
   assumes "distinct4 a b x y"
   shows "join x y = join a b"
-  using assms
-  by (metis S1a S1b distinct4_def)
+  using assms S1a S1b distinct4_def by metis
 
 lemma vanadium1:
   fixes a b L
@@ -191,10 +139,9 @@ lemma vanadium2:
   assumes "\<not> collinear a b c" 
   assumes "a \<in> P \<and> b \<in> P \<and> c \<in> P" 
   assumes "a \<in> Q \<and> b \<in> Q \<and> c \<in> Q" 
-  assumes "distinct [a, b, c]" 
+  assumes "distinct3 a b c" 
   shows "P = Q"
-  using S2a S2b assms collinear_join
-  by (simp; metis)
+  using assms collinear_join S2a S2b by metis
 
 lemma vanadium3:
   fixes x y P Q
@@ -204,23 +151,19 @@ lemma vanadium3:
   shows "P = Q \<or> P \<inter> Q = join x y"
 proof -
   obtain L where L_facts: "L \<in> Lines \<and> L \<subseteq> P \<and> L \<subseteq> Q" using S4 assms by metis
-  then obtain a b where h: "a \<in> Points \<and> b \<in> Points \<and> a \<noteq> b \<and> a \<in> L \<and> b \<in> L" using S6 S0a
-    by (metis distinct3_def)
+  then obtain a b where h0: "a \<in> Points \<and> b \<in> Points \<and> a \<noteq> b \<and> a \<in> L \<and> b \<in> L" 
+    using S6 S0a unfolding distinct3_def by blast
   then have h1: "L = join a b" using L_facts S1b by auto
   show ?thesis
-  proof (cases "\<exists> p . (p \<in> Points \<and> p \<notin> L \<and> p \<in> P \<and> p \<in> Q)")
+  proof (cases "\<exists>p. (p \<in> Points \<and> p \<notin> L \<and> p \<in> P \<and> p \<in> Q)")
     case True
     then obtain p where p_facts: "(p \<in> Points \<and> p \<notin> L \<and> p \<in> P \<and> p \<in> Q)" by auto
-    then have "distinct [a, b, p]" using h by auto
-    then have "P = Q" using vanadium2 p_facts h1 L_facts S2_exists_unique assms 
-      by (smt (verit, del_insts) collinear_join h subset_iff)
-    then show ?thesis by auto
+    then have "distinct3 a b p" using h0 unfolding distinct3_def by auto
+    then show ?thesis using assms h0 h1 p_facts L_facts vanadium2 [of a b p P Q] by blast
   next
-    case False
-    then have "p \<in> Points \<and> p \<in> P \<and> p \<in> Q \<Longrightarrow> p \<in> L" for p by auto
-    then have h2: "P \<inter> Q = L" using crossing_planes L_facts S0b assms(1) by auto
-    then have "join a b = join x y" using h1 same_joins assms
-    by (metis False L_facts S1b)
+    case nexistp: False
+    then have h2: "P \<inter> Q = L" using assms L_facts crossing_planes S0b by auto
+    then have "join a b = join x y" using assms nexistp h1 L_facts S1b by metis
     then show ?thesis using h1 h2 by auto
   qed
 qed
@@ -230,17 +173,40 @@ lemma vanadium4:
   assumes "x \<in> Points \<and> y \<in> Points \<and> z \<in> Points \<and> w \<in> Points"
   assumes "distinct4 x y z w"
   assumes "\<not> collinear x y z \<and> \<not> collinear x y w"
-  shows "plane_through x y z = plane_through x y w \<or> 
-        plane_through x y z \<inter> plane_through x y w = join x y"
+  shows "(plane_through x y z) = (plane_through x y w)
+    \<or> (plane_through x y z) \<inter> (plane_through x y w) = (join x y)"
 proof -
-  let ?P = "plane_through x y z"
-  let ?Q = "plane_through x y w"
+  let ?P = "plane_through x y z" let ?Q = "plane_through x y w"
   have "x \<in> ?P \<and> y \<in> ?P \<and> x \<in> ?Q \<and> y \<in> ?Q" using S2a assms by auto
-  then show ?thesis using vanadium3[of x y ?P ?Q] assms S2a distinct4_def by metis
+  then show ?thesis using assms vanadium3 S2a distinct4_def by metis
 qed
-  
+text \<open>\done\<close>
 
-lemma two_point_line_in_plane0:
+text \<open>\hadi\<close>
+lemma choose_subset_helper:
+  fixes X Y Z W
+  assumes "X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points
+    \<and> W \<in> Points \<and> \<not> coplanar X Y Z W \<and> \<not> collinear X Y Z \<and> \<not> collinear X Y W 
+    \<and> \<not> collinear X Z W \<and> \<not> collinear Y Z W \<and> distinct4 X Y Z W"
+  shows "\<forall>X0 Y0 Z0. distinct3 X0 Y0 Z0 \<and> {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} 
+    \<longrightarrow> \<not> collinear X0 Y0 Z0" 
+  and "\<forall>X0 Y0 Z0 W0. distinct4 X0 Y0 Z0 W0 \<and> {X0,Y0,Z0,W0} = {X,Y,Z,W} 
+    \<longrightarrow> \<not> coplanar X0 Y0 Z0 W0"
+proof (clarify)
+  fix X0 Y0 Z0
+  assume a1: "distinct3 X0 Y0 Z0" and "{X0,Y0,Z0} \<subseteq> {X,Y,Z,W}"
+  then consider "{X0,Y0,Z0} = {X,Y,Z}" | "{X0,Y0,Z0} = {X,Y,W}"
+    | "{X0,Y0,Z0} = {X,Z,W}" | "{X0,Y0,Z0} = {Y,Z,W}"
+    unfolding distinct3_def by force
+  then show "collinear X0 Y0 Z0 \<Longrightarrow> False" by (cases, 
+    (metis assms a1 collinear_commute empty_iff insert_iff distinct3_def)+)
+next
+  show "\<forall>X0 Y0 Z0 W0. distinct4 X0 Y0 Z0 W0 \<and> {X0,Y0,Z0,W0} = {X,Y,Z,W} 
+    \<longrightarrow> \<not> coplanar X0 Y0 Z0 W0" using assms insert_subset bot.extremum 
+    unfolding coplanar_def by metis
+qed
+
+lemma vanadium_two_point_line_in_plane:
   fixes A B P
   assumes "P \<in> Planes"
   assumes "A \<in> Points" and "B \<in> Points"
@@ -250,120 +216,74 @@ lemma two_point_line_in_plane0:
 proof (rule ccontr)
   let ?AB = "join A B"
   assume cd: "\<not> (?AB \<subseteq> P)"
-  then have Punq: "\<forall>Q \<in> Planes. A \<in> Q \<and> B \<in> Q \<longrightarrow> Q = P"
-    using assms crossing_planes S1b by fastforce
-  then have CABCP: "\<forall>C \<in> Points. C \<notin> ?AB \<longrightarrow> C \<in> P" 
-    using assms S1b S2a unfolding collinear_def by (smt (verit))
+  then have Punq: "\<forall>Q \<in> Planes. A \<in> Q \<and> B \<in> Q \<longrightarrow> Q = P" using assms vanadium3 by blast
+  then have CABCP: "\<forall>C \<in> Points. C \<notin> ?AB \<longrightarrow> C \<in> P" using assms collinear_join S2a by metis
   obtain X Y Z W where XYZWdef: "X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points 
     \<and> W \<in> Points \<and> \<not> coplanar X Y Z W \<and> \<not> collinear X Y Z \<and> \<not> collinear X Y W 
-    \<and> \<not> collinear X Z W \<and> \<not> collinear Y Z W" using S5 by auto
-  then have XYZWdist: "distinct4 X Y Z W" using S5_dist by simp
-  have X00: "\<nexists>X0 Y0. {X0,Y0} \<subseteq> {X,Y,Z,W} \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0"
+    \<and> \<not> collinear X Z W \<and> \<not> collinear Y Z W \<and> distinct4 X Y Z W" using S5 S5_dist by metis
+  let ?XYZW = "{X,Y,Z,W}"
+  have "\<nexists>X0 Y0. {X0,Y0} \<subseteq> ?XYZW \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0"
   proof (rule ccontr)
-    assume cd1: "\<not> (\<nexists>X0 Y0. {X0,Y0} \<subseteq> {X,Y,Z,W} \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0)"
-    then obtain X0 Y0 where X0Y0def: "{X0,Y0} \<subseteq> {X,Y,Z,W} \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB
-      \<and> X0 \<noteq> Y0" by auto
+    assume cd1: "\<not> (\<nexists>X0 Y0. {X0,Y0} \<subseteq> ?XYZW \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0)"
+    then obtain X0 Y0 where X0Y0def: "{X0,Y0} \<subseteq> ?XYZW \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0" by auto
     then have ABX0Y0: "?AB = (join X0 Y0)" using assms S0a S1a S1b by metis
-    obtain Z0 W0 where Z0W0def: "{Z0,W0} \<subseteq> {X,Y,Z,W} \<and> Z0 \<noteq> W0 \<and> Z0 \<noteq> X0 \<and> Z0 \<noteq> Y0
-      \<and> W0 \<noteq> X0 \<and> W0 \<noteq> Y0" using XYZWdist
-      by (metis distinct4_def insert_mono subset_insertI subset_insertI2)
-    then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0"
-      using X0Y0def XYZWdef coplanar_def by fastforce
+    obtain Z0 W0 where Z0W0def: "{Z0,W0} \<subseteq> ?XYZW \<and> Z0 \<noteq> W0 \<and> Z0 \<noteq> X0 \<and> Z0 \<noteq> Y0 \<and> W0 \<noteq> X0 \<and> W0 \<noteq> Y0" 
+      using XYZWdef insert_mono subset_insertI subset_insertI2 unfolding distinct4_def by metis
+    then have allp: "X0 \<in> Points \<and> Y0 \<in> Points \<and> Z0 \<in> Points \<and> W0 \<in> Points \<and> {X0,Y0,Z0,W0} = ?XYZW 
+      \<and> distinct4 X0 Y0 Z0 W0" using X0Y0def XYZWdef unfolding distinct4_def by auto
+    then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0" 
+      using XYZWdef choose_subset_helper(2) by presburger
     have X0Y0Z0ncoll: "\<not> collinear X0 Y0 Z0" and X0Y0W0ncoll: "\<not> collinear X0 Y0 W0"
-      and X0Z0W0ncoll: "\<not> collinear X0 Z0 W0" and Y0Z0W0ncoll: "\<not> collinear Y0 Z0 W0"
-      using X0Y0def XYZWdef Z0W0def collinear_def
-      by (smt (verit, ccfv_threshold) empty_iff insert_iff insert_subset)+
-    then have "(plane_through X0 Y0 Z0) \<noteq> (plane_through X0 Y0 W0)"
-      by (smt (verit, del_insts) S2a X0Y0def XYZWdef Z0W0def coplanar_def empty_iff
-          insert_iff insert_subset)
-    then obtain l where ldef: "l \<in> Lines \<and> l = (plane_through X0 Y0 Z0) \<inter> (plane_through X0 Y0 W0)"
-      by (smt (verit, ccfv_threshold) S2a X0Y0W0ncoll X0Y0Z0ncoll X0Y0def XYZWdef Z0W0def
-          crossing_planes empty_iff insert_iff insert_subset)
-    have "X0 \<in> (plane_through X0 Y0 Z0) \<and> Y0 \<in> (plane_through X0 Y0 Z0)
-      \<and> X0 \<in> (plane_through X0 Y0 W0) \<and> Y0 \<in> (plane_through X0 Y0 W0)"
-      using S2a X0Y0W0ncoll X0Y0Z0ncoll X0Y0def XYZWdef Z0W0def by auto
-    then have "l = ?AB" using ldef ABX0Y0
-      by (metis Int_iff S0a S1b X0Y0def)
+      using XYZWdef X0Y0def Z0W0def allp choose_subset_helper(1) insert_subset 
+      unfolding distinct3_def by metis+
+    then have neqW: "(plane_through X0 Y0 Z0) \<noteq> (plane_through X0 Y0 W0)"
+      using allp X0Y0Z0W0ncop S2a unfolding coplanar_def by metis
+    then have "(join X0 Y0) = (plane_through X0 Y0 Z0) \<inter> (plane_through X0 Y0 W0)"
+      using allp X0Y0def Z0W0def X0Y0Z0ncoll X0Y0W0ncoll vanadium4 by metis
     then have "A \<in> (plane_through X0 Y0 Z0) \<and> B \<in> (plane_through X0 Y0 Z0)
-      \<and> A \<in> (plane_through X0 Y0 W0) \<and> B \<in> (plane_through X0 Y0 W0)"
-      using S1a assms(2,3,6) ldef by auto
-    then show False using Punq S0a S2a X0Y0Z0ncoll X0Y0def XYZWdef Z0W0def 
-       \<open>l = join A B\<close> cd empty_iff inf_commute inf_le2 insert_commute insert_iff 
-       insert_subset ldef by metis
+      \<and> A \<in> (plane_through X0 Y0 W0) \<and> B \<in> (plane_through X0 Y0 W0)" 
+      using assms ABX0Y0 S1a by auto
+    then show False using Punq allp X0Y0W0ncoll X0Y0Z0ncoll neqW S2a by metis
   qed
-  then have "\<forall>X0 Y0. {X0,Y0} \<subseteq> {X,Y,Z,W} \<and> X0 \<noteq> Y0 \<and> X0 \<in> ?AB \<longrightarrow> Y0 \<notin> ?AB"
-    by metis
-  then have "\<forall>X0. X0 \<in> {X,Y,Z,W} \<and> X0 \<in> ?AB \<longrightarrow> (\<nexists>Y0. Y0 \<in> {X,Y,Z,W} \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0)"
-    by (metis insert_subset subsetI)
-  then have "\<exists>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} \<and> X0 \<notin> ?AB
-    \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0"
-    by (smt (verit, del_insts) XYZWdist bot.extremum distinct3_def distinct4_def
-        insert_mono insert_subset)
-  then obtain X0 Y0 Z0 where X0Y0Z0def: "{X0,Y0,Z0} \<subseteq> {X,Y,Z,W} \<and> X0 \<notin> ?AB
+  then have "\<forall>X0. X0 \<in> ?XYZW \<and> X0 \<in> ?AB \<longrightarrow> (\<nexists>Y0. Y0 \<in> ?XYZW \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0)"
+    using insert_subset subsetI by metis
+  then have "\<exists>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> ?XYZW \<and> X0 \<notin> ?AB \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0"
+    using XYZWdef subset_insertI insert_mono insert_subset distinct3_def distinct4_def by metis
+  then obtain X0 Y0 Z0 where X0Y0Z0def: "{X0,Y0,Z0} \<subseteq> ?XYZW \<and> X0 \<notin> ?AB
     \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0" by presburger
-  then obtain W0 where W0def: "W0 \<in> {X,Y,Z,W} \<and> distinct4 X0 Y0 Z0 W0"
-    by (metis XYZWdist distinct3_def distinct4_def insertCI)
-  then have Oeq0: "{X0,Y0,Z0,W0} = {X,Y,Z,W}" using X0Y0Z0def distinct4_def by fastforce
-  then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0" 
-    using XYZWdef insert_iff singletonD unfolding coplanar_def by (smt (verit))
+  then obtain W0 where W0def: "W0 \<in> ?XYZW \<and> distinct4 X0 Y0 Z0 W0"
+    using XYZWdef unfolding distinct3_def distinct4_def by auto
+  then have Oeq0: "X0 \<in> Points \<and> Y0 \<in> Points \<and> Z0 \<in> Points \<and> W0 \<in> Points 
+     \<and> {X0,Y0,Z0,W0} = ?XYZW" using X0Y0Z0def XYZWdef unfolding distinct4_def by auto
+  then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0"
+    using XYZWdef W0def choose_subset_helper(2) by presburger
   have X0Y0Z0ncoll: "\<not> collinear X0 Y0 Z0" and X0Y0W0ncoll: "\<not> collinear X0 Y0 W0"
-    and X0Z0W0ncoll: "\<not> collinear X0 Z0 W0" and Y0Z0W0ncoll: "\<not> collinear Y0 Z0 W0"
-    using Oeq0 XYZWdef insert_iff singletonD unfolding collinear_def
-    by (smt (verit, best) XYZWdist distinct4_def)+
-  have XYZP: "X0 \<in> P \<and> Y0 \<in> P \<and> Z0 \<in> P" using X0Y0Z0def CABCP
-    using XYZWdef by blast
-  then have X0Y0Z0P: "(plane_through X0 Y0 Z0) = P" using X0Y0Z0ncoll
-    using S0b S2b assms(1) by auto
-  then have W0notinXYZ: "W0 \<notin> (plane_through X0 Y0 Z0)"
-    using S0b X0Y0Z0W0ncop XYZP assms(1) coplanar_def by force
-  then have W0AB: "W0 \<in> ?AB" using CABCP W0def X0Y0Z0P XYZWdef by blast
-  have W0nAoB: "W0 \<noteq> A \<and> W0 \<noteq> B" using W0notinXYZ X0Y0Z0P assms(4,5) by auto
-  then have ABisAW: "?AB = (join A W0)" by (metis S0a S1a S1b W0AB assms(2,3,6))
+   using XYZWdef X0Y0Z0def W0def Oeq0 choose_subset_helper(1)
+   unfolding distinct3_def distinct4_def by (metis, metis insert_subset)
+  have xyzinP: "X0 \<in> P \<and> Y0 \<in> P \<and> Z0 \<in> P" using XYZWdef X0Y0Z0def CABCP by blast
+  then have X0Y0Z0eqP: "(plane_through X0 Y0 Z0) = P" using assms X0Y0Z0ncoll S0b S2b by auto
+  then have W0notinXYZ: "W0 \<notin> (plane_through X0 Y0 Z0)" 
+    using assms xyzinP X0Y0Z0W0ncop S0b coplanar_def by auto
+  then have W0AB: "W0 \<in> ?AB" using XYZWdef X0Y0Z0eqP W0def CABCP by auto
+  have W0nAoB: "W0 \<noteq> A \<and> W0 \<noteq> B" using assms X0Y0Z0eqP W0notinXYZ by auto
+  then have ABisAW: "?AB = (join A W0)" using assms W0AB S0a S1a S1b by metis
   then have AXWncoll: "\<not> collinear A X0 W0" and AYWncoll: "\<not> collinear A Y0 W0" 
-    by (smt (verit, best) S1b X0Y0W0ncoll X0Y0Z0def W0nAoB assms(2) collinear_def)+
-  have AXWeqAYW: "(plane_through A X0 W0) = (plane_through A Y0 W0)"
-  proof (rule ccontr)
-    assume cd: "\<not> ((plane_through A X0 W0) = (plane_through A Y0 W0))"
-    then have "?AB = (plane_through A X0 W0) \<inter> (plane_through A Y0 W0)"
-      by (smt (verit) Int_iff S0a S0b S1a S1b S2a W0AB W0nAoB XYZP AXWncoll
-          AYWncoll assms(1,2,3,6) crossing_planes)
-    then have "(plane_through A X0 W0) = P" and "(plane_through A Y0 W0) = P"
-      by (metis AXWncoll AYWncoll Int_iff Punq S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))+
-    then show False using cd by auto
-  qed
-  then have "Y0 \<in> (plane_through A X0 W0)"
-    by (metis AYWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
-  then have "(plane_through X0 Y0 W0) = (plane_through A X0 W0)"
-    by (metis AXWncoll S0a S0b S1a S2a S2b W0AB X0Y0W0ncoll XYZP
-        assms(1,2,3,6))
-  then have AinXYW: "A \<in> (plane_through X0 Y0 W0)"
-    by (metis AXWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
-  
-  have ABisBW: "?AB = (join B W0)" by (metis ABisAW S0a S1a S1b W0AB W0nAoB assms(2,3))
+    using assms Oeq0 X0Y0Z0def W0nAoB S1a vanadium1 collinear_join by metis+
+  have AXWeqAYW: "(plane_through A X0 W0) = (plane_through A Y0 W0)" using assms 
+    Punq Oeq0 W0nAoB ABisAW AXWncoll AYWncoll vanadium3 [of A W0] S1a S2a Int_iff by metis
+  then have AinXYW: "A \<in> (plane_through X0 Y0 W0)" 
+    using assms Oeq0 S2a S2b X0Y0W0ncoll AXWncoll AYWncoll by metis
+  have ABisBW: "?AB = (join B W0)" using assms W0nAoB W0AB S0a S1a S1b by metis
   then have BXWncoll: "\<not> collinear B X0 W0" and BYWncoll: "\<not> collinear B Y0 W0" 
-    by (metis S1b W0nAoB X0Y0W0ncoll X0Y0Z0def assms(3) collinear_def)+
-  have BXWeqBYW: "(plane_through B X0 W0) = (plane_through B Y0 W0)"
-  proof (rule ccontr)
-    assume cd: "\<not> ((plane_through B X0 W0) = (plane_through B Y0 W0))"
-    then have "?AB = (plane_through B X0 W0) \<inter> (plane_through B Y0 W0)"
-      using ABisBW 
-      by (smt (verit, ccfv_SIG) BXWncoll BYWncoll Int_iff S0a S0b S1a S1b S2a W0AB W0nAoB
-          XYZP assms(1,2,3,6) crossing_planes)
-    then have "(plane_through B X0 W0) = P" and "(plane_through B Y0 W0) = P"
-      by (metis BXWncoll BYWncoll Int_iff Punq S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))+
-    then show False using cd by auto
-  qed
-  then have "Y0 \<in> (plane_through B X0 W0)"
-    by (metis BYWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
-  then have "(plane_through X0 Y0 W0) = (plane_through B X0 W0)"
-    by (metis BXWncoll S0a S0b S1a S2a S2b W0AB X0Y0W0ncoll XYZP assms(1,2,3,6))
-  then have "B \<in> (plane_through X0 Y0 W0)"
-    by (metis BXWncoll S0a S0b S1a S2a W0AB XYZP assms(1,2,3,6))
-  then have "P = (plane_through X0 Y0 W0)" 
-    by (metis Punq AinXYW S0a S0b S1a S2a W0AB X0Y0W0ncoll XYZP assms(1,2,3,6))
-  then show False 
-    by (metis S0a S0b S1a S2a W0AB W0notinXYZ X0Y0W0ncoll X0Y0Z0P XYZP assms(1,2,3,6))
+    using assms Oeq0 X0Y0Z0def W0nAoB S1a vanadium1 collinear_join by metis+
+  have BXWeqBYW: "(plane_through B X0 W0) = (plane_through B Y0 W0)" using assms 
+    Punq Oeq0 W0nAoB ABisBW BXWncoll BYWncoll vanadium3 [of B W0] S1a S2a Int_iff by metis
+  then have "B \<in> (plane_through X0 Y0 W0)" 
+    using assms Oeq0 S2a S2b X0Y0W0ncoll BXWncoll BYWncoll by metis
+  then have "P = (plane_through X0 Y0 W0)" using Punq Oeq0 AinXYW X0Y0W0ncoll S2a by auto
+  then show False using assms xyzinP X0Y0Z0eqP X0Y0W0ncoll W0notinXYZ W0AB S0a S0b S1a S2a by metis
 qed
+text \<open>\done\<close>
 
 end
 end
