@@ -48,7 +48,7 @@ assumes
     S5: "(\<exists>P Q R S. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points \<and> 
           \<not> coplanar P Q R S \<and> 
           \<not> collinear P Q R \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S)" and
-    S6: "\<lbrakk>k \<in> Lines\<rbrakk> \<Longrightarrow> (\<exists>P Q R . P \<in> k \<and> Q \<in> k \<and> R \<in> k \<and> distinct3 P Q R)" and
+    S6: "\<lbrakk>k \<in> Lines\<rbrakk> \<Longrightarrow> (\<exists>P Q R . P \<in> k \<and> Q \<in> k \<and> R \<in> k \<and> distinct[ P, Q, R])" and
     S0a: "\<lbrakk>k \<in> Lines; P \<in> k\<rbrakk> \<Longrightarrow> P \<in> Points" and
     S0b: "\<lbrakk>H \<in> Planes; P \<in> H\<rbrakk> \<Longrightarrow> P \<in> Points"
 begin
@@ -58,8 +58,10 @@ lemma S5_dist:
   assumes "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points 
     \<and> S \<in> Points \<and> \<not> coplanar P Q R S \<and> \<not> collinear P Q R 
     \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S"
-  shows "distinct4 P Q R S" 
-  using assms S2a distinct4_def unfolding coplanar_def by metis
+  shows "distinct [P, Q, R, S]" 
+  using assms S2a distinct4_def unfolding coplanar_def
+  by metis
+ 
 
 lemma collinear_commute:
   fixes P Q R
@@ -203,14 +205,14 @@ text \<open>\hadi\<close>
 lemma collinear_implies_coplanar:
   fixes P Q R
   assumes "P \<in> Points" and "Q \<in> Points" and "R \<in> Points"
-  assumes "distinct3 P Q R" and "collinear P Q R"
-  shows "\<exists>S \<in> Points. distinct4 P Q R S \<and> coplanar P Q R S"
+  assumes "distinct[ P, Q, R]" and "collinear P Q R"
+  shows "\<exists>S \<in> Points. distinct[P, Q, R, S] \<and> coplanar P Q R S"
 proof -
   obtain l where ldef: "l \<in> Lines \<and> P \<in> l \<and> Q \<in> l \<and> R \<in> l" 
     using assms unfolding collinear_def by auto
   then obtain S where Sdef: "S \<in> Points \<and> S \<notin> l" using S5 collinear_def by metis
-  then have PQRSdist: "distinct4 P Q R S" 
-    using assms ldef distinct3_def distinct4_def by metis
+  then have PQRSdist: "distinct[P, Q, R, S]" 
+    using assms ldef distinct3_def distinct4_def by blast
   obtain H where Hdef: "H \<in> Planes \<and> S \<in> H \<and> l \<subseteq> H" 
     using ldef Sdef plane_through_point_line by blast
   then show ?thesis using assms ldef Sdef PQRSdist Hdef subset_eq
@@ -272,7 +274,7 @@ lemma space_plane_p2:
 proof -
   fix k n
   assume khl: "k \<in> HLines" and nhl: "n \<in> HLines"
-  then obtain Pk Qk Rk where k_pts: "Pk \<in> k \<and> Qk \<in> k \<and> Rk \<in> k \<and> distinct3 Pk Qk Rk" 
+  then obtain Pk Qk Rk where k_pts: "Pk \<in> k \<and> Qk \<in> k \<and> Rk \<in> k \<and> distinct[Pk, Qk, Rk]" 
     using S6 [of k] HLdef by auto
   show "\<exists>P. (P \<in> H \<and> Hincid P k \<and> Hincid P n)"
   proof (cases "k = n")
@@ -319,7 +321,7 @@ text \<open>\hadi\<close>
 lemma space_plane_p3:
   fixes H
   assumes HP: "H \<in> Planes"
-  shows "\<exists>P Q R. P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> distinct3 P Q R \<and> \<not> (collinear P Q R)"
+  shows "\<exists>P Q R. P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> distinct[P, Q, R] \<and> \<not> (collinear P Q R)"
 proof -
   obtain P Q where PQdef: "P \<in> H \<and> Q \<in> H \<and> P \<noteq> Q" 
     using HP S4 S6 distinct3_def subset_iff by metis
@@ -369,15 +371,15 @@ lemma space_plane_p4:
   defines HLdef: "HLines \<equiv> {L. L \<in> Lines \<and> L \<subseteq> H}"
   defines Hidef: "Hincid \<equiv> (\<lambda>P L. (if P \<in> H \<and> L \<in> HLines then P \<in> L else undefined))"
   shows "\<lbrakk>k \<in> HLines; U = {P. (P \<in> H \<and> Hincid P k)}\<rbrakk> 
-    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct3 Q R S"
+    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]"
 proof -
   fix k U
   assume khl: "k \<in> HLines" and udef: "U = {P. (P \<in> H \<and> Hincid P k)}"
-  then obtain P Q R where pqr: "P \<in> k \<and> Q \<in> k \<and> R \<in> k \<and> distinct3 P Q R" 
-    using S6 HLdef by blast
+  then obtain P Q R where pqr: "P \<in> k \<and> Q \<in> k \<and> R \<in> k \<and> distinct[P, Q, R]" 
+    using S6 HLdef distinct3_def by fastforce
   then have "P \<in> H \<and> Q \<in> H \<and> R \<in> H" 
     using khl pqr S0a HLdef by auto
-  then show "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct3 Q R S" 
+  then show "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]" 
     using khl udef pqr Hidef by auto
 qed
 text \<open>\done\<close>
@@ -397,7 +399,7 @@ proof (unfold_locales)
   show "\<exists>P Q R. P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
     \<and> \<not> (projective_plane_data.pcollinear H HLines Hincid P Q R)"
   proof -
-    obtain P Q R where PQRdef: "P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> distinct3 P Q R 
+    obtain P Q R where PQRdef: "P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> distinct[P, Q, R] 
       \<and> \<not> collinear P Q R" using HP space_plane_p3 [of H] by auto
     then have "\<not> (projective_plane_data.pcollinear H HLines Hincid P Q R)"
       using HP HLdef Hidef S0b [of H] mem_Collect_eq collinear_def
@@ -646,7 +648,7 @@ lemma lines_distinctD:
 lemma desargues_three_lines: (* every pt lies on 3 lines *)
   fixes X::"pointD"
   assumes "X \<in> PointsD"
-  shows "\<exists>l m n. distinct3 l m n 
+  shows "\<exists>l m n. distinct[ l, m, n] 
     \<and> incidD X l \<and> incidD X m \<and> incidD X n 
     \<and> l \<in> LinesD \<and> m \<in> LinesD \<and> n \<in> LinesD" 
   using lines_distinctD unfolding incidD_def LinesD_def distinct3_def
@@ -1536,7 +1538,7 @@ qed
 lemma three_elements: (* From a set with cardinality more than 2, we can obtain 3 distinct items *)
   fixes U::"'a set"
   assumes a: "card U > 2"
-  shows "\<exists> A B C  . A \<in> U \<and> B \<in> U \<and> C \<in> U  \<and> distinct3 A B C"
+  shows "\<exists> A B C  . A \<in> U \<and> B \<in> U \<and> C \<in> U  \<and> distinct[A, B, C]"
 proof -
   obtain A where aa: "A \<in> U" using a by force
   have c1: "card (U - {A}) > 1" using aa  using assms by force
@@ -1556,7 +1558,7 @@ lemma fpp_two_points_zero: (* a level zero line contains at least two points: ne
   assumes "l_level k = 0"
   assumes "U \<subseteq> Points"
   assumes "card U = 4"
-  assumes imp: "\<And> P Q R . ((distinct3 P Q R) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (pcollinear P Q R)" 
+  assumes imp: "\<And> P Q R . ((distinct[P, Q, R]) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (pcollinear P Q R)" 
   shows "\<exists> P Q . P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
 proof (rule ccontr)
   assume ch: "\<not> (\<exists> P Q . P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points)"
@@ -1573,18 +1575,19 @@ proof (rule ccontr)
   by (metis (lifting) Diff_empty Diff_insert0 \<open>card (Base_point ` U) = 4\<close> add_2_eq_Suc add_diff_cancel_left' card_Diff_singleton
       diff_is_0_eq kpchoice lessI linorder_not_le numeral_Bit0 plus_1_eq_Suc zero_neq_numeral)
   then obtain P Q R where pqr_def: "P \<in> (?Upts - ?kpts) \<and> Q \<in> (?Upts - ?kpts) \<and> R \<in> (?Upts - ?kpts) \<and> 
-    distinct3 P Q R" using s  three_elements sorry
+    distinct[P, Q, R]" using s  three_elements sorry
   have "{P, Q, R} \<subseteq> ?Upts" using  pqr_def by blast
   then have "{P,Q,R} \<subseteq> Pi_points" using Upts_pi by order
   then have not_k: "(\<not> (fppincid P k)) \<and> (\<not> (fppincid Q k)) \<and> (\<not> (fppincid R k))" using pqr_def by blast
   obtain uP uQ uR where upqr_def: "P = Base_point uP \<and> Q = Base_point uQ \<and> R = Base_point uR \<and>  
-    distinct3 uP uQ uR \<and> uP \<in> U \<and> uQ \<in> U \<and> uR \<in> U" using pqr_def  
+    distinct[uP, uQ, uR] \<and> uP \<in> U \<and> uQ \<in> U \<and> uR \<in> U" using pqr_def  
     by (smt (verit, ccfv_SIG) DiffE distinct3_def imageE)
   then have "\<not> (pcollinear uP uQ uR)" using assms by blast
   then have jj: "\<not> (\<exists>s\<in> Lines. incid uP s \<and> incid uQ s \<and> incid uR s)" 
     using upqr_def assms(4) in_mono pcollinear_def using assms(3) by fastforce
-  show False using  bexE configuration.base_in_base configuration.fppincid.simps(1) configuration_def distinct3_def empty_iff insertCI upqr_def
-  by (smt (verit, best))
+  show False using  bexE configuration.base_in_base 
+      configuration.fppincid.simps(1) configuration_def distinct3_def empty_iff insertCI upqr_def sorry
+
 qed
 
 
@@ -1643,7 +1646,7 @@ lemma fpp_two_points:
   assumes "p = l_level k"
   assumes "U \<subseteq> Points"
   assumes "card U = 4"
-  assumes imp: "\<And> P Q R . ((distinct3 P Q R) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (pcollinear P Q R)" 
+  assumes imp: "\<And> P Q R . ((distinct[P, Q, R]) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (pcollinear P Q R)" 
   shows "\<exists> P Q . P \<noteq> Q \<and>  fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
 proof -
   consider (zero) "p = 0" | (one) "p = 1" | (many) "p \<ge> 2" by fastforce
