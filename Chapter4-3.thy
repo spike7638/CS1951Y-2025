@@ -543,7 +543,7 @@ proof -
     unfolding harmonic_quadruple_def by metis
 qed
 
-definition (in projective_plane_5_7) harmonic_conjugate where
+(*definition (in projective_plane_5_7) harmonic_conjugate where
 "harmonic_conjugate A B C l m n = (if (distinct[A,B,C] \<and> pcollinear A B C \<and> 
 l \<noteq> join A B \<and> incid A l \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and>
 A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines
@@ -576,6 +576,7 @@ A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines 
  (*   by (metis a0 assms(1,2,3,4,5,6))*)
   qed
 qed
+*)
 
 text\<open>\jackson \oliver\<close>
 theorem (in projective_plane_5_7) p4_6_uniqueness:
