@@ -8,63 +8,6 @@ text\<open>an ordered quadruple of distinct points A,B,C,D on a line is a harmon
 is a complete quadrangle X,Y,Z,W such that A and B are diagonal points of the complete quadrangle. 
 This is denoted H(AB,CD) if A,B,C,D form a harmonic quadruple\<close>
 
-(*
-text\<open>\jackson \oliver\<close>
-(* WE SHOULD COMMENT THIS OUT UPON PUSH -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
-proposition (in projective_plane) P5:
-  fixes A B C D E F Z P Q R (* D E F = A' B' C', Z = O *)
-  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points \<and>
-           F \<in> Points \<and> Z \<in> Points \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
-  assumes "distinct [A, B, C, D, E, F, Z]" 
-  assumes "\<not>pcollinear A B C"
-  assumes "\<not>pcollinear D E F"
-  assumes "P = meet (join A B) (join D E)"
-  assumes "Q = meet (join B C) (join E F)"
-  assumes "R = meet (join A C) (join D F)"
-  assumes "incid Z (join A D)"
-  assumes "incid Z (join B E)"
-  assumes "incid Z (join C F)"
-  
-  shows "pcollinear P Q R"
-  sorry
-text\<open>\done\<close>
-
-
-text\<open>\jackson \oliver\<close>
-(* WE SHOULD COMMENT THIS OUT UPON PUSH -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
-(* This is equivalent to the P5 above. I am not sure which will be easier to work with *)
-proposition (in projective_plane) P5_equivalent:
-  fixes A B C D E F Z P Q R (* D E F = A' B' C', Z = O *)
-  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points \<and>
-           F \<in> Points \<and> Z \<in> Points \<and> P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points"
-  assumes "distinct [A, B, C, D, E, F, Z]" 
-  assumes "\<not>pcollinear A B C"
-  assumes "\<not>pcollinear D E F"
-  assumes "P = meet (join A B) (join D E)"
-  assumes "Q = meet (join B C) (join E F)"
-  assumes "R = meet (join A C) (join D F)"
-  assumes "pcollinear Z A D"
-  assumes "pcollinear Z B E"
-  assumes "pcollinear Z C F"
-  
-  shows "pcollinear P Q R"
-  sorry
-text\<open>\done\<close>
-
-
-text\<open>\jackson \oliver\<close>
-(* WE SHOULD COMMENT THIS OUT UPON PUSH -- FIX WHEN LOCALE SITUATION IS RESOLVED *)
-proposition (in projective_plane) P7:
-  fixes X Y Z W::"'p"
-  assumes "X \<in> Points" "Y \<in> Points" "Z \<in> Points" "W \<in> Points"
-  assumes "cquadrangle X Y Z W"
-  shows "\<not> pcollinear  (meet (join Y Z) (join X W))
-                       (meet (join X Z) (join Y W))
-                       (meet (join X Y) (join Z W))"
-  sorry
-text\<open>\done\<close>
-*)
-
 text\<open>\jackson \oliver\<close>
 lemma (in projective_plane) quadrangle_order:
   fixes X Y Z W::"'p"
@@ -98,7 +41,7 @@ definition (in projective_plane) harmonic_quadruple :: "'p \<Rightarrow> 'p \<Ri
     X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
     cquadrangle X Y Z W \<and>
     A = meet (join X Y) (join Z W) \<and> B = meet (join X Z) (join Y W) \<and>
-    incid C (join X W) \<and> incid D (join Y Z)) \<and> (distinct[A,B,C,D])
+    incid C (join X W) \<and> incid D (join Y Z)) \<and> distinct[A,B,C,D]
     else undefined)"
 text\<open>\done\<close>
 
@@ -600,19 +543,48 @@ proof -
     unfolding harmonic_quadruple_def by metis
 qed
 
+definition (in projective_plane_5_7) harmonic_conjugate where
+"harmonic_conjugate A B C l m n = (if (distinct[A,B,C] \<and> pcollinear A B C \<and> 
+l \<noteq> join A B \<and> incid A l \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and>
+A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines
+) then (SOME D .  D \<in> Points \<and> harmonic_quadruple A B C D) else undefined)"
+                          
+lemma (in projective_plane_5_7) s:
+  fixes A B C l m n
+  assumes "A \<in> Points" and "B \<in> Points" and "C \<in> Points"
+  assumes "pcollinear A B C"
+  assumes "distinct [A,B,C]"
+  assumes "l \<noteq> join A B \<and> incid A l \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines"
+  shows "harmonic_conjugate A B C l m n \<in> Points \<and> harmonic_quadruple A B C (harmonic_conjugate A B C l m n)" 
+ 
+proof -
+  show ?thesis
+  proof -
+    have  a0: "harmonic_conjugate A B C l m n  = (if (distinct[A,B,C] \<and> pcollinear A B C \<and> 
+l \<noteq> join A B \<and> incid A l \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and>
+A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines
+) then (SOME D .  D \<in> Points \<and> harmonic_quadruple A B C D) else undefined)" using harmonic_conjugate_def by auto
+    then have a1: "... =  (if 
+(l \<noteq> join A B \<and> incid A l \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and>
+A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines
+) then (SOME D .  D \<in> Points \<and> harmonic_quadruple A B C D) else undefined)" using assms by presburger
+    then have a2: "... =  (if (True) then (SOME D .  D \<in> Points \<and> harmonic_quadruple A B C D)
+       else undefined)" using assms by presburger
+    then have a3: "... =  (SOME D .  D \<in> Points \<and> harmonic_quadruple A B C D)" by presburger
+
+    then show ?thesis  using p4_6_existence  sorry
+ (*   by (metis a0 assms(1,2,3,4,5,6))*)
+  qed
+qed
+
 text\<open>\jackson \oliver\<close>
-theorem (in projective_plane_7) p4_6_uniqueness:
-  fixes A B C D E
-  fixes l
+theorem (in projective_plane_5_7) p4_6_uniqueness:
+  fixes A B C D E l m n
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> E \<in> Points"
-  assumes "l \<in> Lines"
-  assumes "incid A l" and "incid B l" and "incid C l"
-  assumes "desarguesian Points Lines incid"
-  (* Assume P7 *)
-  assumes "harmonic_quadruple A B C D"
+  assumes "D = harmonic_conjugate A B C l m n" (*harmonic_quadruple A B C D" *)
   assumes "harmonic_quadruple A B C E"
   shows "D = E"
-  sorry 
+  sorry
 
 
 text\<open>Definition: fourth harmonic point of A,B,C is the D satisfying 4.6.\<close>
@@ -626,7 +598,7 @@ theorem (in projective_plane_7) p4_7a:
   assumes "desarguesian Points Lines incid"
   (* Assume P7 *)
   assumes "harmonic_quadruple A B C D"
-  shows "harmonic_quadruple C D A B"
+  shows "harmonic_quadruple C D B A"
   
 proof -
    obtain l X Y Z W where harmon: "l \<in> Lines \<and> incid A l \<and> incid B l \<and> incid C l \<and> incid D l \<and>
@@ -935,7 +907,9 @@ proof -
        apply (smt (z3) assms(1) meet_implies_incid quadrangle_order quadrangle_points_distinct unique_meet) 
        by (metis assms(1,3) cp_fact diagonal_points_noncollinear t)
    qed
-qed
+ qed
+
+  have distinct3_alt: "distinct[l, a, b, c, a', b', c']" using distinct3 by auto
 
 
   have dcmaap_helper: "incid D l \<and> incid D a \<and> incid D a'"
@@ -1057,10 +1031,42 @@ qed
     using assms(2) by auto
   have helper2: "l \<in> Lines" using harmon by auto
   have helper3: "projective_plane Lines Points (mdualize incid)" using assms desarguesian_def helper1 by auto
-  have 1: "projective_plane_data.pcollinear Lines Points (mdualize incid) (join X Y) (join U T) (join Z W)" 
-    using  helper1 helper3 helper2 a_fact ap_fact b_fact bp_fact c_fact cp_fact distinct3 dcmaap dcmbbp dcmccp ndcabc ndcapbpcp
+
+  have helper4: " distinct [M, A, B, C, A', B', C'] \<and>
+        M \<in> Lines \<and>
+        A \<in> Lines \<and>
+        B \<in> Lines \<and>
+        C \<in> Lines \<and>
+        A' \<in> Lines \<and>
+        B' \<in> Lines \<and>
+        C' \<in> Lines \<and>
+        projective_plane_data.pcollinear Lines Points (mdualize incid) M A A' \<and>
+        projective_plane_data.pcollinear Lines Points (mdualize incid) M B B' \<and>
+        projective_plane_data.pcollinear Lines Points (mdualize incid) M C C' \<and>
+        \<not> projective_plane_data.pcollinear Lines Points (mdualize incid) A B C \<and>
+        \<not> projective_plane_data.pcollinear Lines Points (mdualize incid) A' B' C' \<and>
+        distinct
+         [projective_plane_data.join Lines Points (mdualize incid) A A',
+          projective_plane_data.join Lines Points (mdualize incid) B B',
+          projective_plane_data.join Lines Points (mdualize incid) C C'] \<longrightarrow>
+        projective_plane_data.pcollinear Lines Points (mdualize incid)
+         (projective_plane_data.meet Lines Points (mdualize incid)
+           (projective_plane_data.join Lines Points (mdualize incid) A B)
+           (projective_plane_data.join Lines Points (mdualize incid) A' B'))
+         (projective_plane_data.meet Lines Points (mdualize incid)
+           (projective_plane_data.join Lines Points (mdualize incid) A C)
+           (projective_plane_data.join Lines Points (mdualize incid) A' C'))
+         (projective_plane_data.meet Lines Points (mdualize incid)
+           (projective_plane_data.join Lines Points (mdualize incid) B C)
+           (projective_plane_data.join Lines Points (mdualize incid) B' C'))" for A B C A' B' C' M
+    using  helper1 
+    unfolding desarguesian_def[of Lines Points "mdualize incid"] by blast
+  (*by (metis desarguesian_def helper1)*)
+  have 1: "projective_plane_data.pcollinear Lines Points (mdualize incid) (join X Y) (join U T) (join Z W)"
+    using  helper4[of l a b c "a'" "b'" "c'"] helper3 helper2 a_fact ap_fact b_fact bp_fact c_fact cp_fact distinct3_alt dcmaap dcmbbp dcmccp ndcabc ndcapbpcp
       XYemabapbp UTemacapcp ZWembcbpcp daapbbpccp
-    unfolding desarguesian_def[of Lines Points "mdualize incid"] sorry
+    unfolding desarguesian_def[of Lines Points "mdualize incid"] by auto
+   
 
   obtain P where p_fact: "P \<in> Points \<and> (mdualize incid) (join X Y) P \<and> (mdualize incid) (join U T) P \<and> (mdualize incid) (join Z W) P"
     unfolding projective_plane_data.pcollinear_def 
@@ -1085,15 +1091,95 @@ qed
     by (smt (z3) assms(1) distinct distinct_length_2_or_more harmon meet_properties2 projective_plane.join_properties1
         projective_plane.unique_meet projective_plane_axioms t u)
  (* Idea: Break up harmon and harmonic_def of A B C D and show the individual statements rather than using the entirety of harmon *)
-  show ?thesis using assms harmon 0 6 7 8 9 t u unfolding harmonic_quadruple_def sorry
-  (*show ?thesis using 0 P5 thm dual_plane_is_desarguesian [of Points Lines incid "mdualize incid"] sorry*)
-qed
 
- (* have meetA: "incid A (join U T)" using u t 0 by auto
-  have 1: "pcollinear C D A B" using assms harmon by auto
-  show ?thesis using 1 0 P5 by auto
-  *)
-   
+    have prelim: "C \<in> Points \<and> D \<in> Points \<and> B \<in> Points \<and> A \<in> Points" using assms(1) by auto
+    have a0: "(if C \<in> Points \<and> D \<in> Points \<and> B \<in> Points \<and> A \<in> Points
+    then (\<exists>l X Y Z W.
+             l \<in> Lines \<and>
+             incid C l \<and>
+             incid D l \<and>
+             incid B l \<and>
+             incid A l \<and>
+             X \<in> Points \<and>
+             Y \<in> Points \<and>
+             Z \<in> Points \<and>
+             W \<in> Points \<and>
+             cquadrangle X Y Z W \<and> C = (X \<bar> Y) \<sqdot> (Z \<bar> W) \<and> D = (X \<bar> Z) \<sqdot> (Y \<bar> W) \<and> incid B (X \<bar> W) \<and> incid A (Y \<bar> Z)) \<and>
+         distinct [C, D, B, A]
+    else undefined) = 
+  (if True
+    then (\<exists>l X Y Z W.
+             l \<in> Lines \<and>
+             incid C l \<and>
+             incid D l \<and>
+             incid A l \<and>
+             incid B l \<and>
+             X \<in> Points \<and>
+             Y \<in> Points \<and>
+             Z \<in> Points \<and>
+             W \<in> Points \<and>
+             cquadrangle X Y Z W \<and> C = (X \<bar> Y) \<sqdot> (Z \<bar> W) \<and> D = (X \<bar> Z) \<sqdot> (Y \<bar> W) \<and> incid B (X \<bar> W) \<and> incid A (Y \<bar> Z)) \<and>
+         distinct [C, D, B, A]
+    else undefined)" using prelim by meson
+    then have a1: "... = ((\<exists>l X Y Z W.
+             l \<in> Lines \<and>
+             incid C l \<and>
+             incid D l \<and>
+             incid A l \<and>
+             incid B l \<and>
+             X \<in> Points \<and>
+             Y \<in> Points \<and>
+             Z \<in> Points \<and>
+             W \<in> Points \<and>
+             cquadrangle X Y Z W \<and> C = (X \<bar> Y) \<sqdot> (Z \<bar> W) \<and> D = (X \<bar> Z) \<sqdot> (Y \<bar> W) \<and> incid B (X \<bar> W) \<and> incid A (Y \<bar> Z)) \<and>
+         distinct [C, D, B, A])" by auto
+
+    have reorder_distinct: "distinct [C, D, B, A]" using harmon by auto
+    have a_lemma: " incid A (T \<bar> U)"  using 6 join_properties1 join_properties2 t u by metis
+    have prelim_H: "((l \<in> Lines \<and>
+             incid C l \<and>
+             incid D l \<and>
+             incid A l \<and>
+             incid B l \<and>
+             X \<in> Points \<and>
+             T \<in> Points \<and>
+             U \<in> Points \<and>
+             Z \<in> Points \<and>
+             cquadrangle X T U Z \<and> C = (X \<bar> T) \<sqdot> (U \<bar> Z) \<and> D = (X \<bar> U) \<sqdot> (T \<bar> Z) \<and> incid B (X \<bar> Z) \<and> incid A (T \<bar> U)) \<and>
+         distinct [C, D, B, A])" using assms(1) harmon 0 6 7 8 9 t u reorder_distinct a_lemma by argo
+    have H: "((\<exists>l X Y Z W.
+             l \<in> Lines \<and>
+             incid C l \<and>
+             incid D l \<and>
+             incid A l \<and>
+             incid B l \<and>
+             X \<in> Points \<and>
+             Y \<in> Points \<and>
+             Z \<in> Points \<and>
+             W \<in> Points \<and>
+             cquadrangle X Y Z W \<and> C = (X \<bar> Y) \<sqdot> (Z \<bar> W) \<and> D = (X \<bar> Z) \<sqdot> (Y \<bar> W) \<and> incid B (X \<bar> W) \<and> incid A (Y \<bar> Z)) \<and>
+         distinct [C, D, B, A])" using prelim_H by blast
+    (*by (smt (verit) assms(3) diagonal_points_noncollinear distinct_length_2_or_more harmon join_properties1 meet_properties2
+        prelim quadrangle_order unique_meet)*)
+
+    have final_statement: "(if C \<in> Points \<and> D \<in> Points \<and> B \<in> Points \<and> A \<in> Points
+    then (\<exists>l X Y Z W.
+             l \<in> Lines \<and>
+             incid C l \<and>
+             incid D l \<and>
+             incid A l \<and>
+             incid B l \<and>
+             X \<in> Points \<and>
+             Y \<in> Points \<and>
+             Z \<in> Points \<and>
+             W \<in> Points \<and>
+             cquadrangle X Y Z W \<and> C = (X \<bar> Y) \<sqdot> (Z \<bar> W) \<and> D = (X \<bar> Z) \<sqdot> (Y \<bar> W) \<and> incid B (X \<bar> W) \<and> incid A (Y \<bar> Z)) \<and>
+         distinct [C, D, B, A]
+    else undefined)" using H a0 a1 by auto
+
+    show ?thesis using final_statement unfolding harmonic_quadruple_def by metis
+qed
+text\<open>\done\<close>   
 
 
 text\<open>\oliver \jackson\<close>
@@ -1107,7 +1193,7 @@ theorem (in projective_plane_7) p4_7b:
   assumes "desarguesian Points Lines incid"
   shows "harmonic_quadruple A B C D\<longleftrightarrow>harmonic_quadruple C D A B"
 proof -
-  show ?thesis using p4_7a assms by blast
+  show ?thesis using p4_7a assms harmonic_swap_second_pair by blast
 qed
 text\<open>\done\<close>
 
