@@ -217,6 +217,16 @@ definition line_pencil::"'l \<Rightarrow> 'l set" where
 
 end (* affine_plane_data *)
 
+lemma distinct4_def[iff]:
+  "distinct [A,B,C,D] = ((A \<noteq> B) \<and> (A \<noteq> C) \<and> (A \<noteq> D) \<and> (B \<noteq> C) \<and> (B \<noteq> D) \<and> (C \<noteq> D))"
+  by auto
+
+lemma distinct3_def[iff]:
+  "distinct [A,B,C] = ((A \<noteq> B) \<and> (A \<noteq> C) \<and> (B \<noteq> C))"
+  by auto
+
+
+
 locale affine_plane =
      affine_plane_data Points Lines incid join find_parallel
      for
@@ -1981,11 +1991,6 @@ we'll use distinctness of more than 3, and each of these uses lists,
 and unwinding that turns out to be a pain in some proofs...so I'm going
 to define a bunch of predicates to capture those ideas\<close>
 
-definition distinct3 where "distinct3 x y z \<equiv> (x \<noteq> y) \<and> (x \<noteq> z) \<and> (y \<noteq> z)"
-definition distinct4 where 
-  "distinct4 x y z w \<equiv> y \<noteq> x \<and> 
-                       z \<noteq> x \<and> z \<noteq> y \<and> 
-                       w \<noteq> x \<and> w \<noteq> y \<and> w \<noteq> z"
 definition distinct5 where 
   "distinct5 x y z w r \<equiv> y \<noteq> x \<and> 
                        z \<noteq> x \<and> z \<noteq> y \<and> 
@@ -2030,7 +2035,7 @@ assumes
     p1: "\<lbrakk>P \<noteq> Q; P \<in> Points; Q \<in> Points\<rbrakk> \<Longrightarrow> (\<exists>!k. k \<in> Lines \<and> P \<lhd> k \<and> Q \<lhd> k)" and
     p2: "\<lbrakk>k \<in> Lines; n \<in> Lines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> Points \<and> P \<lhd> k \<and> P \<lhd> n)" and
     p3: "\<exists>P Q R. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> \<not> (pcollinear P Q R)" and
-    p4: "\<lbrakk>k \<in> Lines; U = {P. (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+    p4: "\<lbrakk>k \<in> Lines; U = {P. (P \<in> Points \<and> P \<lhd> k)} \<rbrakk> \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]"
 begin
 
 (*Uncommented and fixed by Nick and George for use in 4-4:*)
