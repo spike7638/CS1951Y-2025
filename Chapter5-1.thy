@@ -1,5 +1,5 @@
 theory "Chapter5-1"
-  imports "Chapter4-4"
+  imports "Chapter4-4jfh"
 begin
 text \<open>Everything up to and including Proposition 5.2\<close>
 
