@@ -214,8 +214,7 @@ lemma vanadium_two_point_line_in_plane:
   assumes "A \<noteq> B"
   shows "join A B \<subseteq> P" 
 proof (rule ccontr)
-  let ?AB = "join A B"
-  assume cd: "\<not> (?AB \<subseteq> P)"
+  let ?AB = "join A B" assume cd: "\<not> (?AB \<subseteq> P)"
   then have Punq: "\<forall>Q \<in> Planes. A \<in> Q \<and> B \<in> Q \<longrightarrow> Q = P" using assms vanadium3 by blast
   then have CABCP: "\<forall>C \<in> Points. C \<notin> ?AB \<longrightarrow> C \<in> P" using assms collinear_join S2a by metis
   obtain X Y Z W where XYZWdef: "X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points 
@@ -253,12 +252,12 @@ proof (rule ccontr)
     \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0" by presburger
   then obtain W0 where W0def: "W0 \<in> ?XYZW \<and> distinct4 X0 Y0 Z0 W0"
     using XYZWdef unfolding distinct3_def distinct4_def by auto
-  then have Oeq0: "X0 \<in> Points \<and> Y0 \<in> Points \<and> Z0 \<in> Points \<and> W0 \<in> Points 
+  then have allp2: "X0 \<in> Points \<and> Y0 \<in> Points \<and> Z0 \<in> Points \<and> W0 \<in> Points 
      \<and> {X0,Y0,Z0,W0} = ?XYZW" using X0Y0Z0def XYZWdef unfolding distinct4_def by auto
   then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0"
     using XYZWdef W0def choose_subset_helper(2) by presburger
   have X0Y0Z0ncoll: "\<not> collinear X0 Y0 Z0" and X0Y0W0ncoll: "\<not> collinear X0 Y0 W0"
-   using XYZWdef X0Y0Z0def W0def Oeq0 choose_subset_helper(1)
+   using XYZWdef X0Y0Z0def W0def allp2 choose_subset_helper(1)
    unfolding distinct3_def distinct4_def by (metis, metis insert_subset)
   have xyzinP: "X0 \<in> P \<and> Y0 \<in> P \<and> Z0 \<in> P" using XYZWdef X0Y0Z0def CABCP by blast
   then have X0Y0Z0eqP: "(plane_through X0 Y0 Z0) = P" using assms X0Y0Z0ncoll S0b S2b by auto
@@ -266,21 +265,18 @@ proof (rule ccontr)
     using assms xyzinP X0Y0Z0W0ncop S0b coplanar_def by auto
   then have W0AB: "W0 \<in> ?AB" using XYZWdef X0Y0Z0eqP W0def CABCP by auto
   have W0nAoB: "W0 \<noteq> A \<and> W0 \<noteq> B" using assms X0Y0Z0eqP W0notinXYZ by auto
-  then have ABisAW: "?AB = (join A W0)" using assms W0AB S0a S1a S1b by metis
+  then have ABisAW: "?AB = (join A W0)" and ABisBW: "?AB = (join B W0)"
+    using assms W0AB S0a S1a S1b by metis+
   then have AXWncoll: "\<not> collinear A X0 W0" and AYWncoll: "\<not> collinear A Y0 W0" 
-    using assms Oeq0 X0Y0Z0def W0nAoB S1a vanadium1 collinear_join by metis+
-  have AXWeqAYW: "(plane_through A X0 W0) = (plane_through A Y0 W0)" using assms 
-    Punq Oeq0 W0nAoB ABisAW AXWncoll AYWncoll vanadium3 [of A W0] S1a S2a Int_iff by metis
-  then have AinXYW: "A \<in> (plane_through X0 Y0 W0)" 
-    using assms Oeq0 S2a S2b X0Y0W0ncoll AXWncoll AYWncoll by metis
-  have ABisBW: "?AB = (join B W0)" using assms W0nAoB W0AB S0a S1a S1b by metis
-  then have BXWncoll: "\<not> collinear B X0 W0" and BYWncoll: "\<not> collinear B Y0 W0" 
-    using assms Oeq0 X0Y0Z0def W0nAoB S1a vanadium1 collinear_join by metis+
-  have BXWeqBYW: "(plane_through B X0 W0) = (plane_through B Y0 W0)" using assms 
-    Punq Oeq0 W0nAoB ABisBW BXWncoll BYWncoll vanadium3 [of B W0] S1a S2a Int_iff by metis
-  then have "B \<in> (plane_through X0 Y0 W0)" 
-    using assms Oeq0 S2a S2b X0Y0W0ncoll BXWncoll BYWncoll by metis
-  then have "P = (plane_through X0 Y0 W0)" using Punq Oeq0 AinXYW X0Y0W0ncoll S2a by auto
+    and BXWncoll: "\<not> collinear B X0 W0" and BYWncoll: "\<not> collinear B Y0 W0" 
+    using assms allp2 X0Y0Z0def W0nAoB S1a vanadium1 collinear_join by metis+
+  then have "(plane_through A X0 W0) = (plane_through A Y0 W0)" 
+    and "(plane_through B X0 W0) = (plane_through B Y0 W0)" 
+    using assms Punq allp2 W0nAoB S1a S2a Int_iff
+    by (metis ABisAW vanadium3 [of A W0], metis ABisBW vanadium3 [of B W0])
+  then have "A \<in> (plane_through X0 Y0 W0)" and "B \<in> (plane_through X0 Y0 W0)"
+    using assms allp2 S2a S2b X0Y0W0ncoll AXWncoll AYWncoll BXWncoll BYWncoll by metis+
+  then have "P = (plane_through X0 Y0 W0)" using Punq allp2 X0Y0W0ncoll S2a by auto
   then show False using assms xyzinP X0Y0Z0eqP X0Y0W0ncoll W0notinXYZ W0AB S0a S0b S1a S2a by metis
 qed
 text \<open>\done\<close>
