@@ -53,6 +53,7 @@ assumes
     S0b: "\<lbrakk>H \<in> Planes; P \<in> H\<rbrakk> \<Longrightarrow> P \<in> Points"
 begin
 
+text \<open>\hadi\<close>
 lemma S5_dist:
   fixes P Q R S
   assumes "P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points 
@@ -69,7 +70,22 @@ lemma collinear_commute:
   shows "collinear Q P R \<and> collinear P R Q"
   using assms collinear_def by auto
 
-lemma point_outside_plane: (* For any plane H, there's a point P not on it *)
+lemma joins_eq_collinear:
+  fixes P Q R
+  assumes "P \<in> Points" and "Q \<in> Points" and "R \<in> Points"
+  assumes "P \<noteq> Q" and "Q \<noteq> R"
+  assumes "(join P Q) = (join Q R)"
+  shows "collinear P Q R" 
+  using assms S1a collinear_def by auto
+
+lemma join_commute:
+  fixes P Q
+  assumes "P \<in> Points" and "Q \<in> Points" and "P \<noteq> Q"
+  shows "(join P Q) = (join Q P)"
+  using assms S1a S1b by auto
+text \<open>\done\<close>
+
+lemma point_outside_plane: (* for any plane H, there's a point P not on it *)
   assumes "H \<in> Planes"
   obtains P where "P \<in> Points \<and> P \<notin> H"
   using assms S2a S2b S5 unfolding coplanar_def by metis
@@ -97,6 +113,18 @@ proof -
   then show ?thesis using kdef by auto
 qed
 
+text \<open>\hadi\<close>
+lemma crossing_planes_2: (* three distinct planes intersect in exactly one point *)
+  fixes H N K
+  assumes "H \<in> Planes" and "N \<in> Planes" and "K \<in> Planes"
+  assumes "distinct[H, N, K]" and "\<not> H \<inter> N \<subseteq> K"
+  shows "\<exists>!P. P \<in> Points \<and> P \<in> H \<inter> N \<inter> K"
+proof -
+  obtain l where "l \<in> Lines \<and> l = H \<inter> N" 
+    using assms crossing_planes unfolding distinct3_def by auto
+  then show ?thesis using assms S3 [of l K] S0a Int_iff by metis
+qed
+
 lemma two_point_line_in_plane:
   fixes P Q H
   assumes "H \<in> Planes"
@@ -106,8 +134,7 @@ lemma two_point_line_in_plane:
   shows "join P Q \<subseteq> H" 
   using assms S1a S3 by blast
 
-text \<open>\hadi\<close>
-lemma outside_plane_ncoll:
+corollary outside_plane_ncoll:
   fixes P Q R H
   assumes "H \<in> Planes"
   assumes "P \<in> Points" and "Q \<in> Points" and "R \<in> Points"
@@ -115,13 +142,11 @@ lemma outside_plane_ncoll:
   assumes "P \<noteq> Q"
   shows "\<not> collinear P Q R"
 proof -
-  have "(join P Q) \<subseteq> H" using assms two_point_line_in_plane by simp
+  from two_point_line_in_plane have "(join P Q) \<subseteq> H" using assms by simp
   then show ?thesis using assms S1b collinear_def by auto
 qed
-text \<open>\done\<close>
 
-text \<open>\hadi\<close>
-lemma extra_point: 
+lemma extra_point:
   fixes P Q H
   assumes "H \<in> Planes"
   assumes "P \<in> Points" and "Q \<in> Points"
@@ -199,7 +224,6 @@ proof -
     using assms S1a S2b QRdef pqrncoll in_mono by metis
   then show ?thesis using Hdef by metis
 qed
-text \<open>\done\<close>
 
 text \<open>\hadi\<close>
 lemma collinear_implies_coplanar:
@@ -220,29 +244,6 @@ proof -
 qed
 text \<open>\done\<close>
 
-text \<open>\hadi\<close>
-lemma crossing_lines:
-  fixes k n P
-  assumes "k \<in> Lines" and "n \<in> Lines"
-  assumes "k \<noteq> n"
-  assumes "P \<in> Points"
-  assumes "P \<in> k \<inter> n"
-  shows "\<exists>!H. H \<in> Planes \<and> k \<subseteq> H \<and> n \<subseteq> H"
-proof -
-  obtain Q where qdef: "Q \<in> k \<and> Q \<notin> n" using assms S0a S1b S6 
-    distinct3_def by metis
-  obtain R where rdef: "R \<in> n \<and> R \<notin> k" using assms S0a S1b S6 
-    distinct3_def by metis
-  then have pqr: "\<not> collinear P Q R" using assms qdef S0a S1b Int_iff
-    unfolding collinear_def by metis
-  then obtain H where hdef: "H = plane_through P Q R" by simp
-  then have hkn: "H \<in> Planes \<and> k \<subseteq> H \<and> n \<subseteq> H" using assms qdef rdef pqr S0a S1b S2a
-    two_point_line_in_plane Int_iff by metis
-  have "N \<in> Planes \<and> k \<subseteq> N \<and> n \<subseteq> N \<Longrightarrow> H = N" for N using assms hdef qdef rdef pqr
-    S0a S2b Int_iff subsetD by metis
-  then show ?thesis using hkn by metis
-qed
-text \<open>\done\<close>
 
 text \<open>\hadi\<close>
 lemma space_plane_p1:
@@ -265,59 +266,35 @@ qed
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
+
 lemma space_plane_p2:
-  fixes H
-  assumes HP: "H \<in> Planes"
-  defines HLdef: "HLines \<equiv> {L. L \<in> Lines \<and> L \<subseteq> H}"
-  defines Hidef: "Hincid \<equiv> (\<lambda>P L. (if P \<in> H \<and> L \<in> HLines then P \<in> L else undefined))"
-  shows "\<lbrakk>k \<in> HLines; n \<in> HLines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> H \<and> Hincid P k \<and> Hincid P n)"
+  fixes H k n
+  assumes "H \<in> Planes" and "k \<in> Lines" and "n \<in> Lines"
+  assumes "k \<subseteq> H" and "n \<subseteq> H"
+  shows "\<exists>P. (P \<in> H \<and> P \<in> k \<and> P \<in> n)"
 proof -
-  fix k n
-  assume khl: "k \<in> HLines" and nhl: "n \<in> HLines"
-  then obtain Pk Qk Rk where k_pts: "Pk \<in> k \<and> Qk \<in> k \<and> Rk \<in> k \<and> distinct[Pk, Qk, Rk]" 
-    using S6 [of k] HLdef by auto
-  show "\<exists>P. (P \<in> H \<and> Hincid P k \<and> Hincid P n)"
+  obtain Pk Qk Rk where k_pts: "Pk \<in> k \<and> Qk \<in> k \<and> Rk \<in> k \<and> distinct [Pk, Qk, Rk]" 
+    using assms S6 [of k] by auto
+  show "\<exists>P. (P \<in> H \<and> P \<in> k \<and> P \<in> n)"
   proof (cases "k = n")
     case True
-    then show ?thesis using khl k_pts S0a HLdef Hidef by auto
+    then show ?thesis using assms k_pts by auto
   next
     case kndist: False
-    obtain X where Xdef: "X \<in> Points \<and> X \<notin> H" using HP point_outside_plane by auto
-    then have "X \<notin> k \<and> X \<notin> n"  using khl nhl HLdef by auto
+    obtain X where Xdef: "X \<in> Points \<and> X \<notin> H" 
+      using assms point_outside_plane by blast
+    then have "X \<notin> k \<and> X \<notin> n"  using assms by auto
     then obtain U V where Udef: "U \<in> Planes \<and> X \<in> U \<and> k \<subseteq> U" 
-      and Vdef: "V \<in> Planes \<and> X \<in> V \<and> n \<subseteq> V" using Xdef khl nhl HLdef
-      plane_through_point_line [of X k] plane_through_point_line [of X n] by auto
-    then have k_int: "k \<in> Lines \<and> k \<subseteq> H \<and> k \<subseteq> U" using khl HLdef by simp
+      and Vdef: "V \<in> Planes \<and> X \<in> V \<and> n \<subseteq> V" 
+      using assms Xdef plane_through_point_line by metis
+    then have k_int: "k \<in> Lines \<and> k \<subseteq> H \<and> k \<subseteq> U" using assms by simp
     then obtain S where Sdef: "S \<in> k \<and> S \<in> V" using k_pts Vdef S3 in_mono by metis
     then have "S \<in> n" 
-      using nhl Xdef Vdef k_int plane_through_point_line S0b HP HLdef by blast
-    then show ?thesis using khl nhl Sdef Vdef k_int Hidef by auto
+      using assms Xdef Vdef k_int plane_through_point_line S0b by blast
+    then show ?thesis using assms Sdef Vdef k_int by auto
   qed
 qed
-text \<open>\done\<close>
 
-text \<open>\hadi\<close>
-lemma crossing_lines_2:
-  fixes k n H
-  assumes "k \<in> Lines" and "n \<in> Lines"
-  assumes "k \<noteq> n"
-  assumes "H \<in> Planes"
-  assumes "k \<subseteq> H \<and> n \<subseteq> H"
-  shows "\<exists>!P. P \<in> Points \<and> P \<in> k \<and> P \<in> n"
-proof -
-  let ?HLines = "{L. L \<in> Lines \<and> L \<subseteq> H}"
-  let ?Hincid = "\<lambda>P L. (if P \<in> H \<and> L \<in> ?HLines then P \<in> L else undefined)"
-  have "\<exists>P. (P \<in> H \<and> ?Hincid P k \<and> ?Hincid P n)" 
-    using assms space_plane_p2 [of H] by simp
-  then have pexist: "\<exists>P. P \<in> Points \<and> P \<in> k \<and> P \<in> n" using assms S0b by auto
-  then obtain P where "P \<in> Points \<and> P \<in> k \<and> P \<in> n" by auto
-  then have "Q \<in> Points \<and> Q \<in> k \<and> Q \<in> n \<longrightarrow> Q = P" for Q 
-    using assms S1b [of Q P] by auto
-  then show ?thesis using pexist by auto
-qed
-text \<open>\done\<close>
-
-text \<open>\hadi\<close>
 lemma space_plane_p3:
   fixes H
   assumes HP: "H \<in> Planes"
@@ -337,18 +314,11 @@ proof -
     using PQdef PQpts Sdef Ndef extra_point by blast
   then obtain M where Mdef: "M \<in> Planes \<and> M = plane_through Q S T"
     using PQpts Sdef S2a by auto
-  then have "N \<noteq> M" using PQpts Sdef Tdef S2a by auto
-  then have QSisNiM: "(join Q S) = N \<inter> M" 
-    using PQdef PQpts Sdef Ndef Tdef Mdef crossing_planes S1b S2a IntI by metis
-  obtain U where Udef: "U \<in> Points \<and> U \<notin> M \<and> \<not> collinear S T U" 
-    using PQpts Sdef Tdef Ndef Mdef extra_point S2a by metis
-  then obtain K where Kdef: "K \<in> Planes \<and> K = plane_through S T U"
-    using Sdef Tdef S2a by auto
-  then have "K \<noteq> H" using Sdef Tdef Udef S2a by auto
-  then obtain l where ldef: "l \<in> Lines \<and> l = K \<inter> H"
-    using HP Kdef crossing_planes by auto
+  then have "M \<noteq> H" using PQpts Sdef Tdef S2a by auto
+  then obtain l where ldef: "l \<in> Lines \<and> l = M \<inter> H"
+    using HP Mdef crossing_planes by auto
   then have "l \<noteq> (join P Q)"
-    using PQpts Sdef Tdef Udef Ndef Kdef S1a S2a S2b Int_iff by metis
+    using PQpts Sdef Tdef Ndef Mdef S1a S2a S2b Int_iff by metis
   then obtain R where Rdef: "R \<in> l \<and> R \<notin> (join P Q)" using PQdef PQpts ldef
     S0a S1a S1b S6 [of l] unfolding distinct3_def by metis
   then have "\<not> collinear P Q R" using HP PQdef Sdef PQisHiN Ndef ldef 
@@ -357,34 +327,7 @@ proof -
     using PQdef PQpts Rdef ldef S0a S1a Int_iff distinct3_def by metis
 qed
 
-lemma plane_by_three_points:
-  fixes H
-  assumes "H \<in> Planes"
-  shows "\<exists>P Q R. (H = plane_through P Q R)"
-  using assms S0b S2b space_plane_p3 [of H] by blast
-text \<open>\done\<close>
 
-text \<open>\hadi\<close>
-lemma space_plane_p4:
-  fixes H
-  assumes HP: "H \<in> Planes"
-  defines HLdef: "HLines \<equiv> {L. L \<in> Lines \<and> L \<subseteq> H}"
-  defines Hidef: "Hincid \<equiv> (\<lambda>P L. (if P \<in> H \<and> L \<in> HLines then P \<in> L else undefined))"
-  shows "\<lbrakk>k \<in> HLines; U = {P. (P \<in> H \<and> Hincid P k)}\<rbrakk> 
-    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]"
-proof -
-  fix k U
-  assume khl: "k \<in> HLines" and udef: "U = {P. (P \<in> H \<and> Hincid P k)}"
-  then obtain P Q R where pqr: "P \<in> k \<and> Q \<in> k \<and> R \<in> k \<and> distinct[P, Q, R]" 
-    using S6 HLdef distinct3_def by fastforce
-  then have "P \<in> H \<and> Q \<in> H \<and> R \<in> H" 
-    using khl pqr S0a HLdef by auto
-  then show "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]" 
-    using khl udef pqr Hidef by auto
-qed
-text \<open>\done\<close>
-
-text \<open>\hadi\<close>
 theorem space_plane_is_proj_plane:
   fixes H
   assumes HP: "H \<in> Planes"
@@ -392,10 +335,19 @@ theorem space_plane_is_proj_plane:
   defines Hidef: "Hincid \<equiv> (\<lambda>P L. (if P \<in> H \<and> L \<in> HLines then P \<in> L else undefined))"
   shows "projective_plane H HLines Hincid"
 proof (unfold_locales)
-  show "\<lbrakk>P \<noteq> Q; P \<in> H; Q \<in> H\<rbrakk> \<Longrightarrow> (\<exists>!k. k \<in> HLines \<and> Hincid P k \<and> Hincid Q k)"
-    for P Q using assms space_plane_p1 by simp
-  show "\<lbrakk>k \<in> HLines; n \<in> HLines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> H \<and> Hincid P k \<and> Hincid P n)"
-    for k n using assms space_plane_p2 by simp
+  show "\<lbrakk>P \<noteq> Q; P \<in> H; Q \<in> H\<rbrakk> \<Longrightarrow> (\<exists>!k. k \<in> HLines \<and> Hincid P k \<and> Hincid Q k)" for P Q
+  proof -
+    assume pnq: "P \<noteq> Q" and php: "P \<in> H" and qhp: "Q \<in> H"
+    then have pqhl: "(join P Q) \<in> HLines" 
+      using two_point_line_in_plane S0b S1a HP HLdef by auto
+    then have kexist: "\<exists>k. k \<in> HLines \<and> Hincid P k \<and> Hincid Q k" 
+      using pnq php qhp S0b S1a HP Hidef by metis
+    then have "l \<in> HLines \<and> Hincid P l \<and> Hincid Q l \<Longrightarrow> l = (join P Q)" for l 
+      using pnq php qhp S0a S1b HLdef Hidef by simp
+    then show "\<exists>!k. k \<in> HLines \<and> Hincid P k \<and> Hincid Q k" using kexist by auto
+  qed
+  show "\<lbrakk>k \<in> HLines; n \<in> HLines\<rbrakk> \<Longrightarrow> \<exists>P. (P \<in> H \<and> Hincid P k \<and> Hincid P n)" for k n
+    using assms space_plane_p2 [of H k n] by auto
   show "\<exists>P Q R. P \<in> H \<and> Q \<in> H \<and> R \<in> H \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
     \<and> \<not> (projective_plane_data.pcollinear H HLines Hincid P Q R)"
   proof -
@@ -408,15 +360,149 @@ proof (unfold_locales)
   qed
   show "\<lbrakk>k \<in> HLines; U = {P. (P \<in> H \<and> Hincid P k)}\<rbrakk> 
     \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q,R,S]" for k U
-    using assms space_plane_p4 unfolding distinct3_def by simp
+  proof -
+    assume khl: "k \<in> HLines" and Uset: "U = {P. (P \<in> H \<and> Hincid P k)}"
+    then obtain Q R S where qrs: "Q \<in> k \<and> R \<in> k \<and> S \<in> k \<and> distinct[ Q, R, S]" 
+      using S6 HLdef distinct3_def by fastforce
+    then have "Q \<in> U \<and> R \<in> U \<and> S \<in> U" using khl Uset qrs S0a HLdef Hidef by auto
+    then show "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q,R,S]" using qrs 
+      distinct_length_2_or_more distinct_singleton unfolding distinct3_def by metis
+  qed
 qed
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
-theorem Desargues_case_1:
+lemma crossing_lines: (* two lines through a point determine a unique plane *)
+  fixes k n P
+  assumes "k \<in> Lines" and "n \<in> Lines" and "k \<noteq> n"
+  assumes "P \<in> Points" and "P \<in> k \<inter> n"
+  shows "\<exists>!H. H \<in> Planes \<and> k \<subseteq> H \<and> n \<subseteq> H"
+proof -
+  obtain Q where qdef: "Q \<in> k \<and> Q \<notin> n" using assms S0a S1b S6 
+    distinct3_def by metis
+  obtain R where rdef: "R \<in> n \<and> R \<notin> k" using assms S0a S1b S6 
+    distinct3_def by metis
+  then have pqr: "\<not> collinear P Q R" using assms qdef S0a S1b Int_iff
+    unfolding collinear_def by metis
+  then obtain H where Hdef: "H \<in> Planes \<and> H = plane_through P Q R"
+    using assms qdef rdef S0a S2a by simp
+  then have Hkn: "k \<subseteq> H \<and> n \<subseteq> H" 
+    using assms pqr qdef rdef S0a S2a S3 [of _ H] Int_iff by metis
+  have "N \<in> Planes \<and> k \<subseteq> N \<and> n \<subseteq> N \<Longrightarrow> H = N" for N using assms pqr qdef rdef
+    Hdef S0a S2b [of P Q R] Int_iff subset_iff by metis
+  then show ?thesis using Hdef Hkn by metis
+qed
+
+lemma crossing_lines_2: (* just a usable version of space_plane_p2 *)
+  fixes k n H
+  assumes "k \<in> Lines" and "n \<in> Lines" and "k \<noteq> n"
+  assumes "H \<in> Planes" and "k \<subseteq> H \<and> n \<subseteq> H"
+  shows "\<exists>!P. P \<in> Points \<and> P \<in> k \<and> P \<in> n"
+proof -
+  have "\<exists>P. (P \<in> H \<and> P \<in> k \<and> P \<in> n)" 
+    using assms space_plane_p2 [of H] by simp
+  then have pexist: "\<exists>P. P \<in> Points \<and> P \<in> k \<and> P \<in> n" using assms S0b by auto
+  then obtain P where "P \<in> Points \<and> P \<in> k \<and> P \<in> n" by auto
+  then have "Q \<in> Points \<and> Q \<in> k \<and> Q \<in> n \<longrightarrow> Q = P" for Q 
+    using assms S1b [of Q P] by auto
+  then show ?thesis using pexist by auto
+qed
+
+lemma crossing_lines_3:
+  fixes k n P
+  assumes "k \<in> Lines" and "n \<in> Lines" and "k \<noteq> n"
+  assumes "P \<in> Points" and "P \<in> k \<inter> n"
+  shows "\<forall>Q. (Q \<in> Points \<and> Q \<in> k \<inter> n \<longrightarrow> Q = P)"
+  using assms S0a S1b Int_iff by metis
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+lemma projected_points_collinear:
+  fixes H X A B C A' C'
+  assumes "H \<in> Planes" and "X \<in> Points" and "A \<in> Points" and "B \<in> Points" 
+    and "C \<in> Points" and "A' \<in> Points" and "C' \<in> Points"
+  assumes "A \<noteq> C" and "A' \<noteq> C'"
+  assumes "A \<in> H" and "B \<in> H" and "C \<in> H"
+  assumes "X \<notin> H" and "A' \<notin> H" and "C' \<notin> H"
+  assumes "collinear X A A'" and "collinear X C C'"
+  assumes "collinear A' B C'"
+  shows "collinear A B C"
+proof -
+  obtain l where ldef: "l \<in> Lines \<and> A' \<in> l \<and> B \<in> l \<and> C' \<in> l"
+    using assms unfolding collinear_def by auto
+  have ACXncoll: "\<not> collinear A C X" using assms outside_plane_ncoll by auto
+  then obtain N where Ndef: "N \<in> Planes \<and> N = (plane_through A C X)"
+    using assms S2a by auto
+  then obtain k where kdef: "k \<in> Lines \<and> k = H \<inter> N" 
+    using assms ACXncoll crossing_planes S2a by blast
+  then have ACink: "A \<in> k \<and> C \<in> k" using assms ACXncoll Ndef S2a by simp
+  have "(join A' C') \<subseteq> N" using assms Ndef S2a outside_plane_ncoll
+    two_point_line_in_plane [of N A' C'] by metis
+  then show ?thesis
+    using assms ldef kdef ACink S1b [of A' C'] collinear_def by auto
+qed
+
+lemma desargues_2_helper: (* see https://www.geogebra.org/3d/q7mpxjx7 *)
+  fixes H X U A B A' B' D D' P P'
+  assumes "H \<in> Planes"
+  assumes "U \<in> Points" and "A \<in> Points" and "D \<in> Points" and "B \<in> Points"
+    and "A' \<in> Points" and "D' \<in> Points" and "B' \<in> Points" and "X \<in> Points"
+  assumes "distinct7 U A D B A' D' B'"
+  assumes "U \<in> H" and "A \<in> H" and "B \<in> H"  and "A' \<in> H" and "B' \<in> H"
+  assumes "X \<notin> H" and "D \<notin> H" and "D' \<notin> H"
+  assumes "\<not> collinear A D B" and "\<not> collinear A' D' B'"
+  assumes "collinear A A' U" and "collinear D D' U" and "collinear B B' U" 
+  assumes "collinear X D B" and "collinear X D' B'"
+  assumes "join A B \<noteq> join A' B'" and "join A D \<noteq> join A' D'"
+  assumes "join A A' \<noteq> join B B'"
+  assumes "P \<in> (join A B) \<inter> (join A' B')" and "P' \<in> (join A D) \<inter> (join A' D')"
+  shows "collinear X P P'"
+proof -
+  have p: "P \<in> Points" and p': "P' \<in> Points" 
+    using assms S0a S1a Int_iff by metis+
+  obtain N1 N2 N3 where N1def: "N1 \<in> Planes \<and> N1 = (plane_through U A D)"
+    and N2def: "N2 \<in> Planes \<and> N2 = (plane_through A D B)"
+    and N3def: "N3 \<in> Planes \<and> N3 = (plane_through A' D' B')"
+    using assms outside_plane_ncoll S2a distinct7_def by metis
+  then have N1neqN2: "N1 \<noteq> N2" using assms p outside_plane_ncoll [of N1] crossing_lines 
+    two_point_line_in_plane collinear_commute S1a S2a distinct7_def by metis
+  then have N1neqN3: "N1 \<noteq> N3" using assms N1def N2def N3def outside_plane_ncoll
+    collinear_commute S2a S2b distinct7_def by metis
+  then have N2neqN3: "N2 \<noteq> N3" using assms N1def N2def N3def N1neqN2 outside_plane_ncoll
+    S2a S2b [of _ _ _ N2] distinct7_def by (metis (mono_tags))
+  have XinN2N3: "X \<in> N2 \<inter> N3" using assms N2def N3def outside_plane_ncoll
+    collinear_commute S2a Int_iff unfolding distinct7_def by metis
+  have "X \<notin> N1" using assms N1def N2def N3def N1neqN2 N1neqN3 collinear_commute [of X P]
+    outside_plane_ncoll [of H] outside_plane_ncoll [of N1] S2a [of U A D] S2b [of _ _ _ N1]
+    unfolding collinear_def distinct7_def by metis
+  then have "\<not> N2 \<inter> N3 \<subseteq> N1" using XinN2N3 by auto
+  then obtain R where Rdef: "R \<in> Points \<and> R \<in> N1 \<inter> N2 \<inter> N3
+    \<and> (\<forall>Q. (Q \<in> Points \<and> Q \<in> N1 \<inter> N2 \<inter> N3) \<longrightarrow> Q = R)"
+    using N1def N2def N3def N1neqN2 N1neqN3 N2neqN3 XinN2N3 inf_assoc inf_commute
+    crossing_planes_2 [of N2 N3 N1] unfolding distinct3_def by metis
+  have "P \<in> N2" and "P \<in> N3" using assms N2def N3def two_point_line_in_plane S2a
+    Int_iff subset_eq unfolding distinct7_def by (metis (no_types))+
+  then have "(join X P) = N2 \<inter> N3" using assms p N2def N3def N2neqN3 XinN2N3
+    crossing_planes two_point_line_in_plane S1b Int_iff subsetD
+    unfolding distinct7_def by (metis (no_types))
+  then have XPRcoll: "collinear X P R" using p Rdef N2def N3def N2neqN3 XinN2N3
+    crossing_planes S0a S1a Int_iff unfolding collinear_def by metis
+  have RinAD: "R \<in> (join A D)" using assms Rdef N1def N2def N1neqN2 S1a S2a
+    two_point_line_in_plane outside_plane_ncoll plane_through_point_line [of R]
+    Int_iff distinct7_def by metis
+  have "R \<in> (join A' D')" using assms Rdef N1def N3def N1neqN3 S1a S2a
+    two_point_line_in_plane outside_plane_ncoll plane_through_point_line [of R]
+    collinear_commute Int_iff distinct7_def by metis
+  then show ?thesis using assms p' Rdef RinAD XPRcoll S1a Int_iff
+    crossing_lines_3 [of "join A D" "join A' D'"] by metis
+qed
+text \<open>\done\<close>
+
+text \<open>\hadi\<close>
+theorem desargues_case_1: (* desargues' theorem for two distinct planes *)
   fixes U A B C A' B' C' P Q R
-  assumes "U \<in> Points" and "A \<in> Points" and "B \<in> Points" and "C \<in> Points" and
-    "A' \<in> Points" and "B' \<in> Points" and "C' \<in> Points"
+  assumes "U \<in> Points" and "A \<in> Points" and "B \<in> Points" and "C \<in> Points"
+    and "A' \<in> Points" and "B' \<in> Points" and "C' \<in> Points"
   assumes "distinct7 U A B C A' B' C'" 
   assumes "collinear A A' U" and "collinear B B' U" and "collinear C C' U"
   assumes "\<not> collinear A B C" and "\<not> collinear A' B' C'" 
@@ -432,21 +518,20 @@ proof -
   let ?abc = "plane_through A B C" let ?a'b'c' = "plane_through A' B' C'"
   have "P \<in> ?abc" and "P \<in> ?a'b'c'" and "Q \<in> ?abc" and "Q \<in> ?a'b'c'" 
     and "R \<in> ?abc" and "R \<in> ?a'b'c'" using assms S2a two_point_line_in_plane 
-      distinct7_def Int_iff inf.absorb_iff2 by metis+
+    distinct7_def Int_iff inf_absorb2 by metis+
   then obtain k where "k \<in> Lines \<and> P \<in> k \<and> Q \<in> k \<and> R \<in> k" 
-    using assms S2a crossing_planes IntI by metis
+    using assms crossing_planes S2a Int_iff by metis
   then show ?thesis using S0a collinear_def by auto
 qed
-text \<open>\done\<close>
 
-text \<open>\hadi\<close>
-theorem Desargues_case_2:
+theorem desargues_case_2: (* desargues' theorem for a single plane *)
   fixes U A B C A' B' C' P Q R
   assumes "U \<in> Points" and "A \<in> Points" and "B \<in> Points" and "C \<in> Points" and
     "A' \<in> Points" and "B' \<in> Points" and "C' \<in> Points"
   assumes "distinct7 U A B C A' B' C'" 
   assumes "collinear A A' U" and "collinear B B' U" and "collinear C C' U"
   assumes "\<not> collinear A B C" and "\<not> collinear A' B' C'" 
+  assumes "distinct[ (join A A'), (join B B'), (join C C')]"
   assumes "plane_through A B C = plane_through A' B' C'"
   assumes "join A B \<noteq> join A' B'"
   assumes "join A C \<noteq> join A' C'"
@@ -457,125 +542,139 @@ theorem Desargues_case_2:
   shows "collinear P Q R"
 proof -
   let ?S = "plane_through A B C"
-  have Spts: "A \<in> ?S \<and> B \<in> ?S \<and> C \<in> ?S \<and> A' \<in> ?S \<and> B' \<in> ?S \<and> C' \<in> ?S"
-    using assms S2a by auto
-  obtain X where xdef: "X \<in> Points \<and> X \<notin> ?S" 
+  have Spts: "U \<in> ?S \<and> A \<in> ?S \<and> B \<in> ?S \<and> C \<in> ?S \<and> A' \<in> ?S \<and> B' \<in> ?S \<and> C' \<in> ?S"
+    and SP: "?S \<in> Planes" using assms outside_plane_ncoll S2a by metis+
+  have PQRinS: "P \<in> ?S \<and> Q \<in> ?S \<and> R \<in> ?S" using assms S2a in_mono inf_le1
+    two_point_line_in_plane [of ?S] unfolding distinct7_def by (metis (full_types))
+  obtain X where xdef: "X \<in> Points \<and> X \<notin> ?S"
     using assms S2a point_outside_plane by blast
-  then obtain D where ddef: "D \<in> Points \<and> D \<in> (join X B) \<and> D \<noteq> X \<and> D \<noteq> B" 
-    using assms S0a S1a S2a S6 distinct3_def by metis
-  have DnS: "\<not> (join X B) \<subseteq> ?S" using assms Spts xdef S1a subset_eq by metis
+  then have XBnS: "\<not> (join X B) \<subseteq> ?S" and XB'nS: "\<not> (join X B') \<subseteq> ?S"
+    using assms Spts S1a subset_eq by metis+
+  obtain D where ddef: "D \<in> Points \<and> D \<in> (join X B) \<and> D \<noteq> X \<and> D \<noteq> B" 
+    using assms xdef S0a S1a S2a S6 distinct3_def by metis
+  then have "(join X D) \<in> Lines \<and> \<not> (join X D) \<subseteq> ?S" 
+    using xdef S1a subset_iff by metis
+  then have XDintSunq: "\<forall>G. G \<in> (join X D) \<and> G \<in> ?S \<longrightarrow> G = B" 
+    using assms xdef ddef S1a S1b S2a S3 by metis
+  then have DnS: "D \<notin> ?S" using xdef ddef S1a by auto
+
+  have nubx: "\<not> collinear U B X" using assms Spts xdef ddef XDintSunq S1b 
+    distinct7_def unfolding collinear_def by metis
   let ?ubx = "plane_through U B X"
-  have nubx: "\<not> collinear U B X" 
-    using assms xdef S1b S2a two_point_line_in_plane [of ?S B]
-    distinct7_def distinct3_def in_mono unfolding collinear_def by (smt (verit))
-  then have "join U B \<subseteq> ?ubx" using assms xdef S2a two_point_line_in_plane
-    by (metis distinct7_def)
-  then have "B' \<in> ?ubx" using assms S1b collinear_def unfolding distinct7_def 
-  by (smt (verit, ccfv_threshold) in_mono)
+  have "join U B \<subseteq> ?ubx" using assms xdef nubx two_point_line_in_plane S2a
+    unfolding distinct7_def by metis
+  then have "B' \<in> ?ubx" using assms S1b distinct7_def in_mono
+    unfolding collinear_def by metis
   then have xb'inubx: "join X B' \<subseteq> ?ubx" and "join X B \<subseteq> ?ubx"
     using assms nubx xdef S2a two_point_line_in_plane by metis+
   then have "D \<in> ?ubx" using ddef by auto
-  then have "join U D \<subseteq> ?ubx" using assms nubx xdef S1a S2a two_point_line_in_plane 
-    ddef unfolding collinear_def by metis
+  then have "join U D \<subseteq> ?ubx" using assms xdef nubx ddef S1a S2a  
+    two_point_line_in_plane unfolding collinear_def by metis
   then obtain D' where d'def: "D' \<in> Points \<and> D' \<in> (join U D) \<inter> (join X B')" 
     using assms xdef nubx ddef xb'inubx crossing_lines_2 [of "join U D"] 
     S1a S2a IntI unfolding collinear_def by metis
-  have nub'x: "\<not> collinear U B' X"
-  proof (rule ccontr)
-    assume "\<not> (\<not> collinear U B' X)"
-    then obtain l where ldef: "l \<in> Lines \<and> U \<in> l \<and> B' \<in> l \<and> X \<in> l" 
-      using assms xdef unfolding collinear_def by presburger
-    then have "l = join U X" using assms nubx xdef S1b 
-      unfolding collinear_def by metis
-    then have uxub': "join U X = join U B'" using assms ldef S1b unfolding distinct7_def by auto
-    have "B \<in> join U B'" using assms(1,3,6,8,10) S1b collinear_def unfolding distinct7_def  by auto
-    then have "B \<in> join U X" using uxub' by simp
-    then have "collinear U B X" using assms ldef xdef S1b 
-      unfolding collinear_def by metis
-    then show False using nubx by simp
-  qed
-  have und': "U \<noteq> D'"
-  proof
-    assume "U = D'"
-    then have "U \<in> join X B'" using d'def by auto
-    then have "collinear U B' X" using assms xdef S1a S2a 
-      unfolding collinear_def by metis
-    then show False using nub'x by simp
-  qed
-  have ddist: "distinct7 U A D C A' D' C'"
-  proof (rule ccontr)
-    assume "\<not> distinct7 U A D C A' D' C'"
-    then consider
-    "U = A" | "U = C" | "U = A'" | "U = C'" | "A = C" | "A = A'" | "A = C'" 
-    | "C = A'" | "C = C'" | "A' = C'" | "U = D" | "A = D" | "D = C'" 
-    | "D = C" | "U = D'" | "A = D'"  | "D = A'" | "D = D'"  | "C = D'" 
-    | "A' = D'" | "D' = C'" unfolding distinct7_def by fastforce
-    then show False using assms unfolding distinct7_def apply cases 
-    apply simp+ using S1a ddef nubx xdef unfolding collinear_def
-    apply metis using assms S1a S1b S2a ddef in_mono
-      two_point_line_in_plane xdef unfolding distinct7_def apply (smt (verit))
-    using assms S1a S1b S2a ddef in_mono
-      two_point_line_in_plane xdef apply (smt (verit))
-    using assms S1a S1b S2a ddef in_mono
-      two_point_line_in_plane xdef apply (smt (verit))
-    using und' unfolding distinct7_def apply simp
-    using assms Spts xdef ddef d'def outside_plane_ncoll S1a S2a Int_iff
-    unfolding collinear_def distinct7_def apply (smt (verit, ccfv_threshold))
-    using assms Spts xdef ddef d'def DnS S1a S1b S2a S3 
-    unfolding distinct7_def apply metis
-    using assms Spts xdef ddef d'def DnS S1a S1b S2a S3 Int_iff
-    unfolding distinct7_def apply metis
-    using assms Spts xdef ddef d'def outside_plane_ncoll S1a S2a Int_iff
-    unfolding collinear_def distinct7_def by (smt (verit, ccfv_threshold))+
-  qed
+  have nub'x: "\<not> collinear U B' X" 
+    using assms SP Spts xdef outside_plane_ncoll distinct7_def by metis
+
+  have "D' \<noteq> B'" using assms Spts ddef d'def DnS S1a S1b S2a Int_iff inf_absorb2
+    two_point_line_in_plane [of ?S U] outside_plane_ncoll distinct7_def by metis
+  then have D'nS: "D' \<notin> ?S" 
+    using assms Spts xdef d'def XB'nS S1a S2a S3 Int_iff by metis
+  have "D \<noteq> D'" using assms Spts xdef ddef d'def XDintSunq 
+    S1a S1b Int_iff distinct7_def by metis
+  then have ADCdist: "distinct7 U A D C A' D' C'"
+    using assms Spts DnS D'nS unfolding distinct7_def by auto
+
   have dd'u: "collinear D D' U" using assms S1a ddef d'def IntE
     unfolding collinear_def by metis
-  have adc: "\<not> collinear A D C"
+  have adca'd'c'ncoll: "(\<not> collinear A D C) \<and> (\<not> collinear A' D' C')"
   proof (rule ccontr)
-    assume "\<not> (\<not> collinear A D C)"
-    then obtain l where ldef: "l \<in> Lines \<and> A \<in> l \<and> D \<in> l \<and> C \<in> l" 
-      using assms ddef unfolding collinear_def by auto
-    then have lac: "l = join A C" using assms S1a S1b 
-      unfolding collinear_def by metis
-    have "join A C \<subseteq> ?S" using assms ldef S1a S2a two_point_line_in_plane 
-      unfolding collinear_def by metis
-    then have "D \<in> ?S" using lac ldef by auto
-    then have "D = B" using assms S1a S1b S2a xdef ddef in_mono
-      two_point_line_in_plane [of ?S D B] by (smt (verit))
-    then show False using ddef by simp
+    assume cd: "\<not> ((\<not> collinear A D C) \<and> (\<not> collinear A' D' C'))"
+    then obtain l where ldef: "l \<in> Lines \<and> ((A \<in> l \<and> D \<in> l \<and> C \<in> l)
+      \<or> (A' \<in> l \<and> D' \<in> l \<and> C' \<in> l))" using assms ddef d'def collinear_def by auto
+    then have lac: "(l = join A C) \<or> (l = join A' C')" using assms S1a S1b 
+      unfolding collinear_def by (metis (no_types))
+    have "(join A C \<subseteq> ?S) \<or> (join A' C' \<subseteq> ?S)" using assms ldef S1a S2a 
+      two_point_line_in_plane unfolding collinear_def by metis
+    then have "(D \<in> ?S) \<or> (D' \<in> ?S)" using assms Spts ldef lac S0a S2a
+      two_point_line_in_plane [of ?S] in_mono unfolding distinct7_def by metis
+    then show False using DnS D'nS by simp
   qed
-  have a'd'c': "\<not> collinear A' D' C'"
-  proof (rule ccontr)
-    assume cd: "\<not> (\<not> collinear A' D' C')"
-    then obtain l where ldef: "l \<in> Lines \<and> A' \<in> l \<and> D' \<in> l \<and> C' \<in> l" 
-      using assms d'def unfolding collinear_def by auto
-    then have lac: "l = join A' C'" using assms S1a S1b 
-      unfolding collinear_def by metis
-    have "join A' C' \<subseteq> ?S" using assms ldef S1a S2a two_point_line_in_plane 
-      unfolding collinear_def by metis
-    then have "D' \<in> ?S" using lac ldef by auto
-    then have "D' = B'" using assms S1a S1b S2a xdef d'def in_mono Int_iff
-      two_point_line_in_plane [of ?S D' B'] by (smt (verit, ccfv_threshold))
-    then show False using assms cd by simp
+  then obtain H N where HNdef: "H \<in> Planes \<and> N \<in> Planes \<and> H = (plane_through A D C) 
+    \<and> N = (plane_through A' D' C')" using assms d'def ddef S2a by simp
+  then have HneqN: "H \<noteq> N" using assms Spts xdef ddef d'def adca'd'c'ncoll XBnS 
+    crossing_lines S0a S1a S2a S3 Int_iff distinct7_def by (smt (verit, del_insts))
+  have ada'd'dcd'c': "(join A D \<noteq> join A' D') \<and> (join D C \<noteq> join D' C')"
+    using assms SP Spts ddef d'def DnS D'nS S1a S1b in_mono
+    two_point_line_in_plane [of ?S] unfolding distinct7_def by (smt (verit))
+  then have UADncoll: "\<not> collinear U A D" using assms ddef d'def ADCdist S1b 
+    Int_iff unfolding collinear_def distinct7_def by metis
+  then obtain K where Kdef: "K \<in> Planes \<and> K = (plane_through U A D)"
+    using assms ddef S2a by simp
+  then have "(join A D) \<subseteq> K \<and> (join A' D') \<subseteq> K" using assms UADncoll 
+    ddef d'def dd'u ADCdist two_point_line_in_plane outside_plane_ncoll 
+    collinear_commute S2a distinct7_def by metis
+  then obtain P'::'p where p'def: "P' \<in> (join A D) \<and> P' \<in> (join A' D')" 
+    using assms ddef d'def ADCdist Kdef space_plane_p2 S1a distinct7_def by metis
+  have uadncoll: "\<not> collinear U D C" using assms ddef d'def ada'd'dcd'c' ADCdist 
+    S1b Int_iff unfolding collinear_def distinct7_def by metis
+  then obtain M where Mdef: "M \<in> Planes \<and> M = (plane_through U D C)"
+    using assms ddef S2a by simp
+  then have "(join D C) \<subseteq> M \<and> (join D' C') \<subseteq> M" using assms uadncoll 
+    ddef d'def dd'u ADCdist two_point_line_in_plane outside_plane_ncoll 
+    collinear_commute S2a distinct7_def by metis
+  then obtain R'::'p where r'def: "R' \<in> (join D C) \<and> R' \<in> (join D' C')"
+    using assms ddef d'def ADCdist Mdef space_plane_p2 S1a distinct7_def by metis
+  have PRP'R'dist: "P \<noteq> R \<and> P' \<noteq> R'"
+  proof (safe)
+    assume "P = R"
+    then have "(join A B) = (join B C) \<or> (join A' B') = (join B' C')"
+      using assms S0a S1a S1b [of B'] Int_iff distinct7_def by metis
+    then show False using assms joins_eq_collinear distinct7_def by metis
+  next
+    assume "P' = R'"
+    then have "(join A D) = (join D C) \<or> (join A' D') = (join D' C')"
+      using assms ddef d'def ADCdist p'def r'def S0a S1a S1b [of D']
+      unfolding distinct7_def by metis
+    then show False using assms adca'd'c'ncoll d'def ddef ADCdist 
+      joins_eq_collinear distinct7_def by metis
   qed
-  have adca'd'c': "plane_through A D C \<noteq> plane_through A' D' C'" 
-    using assms adc a'd'c' Spts xdef ddef d'def DnS crossing_lines Int_iff
-    S0a S1a S2a S3 unfolding distinct7_def by (smt (verit, del_insts))
-  then have ada'd': "join A D \<noteq> join A' D'" and dcd'c': "join D C \<noteq> join D' C'" sorry
-  obtain P'::'p where p'def: "P \<in> (join A D) \<inter> (join A' D')" sorry
-  obtain R'::'p where r'def: "R \<in> (join D C) \<inter> (join D' C')" sorry
-  have "collinear P' Q R'" using assms ddist dd'u ddef d'def adc a'd'c'
-    adca'd'c' ada'd' dcd'c' p'def r'def Desargues_case_1 [of U A D C A' D' C' P' Q R'] sorry
-  then show ?thesis using assms Desargues_case_1 a'd'c' ada'd' adc adca'd'c'
-    d'def dcd'c' dd'u ddef ddist p'def r'def by metis
+  have P'QR'coll: "collinear P' Q R'"
+    using assms ddef d'def ADCdist ada'd'dcd'c' dd'u adca'd'c'ncoll
+    HNdef HneqN p'def r'def desargues_case_1 [of U A D C A' D' C'] by auto
+
+  have XDBcoll: "collinear X D B" and XD'B'coll: "collinear X D' B'" using assms
+    xdef ddef d'def S1a unfolding collinear_def by (metis, metis Int_iff)
+  have alldist: "distinct7 U A D B A' D' B' \<and> distinct7 U C D B C' D' B'" 
+    using assms Spts DnS D'nS ADCdist unfolding distinct7_def by metis
+  then have "\<not> collinear A D B \<and> \<not> collinear A' D' B'"
+    and CDBncoll: "\<not> collinear C D B \<and> \<not> collinear C' D' B'" 
+    using assms SP Spts ddef d'def DnS D'nS collinear_commute 
+    outside_plane_ncoll distinct7_def by metis+
+  then have XPP'coll: "collinear X P P'" using assms SP Spts xdef ddef d'def
+    DnS D'nS dd'u outside_plane_ncoll desargues_2_helper [of ?S U A D B A' D' B' X] 
+    ada'd'dcd'c' p'def XDBcoll XD'B'coll alldist distinct3_def Int_iff by metis
+  have XRR'coll: "collinear X R R'" using assms SP Spts xdef ddef d'def DnS D'nS  
+    dd'u outside_plane_ncoll desargues_2_helper [of ?S U C D B C' D' B' X R R'] 
+    ada'd'dcd'c' r'def XDBcoll XD'B'coll CDBncoll alldist distinct3_def
+    join_commute [of C] join_commute [of C'] Int_iff by metis
+
+  have P'nAA': "P' \<noteq> A \<and> P' \<noteq> A'" and R'nCC': "R' \<noteq> C \<and> R' \<noteq> C'"
+    using assms ddef d'def ada'd'dcd'c' ADCdist p'def r'def
+    S1a S1b Int_iff unfolding collinear_def distinct7_def by metis+
+  have "\<not> (join A D) \<subseteq> ?S" and "\<not> (join D C) \<subseteq> ?S"
+    using assms Spts ddef DnS S1a [of A D] S1a [of D C] by auto
+  then have "\<forall>G. G \<in> (join A D) \<and> G \<in> ?S \<longrightarrow> G = A" 
+    and "\<forall>G. G \<in> (join D C) \<and> G \<in> ?S \<longrightarrow> G = C" using assms ddef DnS 
+    S1a S2a S3 [of "join A D" ?S] S3 [of "join D C" ?S] by metis+
+  then have P'R'nS: "P' \<notin> ?S \<and> R' \<notin> ?S" using p'def r'def P'nAA' R'nCC' by auto
+  then show ?thesis using assms xdef ddef DnS PQRinS p'def r'def P'QR'coll 
+    PRP'R'dist projected_points_collinear [of ?S X P Q R P' R'] 
+    XPP'coll XRR'coll S0a S0b S1a S2a by metis
 qed
+text \<open>\done\<close>
 
 end
-
-section \<open>PG(3,2), the smallest possible projective 3-space\<close>
-
-datatype PG32pt
-  = Pc | Qc | Rc | Sc | Ac | Bc | Cc | Dc | Ec | Fc | Hc | Ic | Jc | Kc | Xc
 
 section \<open>Configurations\<close>
 
