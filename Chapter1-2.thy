@@ -32,26 +32,28 @@ lemma [simp]:
 
 definition map_vec where
 "map_vec f g v = vec_lambda (map_fun g f (vec_nth v))"
+
 functor map_vec
   unfolding map_vec_def
   using eq_id_iff by fastforce+
 
-definition projrel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
-  where "projrel x y \<longleftrightarrow> (x \<noteq> zvec) \<and> (y \<noteq> zvec) \<and> (\<exists>t::real. t \<noteq> 0 \<and> x = t *\<^sub>R y)" 
+definition rp2rel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
+  where "rp2rel x y \<longleftrightarrow> (x \<noteq> zvec) \<and> (y \<noteq> zvec) \<and> (\<exists>t::real. t \<noteq> 0 \<and> x = t *\<^sub>R y)" 
 
 text\<open>\spike Current definition of projective relation 
 is that there's nonzero constant c such that u = cv. The alternative definition 
 is that the cross product is zero.  Let's start
 with the big theorem that these two things are equivalent\<close>
-lemma alt_projrel:
+
+lemma alt_rp2rel:
   assumes "u \<noteq> zvec"
   assumes "v \<noteq> zvec"
-  shows "(projrel u v) \<longleftrightarrow> (u \<noteq> zvec) \<and> (v \<noteq> zvec) \<and> (u \<times> v) = zvec"
+  shows "(rp2rel u v) \<longleftrightarrow> (u \<noteq> zvec) \<and> (v \<noteq> zvec) \<and> (u \<times> v) = zvec"
 proof 
-  assume ah1: "projrel u v"
-  then obtain t where "t \<noteq> 0 \<and> u =  t *\<^sub>R  v" using projrel_def assms by blast
+  assume ah1: "rp2rel u v"
+  then obtain t where "t \<noteq> 0 \<and> u =  t *\<^sub>R  v" using rp2rel_def assms by blast
   then show "(u \<noteq> zvec) \<and> (v \<noteq> zvec) \<and> (u \<times> v) = zvec" 
-    using projrel_def cross_refl assms(1) cross3_def cross_zero_right by auto 
+    using rp2rel_def cross_refl assms(1) cross3_def cross_zero_right by auto 
   next
     assume ah2: "(u \<noteq> zvec) \<and> (v \<noteq> zvec) \<and> (u \<times> v) = zvec"
     then have "collinear {0, u, v}" 
@@ -65,78 +67,79 @@ proof
     have sr: "s \<noteq> 0 \<and> r \<noteq> 0" using uw vw assms ah2 cross3_def by fastforce
     then have "u = (r/s) *\<^sub>R v" using uw vw by simp
     then have "(\<exists> t::real . (t \<noteq>0) \<and> u =  t *\<^sub>R  v)" using sr  divide_eq_0_iff by blast
-    then show "projrel u v" using projrel_def ah2 assms by blast
+    then show "rp2rel u v" using rp2rel_def ah2 assms by blast
   qed
-text \<open>\done\<close>
+  text 
+\<open>\done\<close>
 
 lemma vt:
   shows "(vector[1,0,0]::real^3) \<noteq> zvec" 
   using zvec_def vector_3(1) zero_neq_one by metis
 
-lemma exists_projrel_refl: "\<exists>x. projrel x x" 
+lemma exists_rp2rel_refl: "\<exists>x. rp2rel x x" 
 proof -
-  have "projrel (vector [1,0,0]::real^3) (vector [1,0,0]::v3)" using projrel_def vt by auto
+  have "rp2rel (vector [1,0,0]::real^3) (vector [1,0,0]::v3)" using rp2rel_def vt by auto
   then show ?thesis by blast
 qed
 
-lemma symp_projrel: "symp projrel"
-  using divideR_right scaleR_zero_left cross_mult_right projrel_def 
-  unfolding symp_def projrel_def by metis
+lemma symp_rp2rel: "symp rp2rel"
+  using divideR_right scaleR_zero_left cross_mult_right rp2rel_def 
+  unfolding symp_def rp2rel_def by metis
 
 text \<open>\hadi\<close>
-lemma transp_projrel: "transp projrel"
+lemma transp_rp2rel: "transp rp2rel"
 proof (rule transpI)
   fix x y z
-  assume 1: "projrel x y"
-  assume 2: "projrel y z"
-  show "projrel x z" using 1 2 alt_projrel cross_mult_left 
-    cross_zero_right projrel_def by (metis (full_types, lifting))
+  assume 1: "rp2rel x y"
+  assume 2: "rp2rel y z"
+  show "rp2rel x z" using 1 2 alt_rp2rel cross_mult_left 
+    cross_zero_right rp2rel_def by (metis (full_types, lifting))
 qed
 text \<open>\done\<close>
 
-lemma part_equivp_projrel: "part_equivp projrel"
-  by (rule part_equivpI [OF exists_projrel_refl symp_projrel transp_projrel])
+lemma part_equivp_rp2rel: "part_equivp rp2rel"
+  by (rule part_equivpI [OF exists_rp2rel_refl symp_rp2rel transp_rp2rel])
 
 text \<open>\nick\jackson\<close>
-lemma smult_projrel: 
+lemma smult_rp2rel: 
   fixes x y c
   assumes x_def: "x \<noteq> zvec"
   assumes y_def: "y \<noteq> zvec"
   assumes c_def: "c \<noteq> 0"
   assumes smult: "x = c *\<^sub>R y"
-  shows "projrel x y"
-  using c_def projrel_def smult x_def y_def by blast
+  shows "rp2rel x y"
+  using c_def rp2rel_def smult x_def y_def by blast
 text \<open>\done\<close>
 
-quotient_type rp2 = "v3" / partial: "projrel"
-  morphisms Rep_Proj Abs_Proj
-  using part_equivp_projrel .
+quotient_type rp2 = "v3" / partial: "rp2rel"
+  morphisms Rep_rp2 Abs_rp2
+  using part_equivp_rp2rel .
 
 find_theorems name: "rp2"
 find_theorems name: "Quotient3_rp2"
 
-lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .((x \<noteq> zvec) \<and> projrel x x))"
+lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .((x \<noteq> zvec) \<and> rp2rel x x))"
 proof -
-  have "projrel x x \<longrightarrow> x \<noteq> zvec" for x using projrel_def by blast
-  then show ?thesis using projrel_def rp2.domain by auto 
+  have "rp2rel x x \<longrightarrow> x \<noteq> zvec" for x using rp2rel_def by blast
+  then show ?thesis using rp2rel_def rp2.domain by auto 
 qed
 
 lemma rep_P_nz:
   fixes P :: rp2
-  shows "Rep_Proj P \<noteq> zvec" 
-  using projrel_def Quotient_rel_rep Quotient_rp2 by metis
+  shows "Rep_rp2 P \<noteq> zvec" 
+  using rp2rel_def Quotient_rel_rep Quotient_rp2 by metis
 
-(* a remaining theorem from the "warmup" section, one that needs "projrel", and
+(* a remaining theorem from the "warmup" section, one that needs "rp2rel", and
 needs rewriting using Cross3 rather than our (now-delete) version of 'cross' *)
 
 text \<open>\hadi\<close>
 lemma cross_nz:
   assumes "u \<noteq> zvec"
   assumes "v \<noteq> zvec"
-  assumes "\<not> projrel u v"
+  assumes "\<not> rp2rel u v"
   defines s_def: "s \<equiv> u \<times> v"
   shows "s \<noteq> zvec" 
-  using assms cross3_def projrel_def s_def alt_projrel by metis
+  using assms cross3_def rp2rel_def s_def alt_rp2rel by metis
 text \<open>\done\<close>
 
 (* We've defined RP2, but we still need to show it's a projective plane, i.e., demonstrate 
@@ -158,19 +161,19 @@ lift_definition rp2_incid::"rp2 \<Rightarrow> rp2 \<Rightarrow> bool"
 is "\<lambda>P k. (P \<bullet> k = 0)"
 proof -
   fix P1 P2 k1 k2
-  assume a1: "projrel P1 P2"
-  assume a2: "projrel k1 k2"
+  assume a1: "rp2rel P1 P2"
+  assume a2: "rp2rel k1 k2"
   obtain s where P12: "s \<noteq> 0 \<and> P1 = s *\<^sub>R P2" 
-    using a1 alt_projrel [of P1] projrel_def [of P1] cross3_def by fastforce
+    using a1 alt_rp2rel [of P1] rp2rel_def [of P1] cross3_def by fastforce
   obtain t where k12: "t \<noteq> 0 \<and> k1 = t *\<^sub>R k2"
-    using a2 alt_projrel [of k1] projrel_def [of k1] cross3_def by fastforce
+    using a2 alt_rp2rel [of k1] rp2rel_def [of k1] cross3_def by fastforce
   have ts: "t \<noteq> 0 \<and> s \<noteq> 0" using P12 k12 by auto
   have "(P1 \<bullet> k1 = 0) = (P1 \<bullet> (t *\<^sub>R k2) = 0)" using k12 by auto 
   also have "... = ( P2 \<bullet>  k2 = 0)" using P12 ts by auto
   finally show "(P1 \<bullet> k1 = 0) = (P2 \<bullet> k2 = 0)" .
 qed
 
-lemma incid_commute:
+lemma incid_commute[iff]:
   shows "rp2_incid A B \<longleftrightarrow> rp2_incid B A"
   by (simp add: inner_commute rp2_incid.rep_eq)
 text \<open>\done\<close>
@@ -179,22 +182,24 @@ text \<open>\hadi\<close>
 lemma exists_rp2_coords:
   fixes V :: rp2
   assumes "V \<in> rp2_Points"
-  shows "\<exists>x y z::real. Rep_Proj V = (vector[x,y,z]::v3)"
+  shows "\<exists>x y z::real. Rep_rp2 V = (vector[x,y,z]::v3)"
   using forall_vector_3 by fastforce
 
 lemma rp2_line_equation:
   fixes l::rp2
   assumes "l \<in> rp2_Lines"
   shows "\<exists>a1 a2 a3::real. (\<forall>V \<in> rp2_Points. rp2_incid V l
-    \<longleftrightarrow> ((a1 * (Rep_Proj V)$1) + (a2 * (Rep_Proj V)$2) + (a3 * (Rep_Proj V)$3) = 0))"
+    \<longleftrightarrow> ((a1 * (Rep_rp2 V)$1) + (a2 * (Rep_rp2 V)$2) + (a3 * (Rep_rp2 V)$3) = 0) \<and> \<not> (a1 = 0 \<and> a2 = 0 \<and> a3 = 0))"
 proof -
-  obtain l1 l2 l3::real where lcoords: "Rep_Proj l = (vector[l1,l2,l3]::v3)"
+  obtain l1 l2 l3::real where lcoords: "Rep_rp2 l = (vector[l1,l2,l3]::v3)"
     using exists_rp2_coords rp2_Points_def by blast
-  have "\<forall>V \<in> rp2_Points. rp2_incid V l
-    \<longleftrightarrow> ((l1 * (Rep_Proj V)$1) + (l2 * (Rep_Proj V)$2) + (l3 * (Rep_Proj V)$3) = 0)"
+  have 0: "\<forall>V \<in> rp2_Points. rp2_incid V l
+    \<longleftrightarrow> ((l1 * (Rep_rp2 V)$1) + (l2 * (Rep_rp2 V)$2) + (l3 * (Rep_rp2 V)$3) = 0)"
     using exists_rp2_coords lcoords rp2_incid.rep_eq vector_3 inner_commute sum_3 
       inner_real_def unfolding inner_vec_def by (metis (lifting))
-  then show ?thesis by auto
+  have 1: "\<not> (l1 = 0 \<and> l2 = 0 \<and> l3 = 0)" 
+  by (metis lcoords rep_P_nz zvec_def)
+  show ?thesis using 0 1 by auto
 qed
 text \<open>\done\<close>
 
@@ -205,14 +210,14 @@ text \<open>\hadi\<close>
 lift_definition Join :: "rp2 \<Rightarrow> rp2 \<Rightarrow> rp2" is "\<lambda>P Q. join P Q" 
 proof -
   fix v1 v2 v3 v4
-  assume a1: "projrel v1 v2"
-  assume a2: "projrel v3 v4"
-  show "projrel (join v1 v3) (join v2 v4)" 
+  assume a1: "rp2rel v1 v2"
+  assume a2: "rp2rel v3 v4"
+  show "rp2rel (join v1 v3) (join v2 v4)" 
   proof -
     have nz: "(join v1 v3) \<noteq> zvec \<and> (join v2 v4) \<noteq> zvec" 
       using join_def zvec_def vector_3(3) rel_simps(93) by metis
     obtain t1 t2 where t1t2def: "t1 \<noteq> 0 \<and> v1 = t1 *\<^sub>R v2 
-      \<and> t2 \<noteq> 0 \<and> v3 = t2 *\<^sub>R v4" using a1 a2 projrel_def by auto
+      \<and> t2 \<noteq> 0 \<and> v3 = t2 *\<^sub>R v4" using a1 a2 rp2rel_def by auto
     consider
     (allnz) "v1 \<times> v3 \<noteq> zvec \<and> v2 \<times> v4 \<noteq> zvec"
     | (onez) "(v1 \<times> v3 = zvec \<and> v2 \<times> v4 \<noteq> zvec) \<or> (v1 \<times> v3 \<noteq> zvec \<and> v2 \<times> v4 = zvec)"
@@ -220,23 +225,23 @@ proof -
     then show ?thesis 
     proof (cases)
       case allnz
-      then show ?thesis using t1t2def join_def alt_projrel projrel_def cross_refl
+      then show ?thesis using t1t2def join_def alt_rp2rel rp2rel_def cross_refl
         cross_mult_left cross_mult_right scaleR_zero_right by (metis (no_types))
     next
       case onez
       then have "(join v1 v3) \<times> (join v2 v4) = zvec" using a1 a2 join_def
-        alt_projrel projrel_def part_equivp_def part_equivp_projrel by metis
-      then show ?thesis using nz alt_projrel by auto
+        alt_rp2rel rp2rel_def part_equivp_def part_equivp_rp2rel by metis
+      then show ?thesis using nz alt_rp2rel by auto
     next
       case allz
-      then show ?thesis using nz join_def projrel_def by auto
+      then show ?thesis using nz join_def rp2rel_def by auto
     qed
   qed
 qed
 text \<open>\done\<close>
 
 text \<open>\hadi\<close>
-lemma join_commute:
+lemma Join_commute:
   fixes P Q
   assumes a1: "P \<in> rp2_Points" 
   assumes a2: "Q \<in> rp2_Points"
@@ -244,16 +249,16 @@ lemma join_commute:
   shows "Join P Q = Join Q P"
 proof (transfer)
   fix Ps Qs
-  assume b1: "Ps \<noteq> zvec \<and> projrel Ps Ps"
-  assume b2: "Qs \<noteq> zvec \<and> projrel Qs Qs"
-  show "projrel (join Ps Qs) (join Qs Ps)"
+  assume b1: "Ps \<noteq> zvec \<and> rp2rel Ps Ps"
+  assume b2: "Qs \<noteq> zvec \<and> rp2rel Qs Qs"
+  show "rp2rel (join Ps Qs) (join Qs Ps)"
   proof -
     have nz: "(join Ps Qs) \<noteq> zvec \<and> (join Qs Ps) \<noteq> zvec" 
       using join_def zvec_def vector_3(3) rel_simps(93) by metis
     have "\<exists>(t::real). t \<noteq> 0 \<and> (join Ps Qs) = t *\<^sub>R (join Qs Ps)"
-      using b2 alt_projrel cross_skew join_def pth_1 scaleR_left.minus 
+      using b2 alt_rp2rel cross_skew join_def pth_1 scaleR_left.minus 
       scaleR_zero_right zero_neq_one by (metis (no_types))
-    then show ?thesis using nz projrel_def by auto
+    then show ?thesis using nz rp2rel_def by auto
   qed
 qed
 text \<open>\done\<close>
@@ -266,22 +271,22 @@ lemma rp2_P1a:
   shows "(\<exists>k. rp2_incid P k \<and> rp2_incid Q k)"
 proof (transfer)
   fix P Q 
-  show "P \<noteq> zvec \<and> projrel P P \<Longrightarrow> Q \<noteq> zvec \<and> projrel Q Q 
-    \<Longrightarrow> \<exists>k \<in> {x. x \<noteq> zvec \<and> projrel x x}. (P \<bullet> k = 0) \<and> (Q \<bullet> k = 0)"
+  show "P \<noteq> zvec \<and> rp2rel P P \<Longrightarrow> Q \<noteq> zvec \<and> rp2rel Q Q 
+    \<Longrightarrow> \<exists>k \<in> {x. x \<noteq> zvec \<and> rp2rel x x}. (P \<bullet> k = 0) \<and> (Q \<bullet> k = 0)"
   proof -
-    assume pf: "P \<noteq> zvec \<and> projrel P P"
-    assume qf: "Q \<noteq> zvec \<and> projrel Q Q"
-    show "\<exists>k \<in> {x. x \<noteq> zvec \<and> projrel x x}. (P \<bullet> k = 0) \<and> (Q \<bullet> k = 0)"
-    proof (cases "projrel P Q")
+    assume pf: "P \<noteq> zvec \<and> rp2rel P P"
+    assume qf: "Q \<noteq> zvec \<and> rp2rel Q Q"
+    show "\<exists>k \<in> {x. x \<noteq> zvec \<and> rp2rel x x}. (P \<bullet> k = 0) \<and> (Q \<bullet> k = 0)"
+    proof (cases "rp2rel P Q")
       case pqrel: True
       obtain u where udef: "P \<times> u \<noteq> 0" 
-        using cross_basis_nonzero [of P] alt_projrel pf by metis
+        using cross_basis_nonzero [of P] alt_rp2rel pf by metis
       then have "P \<bullet> (P \<times> u) = 0 \<and> Q \<bullet> (P \<times> u) = 0"
-        using pqrel cross_mult_left projrel_def dot_cross_self(1) by auto
-      then show ?thesis using udef alt_projrel pf by auto
+        using pqrel cross_mult_left rp2rel_def dot_cross_self(1) by auto
+      then show ?thesis using udef alt_rp2rel pf by auto
     next
       case False
-      then show ?thesis using alt_projrel dot_cross_self(1,2) pf qf by auto
+      then show ?thesis using alt_rp2rel dot_cross_self(1,2) pf qf by auto
     qed
   qed
 qed
@@ -293,7 +298,7 @@ lemma unique_cross:
   assumes "a \<times> b \<noteq> 0"
   assumes "k \<bullet> a = 0" and "k \<bullet> b = 0" 
   shows "\<exists>s. k = s *\<^sub>R (a \<times> b)"
-  using assms Lagrange zvec_def projrel_def cross3_def cross_nz scaleR_zero_left
+  using assms Lagrange zvec_def rp2rel_def cross3_def cross_nz scaleR_zero_left
     cancel_comm_monoid_add_class.diff_cancel zero_index by (metis (no_types))
 text \<open>\done\<close>
 
@@ -304,13 +309,13 @@ lemma rp2_P1b_helper:
   fixes P Q k n
   assumes P_def: "P \<noteq> zvec" 
   assumes Q_def: "Q \<noteq> zvec"
-  assumes PQ_nprojrel: "\<not> projrel P Q"
+  assumes PQ_nrp2rel: "\<not> rp2rel P Q"
   assumes n_def: "n = P \<times> Q"
   assumes k_def: "k \<noteq> zvec"
   assumes k_facts: "(P \<bullet> k = 0)  \<and> (Q \<bullet> k = 0)" 
   shows "\<exists>c. (c \<noteq> 0) \<and> k = c *\<^sub>R n"
-  using assms alt_projrel cross_refl exists_projrel_refl inner_commute 
-    projrel_def scaleR_zero_left unique_cross by metis
+  using assms alt_rp2rel cross_refl exists_rp2rel_refl inner_commute 
+    rp2rel_def scaleR_zero_left unique_cross by metis
 
 text \<open>\nick\jackson\<close>
 lemma rp2_P1b:
@@ -324,16 +329,16 @@ lemma rp2_P1b:
   assumes n_facts: "rp2_incid P n  \<and> rp2_incid Q n" 
   shows "k = n"
 proof -
-  obtain Pvec where hPrep: "Pvec = Rep_Proj P" and hPpr3: "Pvec \<in> punctured_r_3" and hPnz: "Pvec \<noteq> 0" 
+  obtain Pvec where hPrep: "Pvec = Rep_rp2 P" and hPpr3: "Pvec \<in> punctured_r_3" and hPnz: "Pvec \<noteq> 0" 
     using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
-  obtain Qvec where hQrep: "Qvec = Rep_Proj Q" and hQpr3: "Qvec \<in> punctured_r_3" and hQnz: "Qvec \<noteq> 0" 
+  obtain Qvec where hQrep: "Qvec = Rep_rp2 Q" and hQpr3: "Qvec \<in> punctured_r_3" and hQnz: "Qvec \<noteq> 0" 
     using cross3_def cross_zero_left punctured_r_3_def rep_P_nz by fastforce
-  have h1: "\<not> projrel Pvec Qvec" 
+  have h1: "\<not> rp2rel Pvec Qvec" 
     using hPrep hQrep Quotient_rel_rep Quotient_rp2 a5 by metis
   let ?crossPQ = "Pvec \<times> Qvec"
-  obtain kvec where hkrep: "kvec = Rep_Proj k" and hkpr3: "kvec \<noteq> zvec" and hknz: "kvec \<noteq> 0" 
+  obtain kvec where hkrep: "kvec = Rep_rp2 k" and hkpr3: "kvec \<noteq> zvec" and hknz: "kvec \<noteq> 0" 
     using cross3_def cross_zero_left  rep_P_nz by fastforce
-  obtain nvec where hnrep: "nvec = Rep_Proj n" and hnpr3: "nvec \<noteq> zvec" and hknz: "nvec \<noteq> 0" 
+  obtain nvec where hnrep: "nvec = Rep_rp2 n" and hnpr3: "nvec \<noteq> zvec" and hknz: "nvec \<noteq> 0" 
     using cross3_def cross_zero_left  rep_P_nz by fastforce
   have h2: "(Pvec \<bullet> kvec = 0) \<and> (Qvec \<bullet> kvec = 0)"
     using hPrep hQrep hkrep k_facts rp2_incid.rep_eq by auto
@@ -344,7 +349,7 @@ proof -
   obtain c_n where hcn: "(c_n \<noteq> 0) \<and> nvec = c_n *\<^sub>R ?crossPQ"
     using a1 a2 a3 h1 h3 hPrep hQrep hkrep hPpr3 hQpr3 hnpr3 rep_P_nz rp2_P1b_helper[of Pvec Qvec ?crossPQ nvec] by auto
   have h4: "((c_k/c_n) \<noteq> 0) \<and> kvec = (c_k/c_n) *\<^sub>R nvec" using hck hcn by auto
-  show ?thesis using h4 Quotient3_rel_rep Quotient3_rp2 hkrep hnrep projrel_def hkpr3 hnpr3 smult_projrel by metis
+  show ?thesis using h4 Quotient3_rel_rep Quotient3_rp2 hkrep hnrep rp2rel_def hkpr3 hnpr3 smult_rp2rel by metis
 qed
 text \<open>\done\<close>
 
@@ -358,16 +363,15 @@ lemma rp2_P2:
   using rp2_P1a [of m k] incid_commute rp2_Points_def by auto
 text \<open>\done \spike\<close>
 
-lemma orthog_implies_not_projrel:
+lemma orthog_implies_not_rp2rel:
   fixes v w::v3
   assumes wnz: "w \<noteq> zvec"
   assumes dotz: "v \<bullet> w = 0"
-  shows "\<not> projrel v w"
-(* sledgehammer:   by (metis alt_projrel assms(2) cross_refl exists_projrel_refl norm_and_cross_eq_0 projrel_def) *)
+  shows "\<not> rp2rel v w"
 proof (rule ccontr)
-  assume ch: "\<not> \<not> projrel v w"
-  then have ch1: "projrel v w" by auto
-  then obtain t where tf: "t \<noteq> 0 \<and> v = t *\<^sub>R w" using projrel_def by auto
+  assume ch: "\<not> \<not> rp2rel v w"
+  then have ch1: "rp2rel v w" by auto
+  then obtain t where tf: "t \<noteq> 0 \<and> v = t *\<^sub>R w" using rp2rel_def by auto
 
   have "v \<bullet> w = t * (w \<bullet> w)" using tf by simp
   have "(w \<bullet> w) = 0" using dotz tf by auto
@@ -388,23 +392,23 @@ lemma rp2_P3:
   shows "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R 
     \<and> Q \<noteq> R \<and> \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
 proof -
-  have rep_diffs: "\<not>projrel e1 e2 \<and> \<not>projrel e1 e3 \<and> \<not>projrel e2 e3"  using e_dots orthog_implies_not_projrel projrel_def by auto
-  define P where "P \<equiv> Abs_Proj e1"
-  define Q where "Q \<equiv> Abs_Proj e2"
-  define R where "R \<equiv> Abs_Proj e3"
+  have rep_diffs: "\<not>rp2rel e1 e2 \<and> \<not>rp2rel e1 e3 \<and> \<not>rp2rel e2 e3"  using e_dots orthog_implies_not_rp2rel rp2rel_def by auto
+  define P where "P \<equiv> Abs_rp2 e1"
+  define Q where "Q \<equiv> Abs_rp2 e2"
+  define R where "R \<equiv> Abs_rp2 e3"
   have basics1: "P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points" using P_def Q_def R_def rp2_Points_def by auto
-  have repP: "projrel (Rep_Proj P) e1" using P_def Quotient_rep_abs[of projrel Abs_Proj Rep_Proj _ e1] 
+  have repP: "rp2rel (Rep_rp2 P) e1" using P_def Quotient_rep_abs[of rp2rel Abs_rp2 Rep_rp2 _ e1] 
   by (metis Quotient_rp2 cross_nz cross_refl e1_def vt zvec_alt) 
-  have repQ: "projrel (Rep_Proj Q) e2" using Q_def Quotient_rep_abs[of "projrel" Abs_Proj Rep_Proj _ e2]
-  by (metis Quotient_rp2 alt_projrel cross_refl e2_def one_neq_zero vector_3(2) zvec_alt zvec_def)
-  have repR: "projrel (Rep_Proj R) e3" using R_def Quotient_rep_abs[of projrel Abs_Proj Rep_Proj _ e3] 
-  by (metis Quotient_rp2 e3_def one_neq_zero pth_1 smult_projrel vector_3(3) zero_index zvec_alt)
+  have repQ: "rp2rel (Rep_rp2 Q) e2" using Q_def Quotient_rep_abs[of "rp2rel" Abs_rp2 Rep_rp2 _ e2]
+  by (metis Quotient_rp2 alt_rp2rel cross_refl e2_def one_neq_zero vector_3(2) zvec_alt zvec_def)
+  have repR: "rp2rel (Rep_rp2 R) e3" using R_def Quotient_rep_abs[of rp2rel Abs_rp2 Rep_rp2 _ e3] 
+  by (metis Quotient_rp2 e3_def one_neq_zero pth_1 smult_rp2rel vector_3(3) zero_index zvec_alt)
 
   have basics2: "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R"   by (metis Quotient3_rel Quotient3_rp2 repP repQ repR rep_diffs)
   have adv: " \<not> (\<exists>k \<in> rp2_Lines. rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k)"
   by (metis P_def Q_def Quotient_refl2 Quotient_rp2 R_def basics1 basics2 e_dots incid_commute repP repQ repR rp2_Lines_def rp2_P1b
       rp2_Points_def rp2_incid.abs_eq)
-  show ?thesis using basics1 basics2 adv by blast
+  show ?thesis using basics1 basics2 adv by metis
 qed
 
 text \<open>\Jiayi\Luke\<close>
@@ -413,46 +417,46 @@ lemma vector_3_eq_iff:
   shows "(vector[a1, a2, a3] :: real^3) = (vector[b1, b2, b3] :: real^3) \<longleftrightarrow> a1 = b1 \<and> a2 = b2 \<and> a3 = b3"
   using vector_3 exhaust_3 by (metis (no_types, opaque_lifting))
 
-lemma projrel_imp_smult:
-  assumes "projrel u v"
+lemma rp2rel_imp_smult:
+  assumes "rp2rel u v"
   shows "\<exists>c::real. c \<noteq> 0 \<and> u = c *\<^sub>R v"
-  using assms unfolding projrel_def by blast
+  using assms unfolding rp2rel_def by blast
 
-lemma projrel_self:
+lemma rp2rel_self:
   fixes x
   assumes "x \<noteq> (vector[0,0,0]:: real^3)"
-  shows "projrel x x"
+  shows "rp2rel x x"
 proof - 
-  show ?thesis using assms projrel_def by force
+  show ?thesis using assms rp2rel_def by force
 qed
 
-lemma ar: "Abs_Proj (Rep_Proj x) = x"
+lemma ar: "Abs_rp2 (Rep_rp2 x) = x"
   by (meson Quotient_abs_rep Quotient_rp2)
 
 lemma ra: 
   fixes x
   assumes "(x \<noteq> (vector[0,0,0]:: real^3))"
-  shows "projrel (Rep_Proj (Abs_Proj x)) x" using projrel_self
+  shows "rp2rel (Rep_rp2 (Abs_rp2 x)) x" using rp2rel_self
   by (simp add: Quotient3_rp2 assms rep_abs_rsp_left) 
 
-lemma equal_implies_projrel:
+lemma equal_implies_rp2rel:
   fixes P Q
   assumes "P = Q"
   assumes "P \<in> rp2_Points \<and> Q \<in> rp2_Points"
-  shows "projrel (Rep_Proj P) (Rep_Proj Q)"
+  shows "rp2rel (Rep_rp2 P) (Rep_rp2 Q)"
 proof -
   show ?thesis using assms by (metis Quotient_alt_def3 Quotient_rp2)
 qed
 
-lemma equal_implies_projrel_ra:
+lemma equal_implies_rp2rel_ra:
   fixes P Q
   fixes x y
   assumes "P = Q"
   assumes "P \<in> rp2_Points \<and> Q \<in> rp2_Points"
-  assumes "P = Abs_Proj x \<and> Q = Abs_Proj y"
-  shows "projrel (Rep_Proj (Abs_Proj x)) (Rep_Proj (Abs_Proj y))"
+  assumes "P = Abs_rp2 x \<and> Q = Abs_rp2 y"
+  shows "rp2rel (Rep_rp2 (Abs_rp2 x)) (Rep_rp2 (Abs_rp2 y))"
 proof - 
-  show ?thesis using assms equal_implies_projrel ra by auto
+  show ?thesis using assms equal_implies_rp2rel ra by auto
 qed
 
 lemma dot_product_zero_implies_incid:
@@ -462,20 +466,20 @@ lemma dot_product_zero_implies_incid:
   assumes "P \<in> rp2_Points"
   assumes "k \<in> rp2_Lines"
   assumes "x \<noteq> zvec \<and> kvec \<noteq> zvec"
-  assumes "P = Abs_Proj x"
-  assumes "k = Abs_Proj kvec"
+  assumes "P = Abs_rp2 x"
+  assumes "k = Abs_rp2 kvec"
   assumes "x \<bullet> kvec = 0"
   shows "rp2_incid P k"
 proof (rule ccontr)
   assume not_incid: "\<not>rp2_incid P k"
-  have "projrel (Rep_Proj P) x" using ra smult_projrel assms  by fastforce
-  then have temp1: "\<exists>e. e *\<^sub>R x = (Rep_Proj P)" using projrel_def by auto
-  then obtain e where edef: "e *\<^sub>R x = (Rep_Proj P)" by auto
+  have "rp2rel (Rep_rp2 P) x" using ra smult_rp2rel assms  by fastforce
+  then have temp1: "\<exists>e. e *\<^sub>R x = (Rep_rp2 P)" using rp2rel_def by auto
+  then obtain e where edef: "e *\<^sub>R x = (Rep_rp2 P)" by auto
 
-  have "(Rep_Proj P) \<bullet> (Rep_Proj k) \<noteq> 0" using rp2_incid.rep_eq not_incid by auto
-  then have "(e *\<^sub>R x) \<bullet> (Rep_Proj k) \<noteq> 0" using edef by auto
+  have "(Rep_rp2 P) \<bullet> (Rep_rp2 k) \<noteq> 0" using rp2_incid.rep_eq not_incid by auto
+  then have "(e *\<^sub>R x) \<bullet> (Rep_rp2 k) \<noteq> 0" using edef by auto
   then have "e *\<^sub>R (x \<bullet> kvec) \<noteq> 0" 
-    using assms alt_projrel equal_implies_projrel not_incid rep_P_nz rp2_incid.abs_eq by force
+    using assms alt_rp2rel equal_implies_rp2rel not_incid rep_P_nz rp2_incid.abs_eq rp2rel_self zvec_def by metis
   then have "e*\<^sub>R 0 \<noteq> 0" using assms by auto
   then show False using scaleR_zero_right by fastforce
 qed
@@ -485,9 +489,9 @@ lemma rp2_P4:
   fixes U
   assumes "k \<in> rp2_Lines"
   assumes "U = {X . X \<in> rp2_Points \<and> rp2_incid X k}"
-  shows "\<exists>P Q R. P \<in> U \<and> Q \<in> U \<and> R \<in> U \<and> distinct [P,Q,R]"
+  shows "\<exists>P Q R. P \<in> U \<and> Q \<in> U \<and> R \<in> U \<and> distinct[P, Q, R]"
 proof - 
-  obtain kvec where kvec_def: "kvec = Rep_Proj k" by auto
+  obtain kvec where kvec_def: "kvec = Rep_rp2 k" by auto
   have kvec_nz: "kvec \<noteq> zvec" using rep_P_nz using kvec_def by auto
   obtain a b c :: real where abc_def: "kvec = (vector[a, b, c]::v3)" using kvec_def
   using forall_vector_3 by fastforce
@@ -540,19 +544,19 @@ proof -
       then show False using a_nz local.sum_eq  v4_z vector_3_eq_iff zvec_def by metis
     qed
 
-    let ?P = "Abs_Proj ?v2"
-    let ?Q = "Abs_Proj ?v3"
-    let ?R = "Abs_Proj ?v4"
+    let ?P = "Abs_rp2 ?v2"
+    let ?Q = "Abs_rp2 ?v3"
+    let ?R = "Abs_rp2 ?v4"
 
     have p_point: "?P \<in> rp2_Points" unfolding rp2_Points_def by auto 
     have q_point: "?Q \<in> rp2_Points" unfolding rp2_Points_def by auto 
     have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
 
-    have "k = Abs_Proj kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
-    then have "rp2_incid ?P k = rp2_incid (Abs_Proj ?v2) (Abs_Proj kvec)"
+    have "k = Abs_rp2 kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
+    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v2) (Abs_rp2 kvec)"
       by auto
 
-    have abs_proj_kvec: "k = Abs_Proj kvec" using ar kvec_def by auto
+    have abs_proj_kvec: "k = Abs_rp2 kvec" using ar kvec_def by auto
 
     have inc_P: "rp2_incid ?P k" 
       using dot_product_zero_implies_incid[of ?P k ?v2 kvec] abs_proj_kvec assms(1) kvec_nz ortho2 p_point v2_nz by auto
@@ -563,28 +567,29 @@ proof -
     have inc_R: "rp2_incid ?R k"
       using dot_product_zero_implies_incid[of ?R k ?v4 kvec] abs_proj_kvec assms kvec_nz ortho4 r_point v4_nz by auto
 
-    have projrel_v4: "projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a] + vector [- b, a, 0]))) (vector [c, 0, - a] + vector [- b, a, 0])" 
+    have rp2rel_v4: "rp2rel (Rep_rp2 (Abs_rp2 (vector [c, 0, - a] + vector [- b, a, 0]))) (vector [c, 0, - a] + vector [- b, a, 0])" 
       using v4_nz ra[of ?v4] by auto
-    have projrel_v3: "projrel (Rep_Proj (Abs_Proj (vector [- b, a, 0]))) (vector [- b, a, 0])"
+    have rp2rel_v3: "rp2rel (Rep_rp2 (Abs_rp2 (vector [- b, a, 0]))) (vector [- b, a, 0])"
       using v3_nz ra[of ?v3] by auto
-    have projrel_v2: "projrel (Rep_Proj (Abs_Proj (vector [c, 0, - a]))) (vector [c, 0, - a])"
+    have rp2rel_v2: "rp2rel (Rep_rp2 (Abs_rp2 (vector [c, 0, - a]))) (vector [c, 0, - a])"
       using v2_nz ra[of ?v2] by auto
 
     have p_not_q: "?P \<noteq> ?Q"
-      using projrel_v3 projrel_v2 a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v3 rp2rel_v2 a_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
     have p_not_r: "?P \<noteq> ?R"
-      using projrel_v4 projrel_v2 a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v4 rp2rel_v2 a_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
     have q_not_r: "?Q \<noteq> ?R" 
-      using projrel_v4 projrel_v3 a_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v4 rp2rel_v3 a_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
-    have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
+    have pqr_distinct: "distinct[?P, ?Q, ?R]" unfolding distinct3_def using p_not_q p_not_r q_not_r by auto
+    have inclusions: "?P \<in> U \<and> ?Q \<in> U \<and> ?R \<in> U" using inc_P inc_Q inc_R  assms rp2_Points_def by auto
 
-    then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
+    then show ?thesis using inclusions pqr_distinct unfolding distinct_def assms by meson
   next
     case b_nz
     let ?v4 = "?v1 + ?v3"
@@ -622,19 +627,19 @@ proof -
       then show False using b_nz local.sum_eq v4_z vector_3_eq_iff zvec_def by metis
     qed
 
-    let ?P = "Abs_Proj ?v1"
-    let ?Q = "Abs_Proj ?v3"
-    let ?R = "Abs_Proj ?v4"
+    let ?P = "Abs_rp2 ?v1"
+    let ?Q = "Abs_rp2 ?v3"
+    let ?R = "Abs_rp2 ?v4"
 
     have p_point: "?P \<in> rp2_Points" unfolding rp2_Points_def by auto 
     have q_point: "?Q \<in> rp2_Points" unfolding rp2_Points_def by auto 
     have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
 
-    have "k = Abs_Proj kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
-    then have "rp2_incid ?P k = rp2_incid (Abs_Proj ?v1) (Abs_Proj kvec)"
+    have "k = Abs_rp2 kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
+    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v1) (Abs_rp2 kvec)"
       by auto
 
-    have abs_proj_kvec: "k = Abs_Proj kvec" using ar kvec_def by auto
+    have abs_proj_kvec: "k = Abs_rp2 kvec" using ar kvec_def by auto
 
     have inc_P: "rp2_incid ?P k" 
       using dot_product_zero_implies_incid[of ?P k ?v1 kvec] abs_proj_kvec assms(1) kvec_nz ortho1 p_point v1_nz by auto
@@ -645,28 +650,29 @@ proof -
     have inc_R: "rp2_incid ?R k"
       using dot_product_zero_implies_incid[of ?R k ?v4 kvec] abs_proj_kvec assms kvec_nz ortho4 r_point v4_nz by auto
 
-    have projrel_v4: "projrel (Rep_Proj (Abs_Proj (vector[0, -c, b] + vector[-b, a, 0]))) (vector [0, -c, b] + vector [- b, a, 0])" 
+    have rp2rel_v4: "rp2rel (Rep_rp2 (Abs_rp2 (vector[0, -c, b] + vector[-b, a, 0]))) (vector [0, -c, b] + vector [- b, a, 0])" 
       using v4_nz ra[of ?v4] by auto
-    have projrel_v3: "projrel (Rep_Proj (Abs_Proj (vector [- b, a, 0]))) (vector [- b, a, 0])"
+    have rp2rel_v3: "rp2rel (Rep_rp2 (Abs_rp2 (vector [- b, a, 0]))) (vector [- b, a, 0])"
       using v3_nz ra[of ?v3] by auto
-    have projrel_v2: "projrel (Rep_Proj (Abs_Proj (vector [0, -c, b]))) (vector [0, -c, b])"
+    have rp2rel_v2: "rp2rel (Rep_rp2 (Abs_rp2 (vector [0, -c, b]))) (vector [0, -c, b])"
       using v1_nz ra[of ?v1] by auto
 
     have p_not_q: "?P \<noteq> ?Q"
-      using projrel_v3 projrel_v2 b_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v3 rp2rel_v2 b_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
     have p_not_r: "?P \<noteq> ?R"
-      using projrel_v4 projrel_v2 b_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v4 rp2rel_v2 b_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
     have q_not_r: "?Q \<noteq> ?R" 
-      using projrel_v4 projrel_v3 b_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v4 rp2rel_v3 b_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
-    have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
+    have pqr_distinct: "distinct[?P, ?Q, ?R]" unfolding distinct3_def using p_not_q p_not_r q_not_r by auto
+    have inclusions: "?P \<in> U \<and> ?Q \<in> U \<and> ?R \<in> U" using inc_P inc_Q inc_R  assms rp2_Points_def by auto
 
-    then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
+    show ?thesis unfolding distinct3_def using inclusions using p_not_q p_not_r q_not_r by blast
   next
     case c_nz
     let ?v4 = "?v1 + ?v2"
@@ -704,19 +710,19 @@ proof -
       then show False using c_nz local.sum_eq v4_z vector_3_eq_iff zvec_def by metis
     qed
 
-    let ?P = "Abs_Proj ?v1"
-    let ?Q = "Abs_Proj ?v2"
-    let ?R = "Abs_Proj ?v4"
+    let ?P = "Abs_rp2 ?v1"
+    let ?Q = "Abs_rp2 ?v2"
+    let ?R = "Abs_rp2 ?v4"
 
     have p_point: "?P \<in> rp2_Points" unfolding rp2_Points_def by auto 
     have q_point: "?Q \<in> rp2_Points" unfolding rp2_Points_def by auto 
     have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
 
-    have "k = Abs_Proj kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
-    then have "rp2_incid ?P k = rp2_incid (Abs_Proj ?v1) (Abs_Proj kvec)"
+    have "k = Abs_rp2 kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
+    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v1) (Abs_rp2 kvec)"
       by auto
 
-    have abs_proj_kvec: "k = Abs_Proj kvec" using ar kvec_def by auto
+    have abs_proj_kvec: "k = Abs_rp2 kvec" using ar kvec_def by auto
 
     have inc_P: "rp2_incid ?P k" 
       using dot_product_zero_implies_incid[of ?P k ?v1 kvec] abs_proj_kvec assms(1) kvec_nz ortho1 p_point v1_nz by auto
@@ -727,28 +733,29 @@ proof -
     have inc_R: "rp2_incid ?R k"
       using dot_product_zero_implies_incid[of ?R k ?v4 kvec] abs_proj_kvec assms kvec_nz ortho4 r_point v4_nz by auto
 
-    have projrel_v4: "projrel (Rep_Proj (Abs_Proj (vector[0, -c, b] + vector[c, 0, -a]))) (vector [0, -c, b] + vector[c, 0, -a])" 
+    have rp2rel_v4: "rp2rel (Rep_rp2 (Abs_rp2 (vector[0, -c, b] + vector[c, 0, -a]))) (vector [0, -c, b] + vector[c, 0, -a])" 
       using v4_nz ra[of ?v4] by auto
-    have projrel_v1: "projrel (Rep_Proj (Abs_Proj (vector[0, -c, b]))) (vector[0, -c, b])"
+    have rp2rel_v1: "rp2rel (Rep_rp2 (Abs_rp2 (vector[0, -c, b]))) (vector[0, -c, b])"
       using v1_nz ra[of ?v1] by auto
-    have projrel_v2: "projrel (Rep_Proj (Abs_Proj (vector[c, 0, -a]))) (vector[c, 0, -a])"
+    have rp2rel_v2: "rp2rel (Rep_rp2 (Abs_rp2 (vector[c, 0, -a]))) (vector[c, 0, -a])"
       using v2_nz ra[of ?v2] by auto
 
     have p_not_q: "?P \<noteq> ?Q"
-      using projrel_v1 projrel_v2 c_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v1 rp2rel_v2 c_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
     have p_not_r: "?P \<noteq> ?R"
-      using projrel_v4 projrel_v1 c_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v4 rp2rel_v1 c_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
     have q_not_r: "?Q \<noteq> ?R" 
-      using projrel_v4 projrel_v2 c_nz alt_projrel cross3_def projrel_def vector_3_eq_iff
+      using rp2rel_v4 rp2rel_v2 c_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
-    have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
+    have pqr_distinct: "distinct[?P, ?Q, ?R]" unfolding distinct3_def using p_not_q p_not_r q_not_r by auto
+    have inclusions: "?P \<in> U \<and> ?Q \<in> U \<and> ?R \<in> U" using inc_P inc_Q inc_R  assms rp2_Points_def by auto
 
-    then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
+    then show ?thesis using inclusions pqr_distinct assms(2) unfolding distinct3_def  by meson 
   qed
 qed
 text \<open>\done\done\<close>
@@ -759,16 +766,17 @@ theorem analytic_rp2:
 proof (unfold_locales)
   show "\<lbrakk>P \<noteq> Q; P \<in> rp2_Points; Q \<in> rp2_Points\<rbrakk> 
     \<Longrightarrow> (\<exists>!k. k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k)" for P Q 
-    using rp2_P1a [of P Q] rp2_P1b [of P Q] rp2_Lines_def by auto
+    using rp2_P1a [of P Q] rp2_P1b [of P Q] rp2_Lines_def 
+    by (metis incid_commute rp2_P2 rp2_Points_def)
   show "\<lbrakk>k \<in> rp2_Lines; n \<in> rp2_Lines\<rbrakk> 
     \<Longrightarrow> \<exists>P. (P \<in> rp2_Points \<and> rp2_incid P k \<and> rp2_incid P n)" for k n
-    using rp2_P2 [of k n] rp2_P4 by auto
+    using rp2_P2 [of k n] rp2_P4 
+    by (metis rp2_Lines_def rp2_P2 rp2_P3 rp2_Points_def)
   show "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
     \<and> \<not> (projective_plane_data.pcollinear rp2_Points rp2_Lines rp2_incid P Q R)"
-    using rp2_P3 unfolding projective_plane_data.pcollinear_def by auto
+    using rp2_P3 unfolding projective_plane_data.pcollinear_def unfolding distinct3_def  by metis
   show "\<lbrakk>k \<in> rp2_Lines; U = {P. (P \<in> rp2_Points \<and> rp2_incid P k)}\<rbrakk> 
-    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U 
-    using rp2_P4 by auto
+    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]" for k U using rp2_P4 by presburger 
 qed
 text \<open>\done\<close>
 
