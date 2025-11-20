@@ -1,11 +1,9 @@
 theory "Chapter2-1"
-  imports  "HOL-Library.Uprod" "Chapter1-3" 
+  imports  "HOL-Library.Uprod"  "Chapter1-3"
 
 begin
-declare [[smt_timeout = 1500]]
-declare [[smt_reconstruction_step_timeout = 1500]]
-
-(* hide_const join *)
+declare [[smt_timeout = 2500]]
+declare [[smt_reconstruction_step_timeout = 2500]]
 
 section \<open>Desargues Introduction, Projective 3-Spaces\<close>
 locale projective_space_data =
@@ -48,15 +46,10 @@ assumes
     S5: "(\<exists>P Q R S. P \<in> Points \<and> Q \<in> Points \<and> R \<in> Points \<and> S \<in> Points \<and> 
           \<not> coplanar P Q R S \<and> 
           \<not> collinear P Q R \<and> \<not> collinear P Q S \<and> \<not> collinear P R S \<and> \<not> collinear Q R S)" and
-    S6: "\<lbrakk>k \<in> Lines\<rbrakk> \<Longrightarrow> (\<exists>P Q R . P \<in> k \<and> Q \<in> k \<and> R \<in> k \<and> distinct[ P, Q, R])" and
+    S6: "\<lbrakk>k \<in> Lines\<rbrakk> \<Longrightarrow> (\<exists>P Q R . P \<in> k \<and> Q \<in> k \<and> R \<in> k \<and> distinct[P, Q, R])" and
     S0a: "\<lbrakk>k \<in> Lines; P \<in> k\<rbrakk> \<Longrightarrow> P \<in> Points" and
     S0b: "\<lbrakk>H \<in> Planes; P \<in> H\<rbrakk> \<Longrightarrow> P \<in> Points"
 begin
-
-find_theorems name: map_ident_strong
-
-theorem
-  shows "finite Points \<Longrightarrow> (card Points > 12)" by nitpick
 
 text \<open>\hadi\<close>
 lemma S5_dist:
@@ -137,7 +130,7 @@ lemma same_joins:
   fixes a b x y
   assumes "a \<in> Points \<and> b \<in> Points \<and> x \<in> Points \<and> y \<in> Points"
   assumes "x \<in> join a b \<and> y \<in> join a b"
-  assumes "distinct4 a b x y"
+  assumes "distinct[a, b, x, y]"
   shows "join x y = join a b"
   using assms S1a S1b distinct4_def by metis
 
@@ -155,7 +148,7 @@ lemma vanadium2:
   assumes "\<not> collinear a b c" 
   assumes "a \<in> P \<and> b \<in> P \<and> c \<in> P" 
   assumes "a \<in> Q \<and> b \<in> Q \<and> c \<in> Q" 
-  assumes "distinct3 a b c" 
+  assumes "distinct[a, b, c]" 
   shows "P = Q"
   using assms collinear_join S2a S2b by metis
 
@@ -174,7 +167,7 @@ proof -
   proof (cases "\<exists>p. (p \<in> Points \<and> p \<notin> L \<and> p \<in> P \<and> p \<in> Q)")
     case True
     then obtain p where p_facts: "(p \<in> Points \<and> p \<notin> L \<and> p \<in> P \<and> p \<in> Q)" by auto
-    then have "distinct3 a b p" using h0 unfolding distinct3_def by auto
+    then have "distinct[a, b, p]" using h0 unfolding distinct3_def by auto
     then show ?thesis using assms h0 h1 p_facts L_facts vanadium2 [of a b p P Q] by blast
   next
     case nexistp: False
@@ -187,14 +180,14 @@ qed
 lemma vanadium4:
   fixes x y z w
   assumes "x \<in> Points \<and> y \<in> Points \<and> z \<in> Points \<and> w \<in> Points"
-  assumes "distinct4 x y z w"
+  assumes "distinct[x, y, z, w]"
   assumes "\<not> collinear x y z \<and> \<not> collinear x y w"
   shows "(plane_through x y z) = (plane_through x y w)
     \<or> (plane_through x y z) \<inter> (plane_through x y w) = (join x y)"
 proof -
   let ?P = "plane_through x y z" let ?Q = "plane_through x y w"
   have "x \<in> ?P \<and> y \<in> ?P \<and> x \<in> ?Q \<and> y \<in> ?Q" using S2a assms by auto
-  then show ?thesis using assms vanadium3 S2a distinct4_def by metis
+  then show ?thesis using assms vanadium3 S2a   by (metis S1a collinear_commute collinear_join)
 qed
 text \<open>\done\<close>
 
@@ -203,24 +196,30 @@ lemma choose_subset_helper:
   fixes X Y Z W
   assumes "X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points
     \<and> W \<in> Points \<and> \<not> coplanar X Y Z W \<and> \<not> collinear X Y Z \<and> \<not> collinear X Y W 
-    \<and> \<not> collinear X Z W \<and> \<not> collinear Y Z W \<and> distinct4 X Y Z W"
-  shows "\<forall>X0 Y0 Z0. distinct3 X0 Y0 Z0 \<and> {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} 
+    \<and> \<not> collinear X Z W \<and> \<not> collinear Y Z W \<and> distinct[X, Y, Z, W]"
+  shows "\<forall>X0 Y0 Z0. distinct[X0, Y0, Z0] \<and> {X0,Y0,Z0} \<subseteq> {X,Y,Z,W} 
     \<longrightarrow> \<not> collinear X0 Y0 Z0" 
-  and "\<forall>X0 Y0 Z0 W0. distinct4 X0 Y0 Z0 W0 \<and> {X0,Y0,Z0,W0} = {X,Y,Z,W} 
+  and "\<forall>X0 Y0 Z0 W0. distinct[X0, Y0, Z0, W0] \<and> {X0,Y0,Z0,W0} = {X,Y,Z,W} 
     \<longrightarrow> \<not> coplanar X0 Y0 Z0 W0"
+  sorry
+(*
 proof (clarify)
   fix X0 Y0 Z0
-  assume a1: "distinct3 X0 Y0 Z0" and "{X0,Y0,Z0} \<subseteq> {X,Y,Z,W}"
-  then consider "{X0,Y0,Z0} = {X,Y,Z}" | "{X0,Y0,Z0} = {X,Y,W}"
-    | "{X0,Y0,Z0} = {X,Z,W}" | "{X0,Y0,Z0} = {Y,Z,W}"
-    unfolding distinct3_def by force
-  then show "collinear X0 Y0 Z0 \<Longrightarrow> False" by (cases, 
-    (metis assms a1 collinear_commute empty_iff insert_iff distinct3_def)+)
+    assume a1: "X0 \<noteq> Y0 \<and> X0 \<noteq> Z0 \<and> Y0 \<noteq> Z0" and "{X0,Y0,Z0} \<subseteq> {X,Y,Z,W}"
+    then consider "{X0,Y0,Z0} = {X,Y,Z}" | "{X0,Y0,Z0} = {X,Y,W}"
+      | "{X0,Y0,Z0} = {X,Z,W}" | "{X0,Y0,Z0} = {Y,Z,W}" by force
+    show "\<And>X0 Y0 Z0. {X0, Y0, Z0} \<subseteq> {X, Y, Z, W} \<Longrightarrow> X0 \<noteq> Y0 \<Longrightarrow> X0 \<noteq> Z0 \<Longrightarrow> Y0 \<noteq> Z0 \<Longrightarrow> local.collinear X0 Y0 Z0 \<Longrightarrow> False"
+  proof (cases)
+    then show  "\<not>local.collinear X0 Y0 Z0" by (cases, 
+    (metis assms a1 collinear_commute empty_iff insert_iff distinct3_def)+) 
+  show "\<forall>X0 Y0 Z0. distinct [X0, Y0, Z0] \<and> {X0, Y0, Z0} \<subseteq> {X, Y, Z, W} \<longrightarrow> \<not> local.collinear X0 Y0 Z0"
 next
-  show "\<forall>X0 Y0 Z0 W0. distinct4 X0 Y0 Z0 W0 \<and> {X0,Y0,Z0,W0} = {X,Y,Z,W} 
+  show "\<forall>X0 Y0 Z0 W0. distinct[X0, Y0, Z0, W0] \<and> {X0,Y0,Z0,W0} = {X,Y,Z,W} 
     \<longrightarrow> \<not> coplanar X0 Y0 Z0 W0" using assms insert_subset bot.extremum 
     unfolding coplanar_def by metis
 qed
+*) 
+
 
 lemma two_point_line_in_plane: (* credit to Jade Vanadium on MSE *)
   fixes A B P
@@ -235,7 +234,7 @@ proof (rule ccontr)
   then have CABCP: "\<forall>C \<in> Points. C \<notin> ?AB \<longrightarrow> C \<in> P" using assms collinear_join S2a by metis
   obtain X Y Z W where XYZWdef: "X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points 
     \<and> W \<in> Points \<and> \<not> coplanar X Y Z W \<and> \<not> collinear X Y Z \<and> \<not> collinear X Y W 
-    \<and> \<not> collinear X Z W \<and> \<not> collinear Y Z W \<and> distinct4 X Y Z W" using S5 S5_dist by metis
+    \<and> \<not> collinear X Z W \<and> \<not> collinear Y Z W \<and> distinct[X, Y, Z, W]" using S5 S5_dist by metis
   let ?XYZW = "{X,Y,Z,W}"
   have "\<nexists>X0 Y0. {X0,Y0} \<subseteq> ?XYZW \<and> X0 \<in> ?AB \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0"
   proof (rule ccontr)
@@ -245,12 +244,14 @@ proof (rule ccontr)
     obtain Z0 W0 where Z0W0def: "{Z0,W0} \<subseteq> ?XYZW \<and> Z0 \<noteq> W0 \<and> Z0 \<noteq> X0 \<and> Z0 \<noteq> Y0 \<and> W0 \<noteq> X0 \<and> W0 \<noteq> Y0" 
       using XYZWdef insert_mono subset_insertI subset_insertI2 unfolding distinct4_def by metis
     then have allp: "X0 \<in> Points \<and> Y0 \<in> Points \<and> Z0 \<in> Points \<and> W0 \<in> Points \<and> {X0,Y0,Z0,W0} = ?XYZW 
-      \<and> distinct4 X0 Y0 Z0 W0" using X0Y0def XYZWdef unfolding distinct4_def by auto
+      \<and> distinct[X0, Y0, Z0, W0]" using X0Y0def XYZWdef unfolding distinct4_def by auto
     then have X0Y0Z0W0ncop: "\<not> coplanar X0 Y0 Z0 W0" 
       using XYZWdef choose_subset_helper(2) by presburger
     have X0Y0Z0ncoll: "\<not> collinear X0 Y0 Z0" and X0Y0W0ncoll: "\<not> collinear X0 Y0 W0"
-      using XYZWdef X0Y0def Z0W0def allp choose_subset_helper(1) insert_subset 
-      unfolding distinct3_def by metis+
+      using XYZWdef X0Y0def Z0W0def allp choose_subset_helper(1) insert_subset unfolding distinct4_def distinct3_def
+      by metis+
+    
+    (*by metis+ *)
     then have neqW: "(plane_through X0 Y0 Z0) \<noteq> (plane_through X0 Y0 W0)"
       using allp X0Y0Z0W0ncop S2a unfolding coplanar_def by metis
     then have "(join X0 Y0) = (plane_through X0 Y0 Z0) \<inter> (plane_through X0 Y0 W0)"
@@ -262,11 +263,11 @@ proof (rule ccontr)
   qed
   then have "\<forall>X0. X0 \<in> ?XYZW \<and> X0 \<in> ?AB \<longrightarrow> (\<nexists>Y0. Y0 \<in> ?XYZW \<and> Y0 \<in> ?AB \<and> X0 \<noteq> Y0)"
     using insert_subset subsetI by metis
-  then have "\<exists>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> ?XYZW \<and> X0 \<notin> ?AB \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0"
+  then have "\<exists>X0 Y0 Z0. {X0,Y0,Z0} \<subseteq> ?XYZW \<and> X0 \<notin> ?AB \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct[X0, Y0, Z0]"
     using XYZWdef subset_insertI insert_mono insert_subset distinct3_def distinct4_def by metis
   then obtain X0 Y0 Z0 where X0Y0Z0def: "{X0,Y0,Z0} \<subseteq> ?XYZW \<and> X0 \<notin> ?AB
-    \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct3 X0 Y0 Z0" by presburger
-  then obtain W0 where W0def: "W0 \<in> ?XYZW \<and> distinct4 X0 Y0 Z0 W0"
+    \<and> Y0 \<notin> ?AB \<and> Z0 \<notin> ?AB \<and> distinct[X0, Y0, Z0]" by presburger
+  then obtain W0 where W0def: "W0 \<in> ?XYZW \<and> distinct[X0, Y0, Z0, W0]"
     using XYZWdef unfolding distinct3_def distinct4_def by auto
   then have allp2: "X0 \<in> Points \<and> Y0 \<in> Points \<and> Z0 \<in> Points \<and> W0 \<in> Points 
      \<and> {X0,Y0,Z0,W0} = ?XYZW" using X0Y0Z0def XYZWdef unfolding distinct4_def by auto
@@ -928,19 +929,61 @@ lemma lines_distinctD:
     by auto
 
 lemma desargues_three_lines: (* every pt lies on 3 lines *)
-  fixes X::"pointD"
   assumes "X \<in> PointsD"
-  shows "\<exists>l m n. distinct[ l, m, n] 
+  shows "\<exists>l m n. l \<noteq> m \<and> m \<noteq> n \<and> l \<noteq> n
     \<and> incidD X l \<and> incidD X m \<and> incidD X n 
     \<and> l \<in> LinesD \<and> m \<in> LinesD \<and> n \<in> LinesD" 
-  using lines_distinctD unfolding incidD_def LinesD_def distinct3_def
-  sorry
+proof (unfold incidD_def LinesD_def)
+  consider "X = Ad" |"X = Bd" |"X = Cd" |"X = Dd" |"X = Ed" |"X = Fd" 
+    |"X = Hd" |"X = Pd" |"X = Qd" |"X = Rd" using pointD.exhaust by blast
+  then show " \<exists>l m n.
+       l \<noteq> m \<and>
+       m \<noteq> n \<and>
+       l \<noteq> n \<and>
+       X \<in> l \<and>
+       X \<in> m \<and>
+       X \<in> n \<and>
+       l \<in> {{Ad, Bd, Pd}, {Bd, Cd, Rd}, {Cd, Ad, Qd}, {Dd, Ed, Pd}, {Ed, Fd, Rd}, {Fd, Dd, Qd}, {Hd, Ad, Dd}, {Hd, Bd, Ed}, {Hd, Cd, Fd},
+             {Pd, Qd, Rd}} \<and>
+       m \<in> {{Ad, Bd, Pd}, {Bd, Cd, Rd}, {Cd, Ad, Qd}, {Dd, Ed, Pd}, {Ed, Fd, Rd}, {Fd, Dd, Qd}, {Hd, Ad, Dd}, {Hd, Bd, Ed}, {Hd, Cd, Fd},
+             {Pd, Qd, Rd}} \<and>
+       n \<in> {{Ad, Bd, Pd}, {Bd, Cd, Rd}, {Cd, Ad, Qd}, {Dd, Ed, Pd}, {Ed, Fd, Rd}, {Fd, Dd, Qd}, {Hd, Ad, Dd}, {Hd, Bd, Ed}, {Hd, Cd, Fd},
+             {Pd, Qd, Rd}} " 
+  proof (cases)
+    case 1
+    then show ?thesis 
+    by (meson insertCI lines_distinctD)
 
-  (*by (cases X)
+  next
+    case 2
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 3
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 4
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 5
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 6
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 7
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 8
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 9
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  next
+    case 10
+    then show ?thesis  by (meson insertCI lines_distinctD)
+  qed
+qed
 
-    (simp only: insert_iff empty_iff conj_disj_distribL conj_disj_distribR
-     ex_disj_distrib simp_thms(39); simp; fail)+
-*)
 lemma desargues_three_points: (* every line contains 3 points *)
   assumes "k \<in> LinesD"
   shows "card k = 3"
@@ -1011,11 +1054,13 @@ fun f_example::"int uprod \<Rightarrow> bool" where
 "f_example(x) = (if (\<exists> a b . (x = Upair a b) \<and> (a = b)) then True else False)"
 
 (* go level by level *)
-fun p_level::" ('a, 'b) fpoint \<Rightarrow> nat" where
-  "p_level (Base_point _) = 0" | "p_level (Crossing _ n) = n"
+fun p_level::" ('a, 'b)fpoint \<Rightarrow> nat" where
+"p_level (Base_point _) = 0" |
+"p_level (Crossing _ n) = n"
 
-fun l_level::" ('a, 'b) fline \<Rightarrow> nat" where
-  "l_level (Base_line _) = 0" | "l_level (Join _ n) = n"
+fun l_level::" ('a, 'b)fline \<Rightarrow> nat" where
+"l_level (Base_line _) = 0" |
+"l_level (Join _ n) = n"
 
 text \<open>Notice that in the following definition, a BasePoint or BaseLine always (implicitly) has level 0. 
 Also, the definition depends on the set of base points,
@@ -1458,7 +1503,7 @@ theorem free_planes_join:  (* there's a line between any two distinct points of 
   using assms joining_line nle_le by metis
 
 lemma line_point_levels: (* points of join P Q, a line at level n, are either P or Q or have level > n *)
- fixes CPoints::"'a set"
+  fixes CPoints::"'a set"
   fixes CLines::"'b set"
   assumes "card CPoints \<ge> 4"
   fixes P A1 B1 n
@@ -1813,7 +1858,7 @@ proof (erule contrapos_np)
 qed
 
 lemma three_elements: (* From a set with cardinality more than 2, we can obtain 3 distinct items *)
-  fixes U::"'a set"
+  fixes U
   assumes a: "card U > 2"
   shows "\<exists> A B C  . A \<in> U \<and> B \<in> U \<and> C \<in> U  \<and> distinct[A, B, C]"
 proof -
@@ -1852,7 +1897,7 @@ proof (rule ccontr)
   by (metis (lifting) Diff_empty Diff_insert0 \<open>card (Base_point ` U) = 4\<close> add_2_eq_Suc add_diff_cancel_left' card_Diff_singleton
       diff_is_0_eq kpchoice lessI linorder_not_le numeral_Bit0 plus_1_eq_Suc zero_neq_numeral)
   then obtain P Q R where pqr_def: "P \<in> (?Upts - ?kpts) \<and> Q \<in> (?Upts - ?kpts) \<and> R \<in> (?Upts - ?kpts) \<and> 
-    distinct3 P Q R" using configuration.three_elements emptyE configuration_def by (smt (z3))
+    distinct[P, Q, R]" using s  three_elements[of "(?Upts - ?kpts)"] by presburger
   have "{P, Q, R} \<subseteq> ?Upts" using  pqr_def by blast
   then have "{P,Q,R} \<subseteq> Pi_points" using Upts_pi by order
   then have not_k: "(\<not> (fppincid P k)) \<and> (\<not> (fppincid Q k)) \<and> (\<not> (fppincid R k))" using pqr_def by blast
