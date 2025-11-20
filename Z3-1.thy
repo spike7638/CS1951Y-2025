@@ -109,102 +109,6 @@ big help. We'll start with just vectors, define and prove a few things about RP2
 Fortunately, for real vectors addition is predefined, and scalar multiplication is denoted by a * 
 with a subscript R. 
 \<close>
-(* We're going to need cross and dot-products *)
-unbundle cross3_syntax
-
-text \<open>
-type_synonym v3 = "real^3"
-
-definition zvec where "zvec = ((vector[0, 0, 0])::real^3)"
-
-lemma [simp]:
-  shows "zvec = vector[0::real, 0, 0]" using zvec_def by auto
-
-definition map_vec where
-"map_vec f g v = vec_lambda (map_fun g f (vec_nth v))"
-functor map_vec
-  unfolding map_vec_def
-  using eq_id_iff by fastforce+
-
-definition projrel :: "(v3) \<Rightarrow> (v3) \<Rightarrow> bool"
-  where "projrel x y \<longleftrightarrow> (x \<noteq> zvec) \<and> (y \<noteq> zvec) \<and> (\<exists>t::real. t \<noteq> 0 \<and> x = t *\<^sub>R y)" 
-
-text\<open> This definition of the projective relation says that there's nonzero constant c such 
-that u = cv. An alternative definition is that the cross product is zero.  Let's start
-with the big theorem that these two things are equivalent\<close>
-
-lemma vt:
-  shows "(vector[1,0,0]::real^3) \<noteq> zvec" 
-  using zvec_def vector_3(1) zero_neq_one by metis
-
-lemma exists_projrel_refl: "\<exists>x. projrel x x" 
-using projrel_def [of "vector [1,0,0]::v3" "vector [1,0,0]::v3"]  vt by auto
-
-lemma symp_projrel: "symp projrel"
-  using divideR_right scaleR_zero_left cross_mult_right projrel_def 
-  unfolding symp_def projrel_def by metis
-
-lemma transp_projrel: "transp projrel"
-proof (rule transpI)
-  fix x y z
-  show "projrel x y \<Longrightarrow> projrel y z \<Longrightarrow>projrel x z" sorry
-qed
-
-lemma part_equivp_projrel: "part_equivp projrel"
-  by (rule part_equivpI [OF exists_projrel_refl symp_projrel transp_projrel])
-
-text \<open>\nick\jackson\<close>
-lemma smult_projrel: 
-  fixes x y c
-  assumes x_def: "x \<noteq> zvec"
-  assumes y_def: "y \<noteq> zvec"
-  assumes c_def: "c \<noteq> 0"
-  assumes smult: "x = c *\<^sub>R y"
-  shows "projrel x y"
-  using c_def projrel_def smult x_def y_def by blast
-text \<open>\done\<close>
-
-quotient_type rp2 = "v3" / partial: "projrel"
-  morphisms Rep_Proj Abs_Proj
-  using part_equivp_projrel .
-
-lemma Domainp_cr_proj [transfer_domain_rule]: "Domainp cr_rp2 = (\<lambda>x .((x \<noteq> zvec) \<and> projrel x x))"
-proof -
-  have "projrel x x \<longrightarrow> x  \<noteq> zvec" for x using projrel_def by blast
-  then show ?thesis using projrel_def rp2.domain by auto 
-qed
-
-lemma rep_P_nz:
-  fixes P
-  assumes a1: "P \<in> rp2_Points" 
-  shows "Rep_Proj P \<noteq> zvec" 
-  using projrel_def Quotient_rel_rep Quotient_rp2 by metis
-
-definition rp2_Points where
-"rp2_Points = (UNIV::rp2 set)" 
-
-definition rp2_Lines where
-"rp2_Lines = (UNIV::rp2 set)"
-
-lift_definition rp2_incid::"rp2 \<Rightarrow> rp2 \<Rightarrow> bool" is "\<lambda>P k. (P \<bullet> k = 0)"
-proof -
-  fix P1 P2 k1 k2
-  assume a1: "projrel P1 P2"
-  assume a2: "projrel k1 k2"
-  obtain s where P12: "s \<noteq> 0 \<and> P1 = s *\<^sub>R P2" 
-    using a1 projrel_def [of P1] cross3_def by fastforce
-  obtain t where k12: "t \<noteq> 0 \<and> k1 = t *\<^sub>R k2"
-    using a2 projrel_def [of k1] cross3_def by fastforce
-  have ts: "t \<noteq> 0 \<and> s \<noteq> 0" using P12 k12 by auto
-  have "(P1 \<bullet> k1 = 0) = (P1 \<bullet> (t *\<^sub>R k2) = 0)" using k12 by auto 
-  also have "... = ( P2 \<bullet>  k2 = 0)" using P12 ts by auto
-  finally show "(P1 \<bullet> k1 = 0) = (P2 \<bullet> k2 = 0)" .
-qed
-
-lemma incid_commute:
-  shows "rp2_incid A B \<longleftrightarrow> rp2_incid B A"
-  by (simp add: inner_commute rp2_incid.rep_eq)
-*)
 
 subsection\<open>Automorphisms of the real projective plane\<close>
 text\<open>
@@ -244,28 +148,10 @@ lemma vect_zero_eqv:
 
 lemma not_all_zero_eqv: "not_all_zero x y z \<longleftrightarrow> vector[x, y, z] \<noteq> (0 :: (real, 3) vec)"
   unfolding not_all_zero_def using vect_zero_eqv by auto
+lemma not_all_zero_eqv2: "not_all_zero x y z \<longleftrightarrow> vector[x, y, z] \<noteq> zvec"
+  unfolding not_all_zero_def using vect_zero_eqv by (metis zvec_def) 
 
-(*Now, the components of the definition of RP2 *)
-
-(*
-definition respects_scaling :: "(v3 \<Rightarrow> v3) \<Rightarrow> bool"
-  where "respects_scaling f \<longleftrightarrow> (\<forall>x::v3. \<forall>l :: real. l \<noteq> 0 \<longrightarrow> (\<exists>q . f (l *s x) = q *s (f x)))"
-
-(*Note that q is not required to be  non-zero; this requirement comes into play
-  in the next definition *)
-
-definition image_non_zero :: "(v3 \<Rightarrow> v3) \<Rightarrow> bool"
-  where "image_non_zero f \<longleftrightarrow> (\<forall>x :: v3 . x \<noteq> zvec\<longrightarrow> f x \<noteq> zvec)"
-
-definition well_defined :: "(v3 \<Rightarrow> v3) \<Rightarrow> bool"
-  where "well_defined f \<longleftrightarrow> respects_scaling f \<and> image_non_zero f"
-
-
-definition is_punctured_line :: "(v3) set \<Rightarrow> bool" 
-  where "is_punctured_line L \<longleftrightarrow> (\<exists> a b c  :: real. (not_all_zero a b c) \<and> 
-                         L = {x. a  * x$1 + b * x$2 + c * x$3 = 0})"
-*)
-
+(*Robert: could we simplify this definition by using rp2_coll? *)
 definition maps_lines_to_lines :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
   where "maps_lines_to_lines f \<longleftrightarrow> (\<forall>k P Q R . ((k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k) \<longrightarrow> 
                                    (\<exists>m . m \<in> rp2_Lines  \<and>  rp2_incid (f P) m \<and> rp2_incid (f Q) m \<and> rp2_incid (f R) m)))"
@@ -284,30 +170,44 @@ definition is_RP2_auto :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
 definition tom :: "m33 \<Rightarrow> (v3 \<Rightarrow> v3)"
   where "tom A = (if (invertible A) then (\<lambda>x. A *v x) else (\<lambda>x::v3. x))" 
 
+theorem "tom_inv" [simp]:
+  fixes A :: m33
+  assumes "invertible A"
+  shows "tom A = (\<lambda>x. A *v x)"
+  unfolding tom_def using assms by auto
+
+theorem "tom_nonz_det" [simp]:
+  fixes A :: m33
+  assumes "det A \<noteq> 0"
+  shows "tom A = (\<lambda>x. A *v x)"
+  unfolding tom_def using assms
+  by (simp add: invertible_det_nz)
+
+
 lift_definition rp2tom::"m33 \<Rightarrow> (rp2 \<Rightarrow> rp2)"
 is "tom"
 proof (transfer,clarsimp)
   show "\<And>A x y.
-       projrel x y \<Longrightarrow>
-       (projrel (tom A x) (tom A y))"
+       rp2rel x y \<Longrightarrow>
+       (rp2rel (tom A x) (tom A y))"
   proof -
     fix A::m33
     fix x::v3
     fix y::v3
-    assume ah: "projrel x y"
-    show "projrel (tom A x) (tom A y)" (is ?claim)
+    assume ah: "rp2rel x y"
+    show "rp2rel (tom A x) (tom A y)" (is ?claim)
     proof (cases "invertible A")
       case inv: True
       have ta: "tom A t = A *v t" for t using tom_def inv by auto
-      have xz: "x \<noteq> zvec"  using projrel_def ah by blast
-      have yz: "y \<noteq> zvec"  using projrel_def ah by blast
-      obtain c where "x = c *\<^sub>R y" using ah xz yz projrel_def by blast
+      have xz: "x \<noteq> zvec"  using rp2rel_def ah by blast
+      have yz: "y \<noteq> zvec"  using rp2rel_def ah by blast
+      obtain c where "x = c *\<^sub>R y" using ah xz yz rp2rel_def by blast
       have nzAt: "t \<noteq> zvec \<longrightarrow> A *v t \<noteq> zvec" for t using xz inv 
         by (metis invertible_def matrix_left_invertible_ker vect_zero_eqv zvec_def)
       have "tom A x \<noteq> zvec" using xz nzAt ta by auto
       have "tom A y \<noteq> zvec" using yz nzAt ta by auto
       then show ?thesis 
-        using \<open>tom A x \<noteq> zvec\<close> ah matrix_vector_mult_scaleR projrel_def tom_def by auto
+        using \<open>tom A x \<noteq> zvec\<close> ah matrix_vector_mult_scaleR rp2rel_def tom_def by auto
       next
       case id: False
       then show ?thesis 
@@ -316,8 +216,19 @@ proof (transfer,clarsimp)
   qed
 qed
 
+lemma "rp2tom_explicit":
+  fixes A
+  assumes "invertible A"
+  shows "rp2tom A = Abs_rp2 \<circ> (tom A) \<circ> Rep_rp2" 
+  using rp2tom_def
+  by (metis id_apply map_fun_apply map_fun_def)
 
-
+lemma "rp2tom_explicit2":
+  fixes A x
+  assumes "invertible A"
+  shows "(rp2tom A) x = Abs_rp2 ((tom A)(Rep_rp2 x))" 
+  using rp2tom_explicit
+  by (metis UNIV_I ar equal_implies_rp2rel rp2_Points_def rp2tom.abs_eq)
 
 (*== the following is more or less the set-up for Theorem 3.7 == *)
 
@@ -363,22 +274,9 @@ proof -
     using h2a by simp 
   have h3: "inner s ((tom (mat 1)) x) = inner s x"
     using matrix_vector_mul_lid tom_def by simp
-  show ?thesis using h1 h2 h3 tom_def by simp
+  show ?thesis using h1 h2 h3 tom_def 
+  using adj_inv_def h0 h2a invertible_right_inverse transpose_invertible by auto
 qed 
-
-lemma inv_matrices_image_non_zero:
-  fixes A :: m33
-  assumes invertible: "det A \<noteq> 0"
-  shows "image_non_zero (tom A)"
-  unfolding image_non_zero_def
-  unfolding tom_def
-proof (rule allI; rule impI) 
-  fix x :: v3
-  assume non_zero: "x \<noteq> 0" 
-  show "A *v x \<noteq> 0"
-    using invertible non_zero invertible_def invertible_det_nz matrix_left_invertible_ker
-    by auto
-qed
 
 lemma explicit_inner_prod:
   fixes s :: v3
@@ -411,13 +309,15 @@ lemma matrix_rows:
 lemma matrix_vect_mult_helper:
   fixes B :: m33
   fixes a b c :: real
+  assumes "invertible B"
   shows "(tom B) (vector[a, b, c]) = 
           vector[inner (vector [a, b, c]) (B $ 1), inner (vector [a, b, c]) (B $ 2), 
           inner (vector [a, b, c]) (B $ 3)]" 
 proof -
   let ?s = "vector[a, b, c]"
   have "(tom B) ?s$1 = inner ?s (B$1) \<and> (tom B) ?s$2 = inner ?s (B$2) \<and> (tom B) ?s$3 = inner ?s (B$3)" 
-    by (simp add: inner_commute matrix_vector_mul_component tom_def)
+    using  inner_commute matrix_vector_mul_component tom_def assms by metis
+(* (simp add: inner_commute matrix_vector_mul_component tom_def) *)
   then show ?thesis using vector_3
     by (smt (verit, ccfv_SIG) exhaust_3 vec_eq_iff)
 qed
@@ -467,14 +367,6 @@ lemma vect_vect_by_vect_mult:
   using matrix_by_vect_mult vector_3[of x y z]
   by (simp add: matrix_vector_mult_def)
 
-(*
-lemma matrices_respect_scaling:
-  fixes A :: m33
-  shows "respects_scaling (tom A)"
-  using tom_def respects_scaling_def[of "tom A"] vec.scale
-  by metis
-*)
-
 lemma maps_lines_to_lines_helper:
   fixes A :: m33
   fixes a b c :: real
@@ -489,7 +381,9 @@ proof -
   let ?e = "inner ?s (?B$2)"
   let ?f = "inner ?s (?B$3)"
   let ?r = "vector[?d, ?e, ?f]"
-  have rw1: "?r = tom ?B ?s" using matrix_vect_mult_helper by auto 
+  have rw1: "?r = tom ?B ?s" using matrix_vect_mult_helper 
+  by (metis adj_inv_def inverse_m_matrix_is_ident invertible invertible_det_nz invertible_right_inverse
+      transpose_invertible) 
   have req1: "a * x$1 + b*x$2 + c*x$3 = 0
               \<longrightarrow> ( ?d * ((tom A) x)$1 + ?e *((tom A) x)$2 + ?f *((tom A) x)$3 = 0)" for x
   proof (rule impI)
@@ -518,50 +412,68 @@ proof -
 qed 
   show ?thesis using req1 req2 by auto
 qed 
+lemma s0:
+  assumes "k \<in> rp2_Lines"
+  shows "rp2_incid P k \<longleftrightarrow>  ((Rep_rp2 P) \<bullet> (Rep_rp2 k)  = 0)"
+  by (simp add: rp2_incid.rep_eq)
 
 lemma inv_matrices_maps_lines_to_lines:
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
-  shows "maps_lines_to_lines (tom A)"
+  shows "maps_lines_to_lines (rp2tom A)"
   unfolding maps_lines_to_lines_def
-  proof (rule allI; rule impI)
-    fix L
-    assume have_line: "is_punctured_line L"
-    then obtain a b c :: real
-      where h1: "(not_all_zero a b c) \<and> L = {x. a  * x$1 + b * x$2 + c * x$3 = 0}"
-      using have_line is_punctured_line_def by auto
-    show "\<exists>L'. is_punctured_line L' \<and> tom A ` L \<subseteq> L'"
-      unfolding is_punctured_line_def
-    proof -
-      obtain d e f :: real
-        where h2: "not_all_zero d e f \<and> (\<forall>x :: v3. a * x$1 + b*x$2 + c*x$3 = 0
+proof -
+  fix k P Q R
+  have a0: "k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k \<longrightarrow>
+       (\<exists>m. m \<in> rp2_Lines \<and> rp2_incid ((rp2tom A) P) m \<and> rp2_incid ((rp2tom A) Q) m \<and> rp2_incid ((rp2tom A) R) m)" for k P Q R
+  proof (rule impI)
+    assume minor: "k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k "
+    then have  have_points: "P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points"
+    by (simp add: rp2_Points_def)
+    then have "((Rep_rp2 P) \<bullet> (Rep_rp2 k)  = 0) \<and> ((Rep_rp2 Q) \<bullet> (Rep_rp2 k)  = 0) \<and> ((Rep_rp2 Q) \<bullet> (Rep_rp2 k)  = 0)" 
+    using rp2_incid.rep_eq minor by auto
+  have " (m \<in> rp2_Lines) \<and> (rp2_incid (rp2tom A X) m) \<longleftrightarrow> ((Rep_rp2 (rp2tom A X)) \<bullet> (Rep_rp2 m)  = 0)" for X m 
+    using s0 rp2_Lines_def by auto                                     
+  then have a2: " (m \<in> rp2_Lines) \<and> (rp2_incid (rp2tom A X) m) \<longleftrightarrow> (((A *v (Rep_rp2  X)) \<bullet> (Rep_rp2 m)  = 0))" for X m 
+    using tom_nonz_det[of A] invertible rp2tom_explicit2[of A]
+  by (metis UNIV_I alt_rp2rel ar cross_refl equal_implies_rp2rel invertible_det_nz
+      invertible_left_inverse matrix_left_invertible_ker rp2_Points_def rp2_incid.abs_eq
+      zvec_alt)
+  obtain a b c :: real where abc_def: "(\<forall>V \<in> rp2_Points. rp2_incid V k
+    \<longleftrightarrow> ((a * (Rep_rp2 V)$1) + (b * (Rep_rp2 V)$2) + (c * (Rep_rp2 V)$3) = 0)) \<and> not_all_zero a b c"
+    using rp2_line_equation  minor not_all_zero_def by (metis RP2Q.p2)
+  let ?L = "{x. a  * x$1 + b * x$2 + c * x$3 = 0}"
+  obtain d e f  where coord_def: "not_all_zero d e f \<and> (\<forall>x :: v3. a * x$1 + b*x$2 + c*x$3 = 0
            \<longrightarrow> ( d * ((tom A) x)$1 + e *((tom A) x)$2 + f *((tom A) x)$3 = 0))" 
-        using maps_lines_to_lines_helper h1 invertible by presburger
-      let ?L' = "{x. d * x $ 1 + e * x $ 2 + f * x $ 3 = 0}"
-      have req1a: "tom A ` L \<subseteq> ?L'"
-        using h1 h2 by blast
-      have req2: "not_all_zero d e f"
-        using h2 by auto
-      have req1b: "is_punctured_line ?L'" using req2 is_punctured_line_def by auto
-      show "\<exists>L'. (\<exists>a b c. not_all_zero a b c \<and> L' = {x. a * x $ 1 + b * x $ 2 + c * x $ 3 = 0}) \<and>
-         tom A ` L \<subseteq> L'" using req1a req1b req2 by auto
-qed  
-qed 
+    using maps_lines_to_lines_helper[of A a b c ?L] invertible abc_def by presburger
+  obtain k' where k'_def: "(\<forall>V \<in> rp2_Points. rp2_incid V k'
+    \<longleftrightarrow> ((d * (Rep_rp2 V)$1) + (e * (Rep_rp2 V)$2) + (f * (Rep_rp2 V)$3) = 0))" by sorry
+  then have "k' \<in> rp2_Lines"
+    by (simp add: rp2_Lines_def)
+  have "(d * (Rep_rp2 (rp2tom A P))$1) + (e * (Rep_rp2 (rp2tom A P))$2) + (f * (Rep_rp2 (rp2tom A P))$3) = 0"
+    using s0 a2 assms explicit_inner_prod by sorry
+(* The above feels doable if we unfold the definitions enough *)
+  then have a3: "rp2_incid (rp2tom A P) k'" using k'_def have_points
+  by (metis UNIV_I rp2_Points_def)
+  (* Now repeat the above few lines for Q and R * -- TODO *)
+  then show "\<exists>m. m \<in> rp2_Lines \<and> rp2_incid (rp2tom A P) m \<and> rp2_incid (rp2tom A Q) m \<and> rp2_incid (rp2tom A R) m "
+    using rp2_line_equation maps_lines_to_lines_helper[of A] invertible a2 coord_def by sorry
+qed
+  show "\<forall>k P Q R.
+       k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k \<longrightarrow>
+       (\<exists>m. m \<in> rp2_Lines \<and> rp2_incid (rp2tom A P) m \<and> rp2_incid (rp2tom A Q) m \<and> rp2_incid (rp2tom A R) m)" using a0 by blast
+qed
 
 theorem inv_matrices_are_auts:
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
   shows "is_RP2_auto (tom A)" 
   unfolding is_RP2_auto_def
-  unfolding well_defined_def
+(*  unfolding well_defined_def *)
 proof (safe)
-  show "respects_scaling (tom A)" 
-    using matrices_respect_scaling by auto
-  show "image_non_zero (tom A)"
-    using invertible inv_matrices_image_non_zero by auto
   show "bij (tom A)"
     using tom_def invertible invertible_det_nz invertible_eq_bij by auto
-  show "maps_lines_to_lines (tom A)"
+  show "maps_lines_to_lines (Tom A)"
     using invertible inv_matrices_maps_lines_to_lines by auto
 qed
 
@@ -569,7 +481,7 @@ definition RP2_auto :: "(rp2 \<Rightarrow> rp2) set" where
 "RP2_auto = {A :: (rp2 \<Rightarrow> rp2) . (\<exists> f :: v3 \<Rightarrow> v3 . make_RP2_auto f = A)}"
 
 definition rp2_auto_to_transf :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (v3 \<Rightarrow> v3)"
-  where "rp2_auto_to_transf r = Rep_Proj \<circ> r \<circ> Abs_Proj"
+  where "rp2_auto_to_transf r = Rep_rp2 \<circ> r \<circ> Abs_rp2"
 
 
 (*== Page 21 ==*)
@@ -598,17 +510,17 @@ definition equiv_maps :: "(v3 \<Rightarrow> v3) \<Rightarrow> (v3 \<Rightarrow> 
 lift_definition RP2_equiv_maps :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (rp2 \<Rightarrow> rp2) \<Rightarrow> bool" is equiv_maps
 proof (transfer, clarsimp)
   show "\<And>f g h r . 
-         (\<And>x y . projrel x y \<Longrightarrow> projrel (f x) (g y)) \<Longrightarrow> 
-         (\<And>x y . projrel x y \<Longrightarrow> projrel (h x) (r y)) \<Longrightarrow> equiv_maps f h = equiv_maps g r"
+         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
+         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps f h = equiv_maps g r"
   proof (safe)
     fix f g h r 
-    assume "projrel x y \<Longrightarrow> projrel (f x) (g y)" for x y 
-    assume "projrel x y \<Longrightarrow> projrel (h x) (r y)" for x y
-    show "equiv_maps f h \<Longrightarrow> equiv_maps g r"by sledgehammer
+    assume "rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)" for x y 
+    assume "rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)" for x y
+    show "equiv_maps f h \<Longrightarrow> equiv_maps g r"by sorry
     next
       show "\<And>f g h r . 
-         (\<And>x y . projrel x y \<Longrightarrow> projrel (f x) (g y)) \<Longrightarrow> 
-         (\<And>x y . projrel x y \<Longrightarrow> projrel (h x) (r y)) \<Longrightarrow> equiv_maps g r \<Longrightarrow> equiv_maps f h" sorry
+         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
+         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps g r \<Longrightarrow> equiv_maps f h" sorry
 qed
 
 (* If the transformations for matrices A and B are equal up to a constant factor c,
