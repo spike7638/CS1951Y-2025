@@ -1,5 +1,5 @@
 theory "Chapter4-1"
-  imports Complex_Main "Chapter1-1"
+  imports Complex_Main "Chapter1-3"
 
 begin
 text \<open>Everything up to the Principle of Duality and the remarks after it. 
@@ -8,9 +8,7 @@ text \<open>Everything up to the Principle of Duality and the remarks after it.
 text \<open>\hadi\<close>
 fun mdualize :: "('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('l \<Rightarrow> 'p \<Rightarrow> bool)" 
   where "mdualize (incid) (l::'l) (P::'p) = incid P l"
-text \<open>\done\<close>
 
-text \<open>\hadi\<close>
 lemma mmi_eq: "incid = (mdualize (mdualize incid))" by fastforce
 text \<open>\done\<close>
 
@@ -116,7 +114,7 @@ lemma dp_p4:
   assumes dm: "dincid = mdualize incid"
   fixes k U
   assumes ku_facts: "k \<in> dLines \<and> U = {P. (P \<in> dPoints \<and> P d\<lhd> k)}"
-  shows "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]"
+  shows "\<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q,R,S]"
 proof -
   obtain l where ldef: "l \<in> Lines \<and> (\<not> incid k l)" using ku_facts pp
     projective_plane.non_containing_line [of Points Lines] dLdef by auto
@@ -157,7 +155,7 @@ proof (unfold_locales)
     \<and> \<not> (projective_plane_data.pcollinear dPoints dLines dincid P Q R)"
     using assms dp_p3 [of _ _ incid] by simp
   show "\<lbrakk>k \<in> dLines; U = {P. (P \<in> dPoints \<and> P d\<lhd> k)}\<rbrakk> 
-    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct [Q, R, S]" for k U
+    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q,R,S]" for k U
     using assms dp_p4 [of _ _ incid] by simp
 qed
 text \<open>\done\<close>
@@ -235,126 +233,118 @@ theorem dual_plane_is_desarguesian:
 proof
   show dualp: "projective_plane dPoints dLines dincid" 
     using assms dual_plane_is_projective unfolding desarguesian_def by auto
+  let ?dmeet = "projective_plane_data.meet dPoints dLines dincid"
+  let ?djoin = "projective_plane_data.join dPoints dLines dincid"
+  let ?meet = "projective_plane_data.meet Points Lines incid"
+  let ?join = "projective_plane_data.join Points Lines incid"
+  let ?dpcollinear = "projective_plane_data.pcollinear dPoints dLines dincid"
+  let ?pcollinear = "projective_plane_data.pcollinear Points Lines incid"
   show "\<forall>M A B C A' B' C'. distinct[M,A,B,C,A',B',C'] \<and> M \<in> dPoints 
     \<and> A \<in> dPoints \<and> B \<in> dPoints \<and> C \<in> dPoints 
     \<and> A' \<in> dPoints \<and> B' \<in> dPoints \<and> C' \<in> dPoints 
-    \<and> projective_plane_data.pcollinear dPoints dLines dincid M A A'
-    \<and> projective_plane_data.pcollinear dPoints dLines dincid M B B'
-    \<and> projective_plane_data.pcollinear dPoints dLines dincid M C C'
-    \<and> (\<not> projective_plane_data.pcollinear dPoints dLines dincid A B C) 
-    \<and> (\<not> projective_plane_data.pcollinear dPoints dLines dincid A' B' C')
-    \<and> (distinct[(projective_plane_data.join dPoints dLines dincid A A'),
-        (projective_plane_data.join dPoints dLines dincid B B'),
-        (projective_plane_data.join dPoints dLines dincid C C')])
-    \<longrightarrow> projective_plane_data.pcollinear dPoints dLines dincid 
-      (projective_plane_data.meet dPoints dLines dincid 
-        (projective_plane_data.join dPoints dLines dincid A B)
-        (projective_plane_data.join dPoints dLines dincid A' B'))
-      (projective_plane_data.meet dPoints dLines dincid 
-        (projective_plane_data.join dPoints dLines dincid A C)
-        (projective_plane_data.join dPoints dLines dincid A' C'))
-      (projective_plane_data.meet dPoints dLines dincid 
-        (projective_plane_data.join dPoints dLines dincid B C)
-        (projective_plane_data.join dPoints dLines dincid B' C'))"
-  proof (clarify)
+    \<and> ?dpcollinear M A A' \<and> ?dpcollinear M B B' \<and> ?dpcollinear M C C'
+    \<and> (\<not> ?dpcollinear A B C) \<and> (\<not> ?dpcollinear A' B' C')
+    \<and> (distinct[(?djoin A A'), (?djoin B B'), (?djoin C C')])
+    \<longrightarrow> ?dpcollinear (?dmeet (?djoin A B) (?djoin A' B'))
+      (?dmeet (?djoin A C) (?djoin A' C'))
+      (?dmeet (?djoin B C) (?djoin B' C'))" 
+  proof (clarsimp)
     fix M A B C A' B' C'
-    assume alldist: "distinct[M,A,B,C,A',B',C']"
-    and m:"M \<in> dPoints" and a:"A \<in> dPoints" and b:"B \<in> dPoints" and c:"C \<in> dPoints"
-    and a':"A' \<in> dPoints" and b':"B' \<in> dPoints" and c':"C' \<in> dPoints" 
-    and maa': "projective_plane_data.pcollinear dPoints dLines dincid M A A'"
-    and mbb': "projective_plane_data.pcollinear dPoints dLines dincid M B B'"
-    and mcc': "projective_plane_data.pcollinear dPoints dLines dincid M C C'"
-    and abc: "\<not> projective_plane_data.pcollinear dPoints dLines dincid A B C"
-    and a'b'c': "\<not> projective_plane_data.pcollinear dPoints dLines dincid A' B' C'"
-    and aa'bb'cc': "(distinct[(projective_plane_data.join dPoints dLines dincid A A'),
-      (projective_plane_data.join dPoints dLines dincid B B'),
-      (projective_plane_data.join dPoints dLines dincid C C')])"
-    let ?P = "(projective_plane_data.meet dPoints dLines dincid 
-      (projective_plane_data.join dPoints dLines dincid A B)
-      (projective_plane_data.join dPoints dLines dincid A' B'))"
-    let ?Q = "(projective_plane_data.meet dPoints dLines dincid 
-      (projective_plane_data.join dPoints dLines dincid A C)
-      (projective_plane_data.join dPoints dLines dincid A' C'))"
-    let ?R = "(projective_plane_data.meet dPoints dLines dincid 
-      (projective_plane_data.join dPoints dLines dincid B C)
-      (projective_plane_data.join dPoints dLines dincid B' C'))"
-    show "projective_plane_data.pcollinear dPoints dLines dincid ?P ?Q ?R"
+    assume ptsdef: "M \<in> dPoints" "A \<in> dPoints" "B \<in> dPoints" "C \<in> dPoints" 
+      "A' \<in> dPoints" "B' \<in> dPoints" "C' \<in> dPoints" 
+    assume alldist: "M \<noteq> A" "M \<noteq> B" "M \<noteq> C" "M \<noteq> A'" "M \<noteq> B'" "M \<noteq> C'" "A \<noteq> B" "A \<noteq> C" 
+      "A \<noteq> A'" "A \<noteq> B'" "A \<noteq> C'" "B \<noteq> C" "B \<noteq> A'" "B \<noteq> B'" "B \<noteq> C'" "C \<noteq> A'" 
+      "C \<noteq> B'" "C \<noteq> C'" "A' \<noteq> B'" "A' \<noteq> C'" "B' \<noteq> C'"
+    assume maa': "?dpcollinear M A A'" and mbb': "?dpcollinear M B B'" 
+      and mcc': "?dpcollinear M C C'" and abc: "\<not> ?dpcollinear A B C" 
+      and a'b'c': "\<not> ?dpcollinear A' B' C'"
+    assume aa'bb'cc': "(?djoin A A') \<noteq> (?djoin B B')" 
+      "(?djoin A A') \<noteq> (?djoin C C')" "(?djoin B B') \<noteq> (?djoin C C')"
+    let ?P = "(?dmeet (?djoin A B) (?djoin A' B'))"
+    let ?Q = "(?dmeet (?djoin A C) (?djoin A' C'))"
+    let ?R = "(?dmeet (?djoin B C) (?djoin B' C'))"
+    show "?dpcollinear ?P ?Q ?R"
     proof -
-      have pdef: "?P \<in> dPoints" and qdef: "?Q \<in> dPoints" and rdef: "?R \<in> dPoints"
-        using alldist a a' b b' c c' aa'bb'cc' dualp distinct_length_2_or_more
-        projective_plane.join_properties1 [of dPoints dLines dincid]
-        projective_plane.join_properties2 [of dPoints dLines dincid]
-        projective_plane.meet_properties2 by metis+
+      have joinsdist: "(?djoin A B) \<noteq> (?djoin A' B')" 
+        "(?djoin A C) \<noteq> (?djoin A' C')" "(?djoin B C) \<noteq> (?djoin B' C')" 
+        using ptsdef alldist aa'bb'cc' dualp projective_plane.join_properties1
+        projective_plane.join_properties2 [of _ _ dincid] by metis+
+      then have pqr: "?P \<in> dPoints" "?Q \<in> dPoints" "?R \<in> dPoints" 
+        using ptsdef alldist dualp projective_plane.mjj_point by metis+
+      have PneqQ: "?P \<noteq> ?Q"
+      proof
+        assume "?P = ?Q"
+        then have "(?djoin A B) = (?djoin A C) \<or> (?djoin A' B') = (?djoin A' C')"
+          using ptsdef alldist projective_plane.join_properties1 [of _ _ dincid]
+          projective_plane.unique_meet [of dPoints dLines _ "?djoin A B" "?djoin A C"] 
+          dualp projective_plane.unique_meet [of _ _ _ "?djoin A' B'" "?djoin A' C'"]
+          joinsdist projective_plane.meet_properties2 [of _ _ dincid] by metis
+        then show False using ptsdef abc a'b'c' projective_plane.jjp_coll
+          dualp projective_plane.pcollinear_degeneracy by metis
+      qed
       obtain M0 A0 A'0 where m0: "M0 \<in> Points \<and> incid M0 M \<and> incid M0 A \<and> incid M0 A'" 
         and a0: "A0 \<in> Points \<and> incid A0 M \<and> incid A0 B \<and> incid A0 B'"
         and a'0: "A'0 \<in> Points \<and> incid A'0 M \<and> incid A'0 C \<and> incid A'0 C'" 
-        using m a b c a' b' c' maa' mbb' mcc' dLdef dm 
+        using ptsdef maa' mbb' mcc' dLdef dm 
         unfolding projective_plane_data.pcollinear_def by auto
       obtain B0 B'0 where b0: "B0 \<in> Points \<and> incid B0 A \<and> incid B0 B" 
         and b'0: "B'0 \<in> Points \<and> incid B'0 A \<and> incid B'0 C" 
-        using a b c dLdef dm dualp mdualize.elims(2) projective_plane.p3 
+        using ptsdef dLdef dm dualp mdualize.elims(2) projective_plane.p3 
         projective_plane.p1 [of _ _ dincid] by (metis (full_types))
       obtain C0 C'0 where c0: "C0 \<in> Points \<and> incid C0 A' \<and> incid C0 B'" 
         and c'0: "C'0 \<in> Points \<and> incid C'0 A' \<and> incid C'0 C'" 
-        using a' b' c' dLdef dm dualp mdualize.elims(2) projective_plane.p3
+        using ptsdef dLdef dm dualp mdualize.elims(2) projective_plane.p3
         projective_plane.p1 [of _ _ dincid] by (metis (full_types))
       have allp: "M0 \<in> Points \<and> A0 \<in> Points \<and> B0 \<in> Points \<and> C0 \<in> Points \<and> A'0 \<in> Points 
         \<and> B'0 \<in> Points \<and> C'0 \<in> Points" using m0 a0 b0 c0 a'0 b'0 c'0 by simp
       have alldist0: "distinct[M0,A0,B0,C0,A'0,B'0,C'0]"
       proof (rule ccontr)
         assume "\<not> distinct[M0,A0,B0,C0,A'0,B'0,C'0]"
-        then consider
-        "B0 = B'0" | "C0 = C'0" | "M0 = A0" | "M0 = B0" | "M0 = C0" | "M0 = A'0" 
-        | "M0 = B'0" | "M0 = C'0" | "A0 = B0" | "A0 = C0" | "A0 = A'0" | "A0 = B'0" 
-        | "A0 = C'0" | "B0 = C0" | "B0 = A'0" | "B0 = C'0" | "C0 = A'0" | "C0 = B'0" 
-        | "A'0 = B'0" | "A'0 = C'0" | "B'0 = C'0" by fastforce
-        then show False using alldist m a a' b b' c c' aa'bb'cc' m0 a0 b0 a'0 b'0 dm 
-        dualp dLdef projective_plane.join_properties2 [of _ _ dincid] apply cases 
-        apply auto+ using abc projective_plane_data.pcollinear_def apply fastforce
-        using c0 c'0 a'b'c' projective_plane_data.pcollinear_def apply fastforce
-        using a'b'c' c'0 c0 abc unfolding projective_plane_data.pcollinear_def by metis+
+        then consider "B0 = B'0" | "C0 = C'0" | "M0 = A0" | "M0 = B0" | "M0 = C0" 
+          | "M0 = A'0" | "M0 = B'0" | "M0 = C'0" | "A0 = B0" | "A0 = C0" | "A0 = A'0" 
+          | "A0 = B'0" | "A0 = C'0" | "B0 = C0" | "B0 = A'0" | "B0 = C'0" | "C0 = A'0" 
+          | "C0 = B'0" | "A'0 = B'0" | "A'0 = C'0" | "B'0 = C'0" by auto
+        then show False using alldist ptsdef abc a'b'c' aa'bb'cc' m0 a0 b0 
+          c0 a'0 b'0 c'0 dm dualp dLdef projective_plane.join_properties2 [of _ _ dincid] 
+          projective_plane_data.pcollinear_def apply cases apply (auto+, fastforce, fastforce)
+          unfolding projective_plane_data.pcollinear_def by metis+
       qed
-      have b0ab: "B0 = projective_plane_data.meet Points Lines incid A B"
-        and b'0ac: "B'0 = projective_plane_data.meet Points Lines incid A C"
-        using a b c b b'0 b0 abc dLdef dPdef dm dsp dual_join_is_meet mdualize.elims(3) 
-        dualp projective_plane.join_properties2 [of dPoints _ _ A] desarguesian_def 
+      have b0ab: "B0 = ?meet A B" and b'0ac: "B'0 = ?meet A C" using ptsdef 
+        b0 b'0 abc dLdef dPdef dm dsp dual_join_is_meet mdualize.elims(3) dualp
+        projective_plane.join_properties2 [of dPoints _ _ A] desarguesian_def 
         [of _ _ incid] projective_plane_data.meet_def [of _ _ incid A]
         projective_plane_data.pcollinear_def [of _ _ dincid] by (metis (lifting))+
-      have m0a0a'0: " projective_plane_data.pcollinear Points Lines incid M0 A0 A'0"
-        and m0b0b'0: "projective_plane_data.pcollinear Points Lines incid M0 B0 B'0"
-        and m0c0c'0: "projective_plane_data.pcollinear Points Lines incid M0 C0 C'0"
-        using projective_plane_data.pcollinear_def [of _ _ incid] 
-         m a a' m0 a0 a'0 b0 b'0 c0 c'0 dPdef by auto
+      have m0a0a'0: "?pcollinear M0 A0 A'0" and m0b0b'0: "?pcollinear M0 B0 B'0"
+        and m0c0c'0: "?pcollinear M0 C0 C'0" using ptsdef m0 a0 a'0 b0 b'0 c0 c'0
+        projective_plane_data.pcollinear_def [of _ _ incid] dPdef by auto
       have a0b0b: "incid A0 B \<and> incid B0 B \<and> A0 \<noteq> B0" 
         and a0c0b': "incid A0 B' \<and> incid C0 B' \<and> A0 \<noteq> C0" 
         and a'0b'0c: "incid A'0 C \<and> incid B'0 C \<and> A'0 \<noteq> B'0"
         and a'0c'0c': "incid A'0 C' \<and> incid C'0 C' \<and> A'0 \<noteq> C'0" 
         using a0 b0 c0 a'0 b'0 c'0 alldist0 by auto
-      then have bj2a0b0: "B = projective_plane_data.join Points Lines incid A0 B0" 
-        and b'j2a0c0: "B' = projective_plane_data.join Points Lines incid A0 C0"
-        and cj2a'0b'0: "C = projective_plane_data.join Points Lines incid A'0 B'0" 
-        and c'j2a'0c'0: "C' = projective_plane_data.join Points Lines incid A'0 C'0"
-        using allp b b' c c' dPdef projective_plane.join_properties2 dsp 
+      then have bj2a0b0: "B = ?join A0 B0" and b'j2a0c0: "B' = ?join A0 C0"
+        and cj2a'0b'0: "C = ?join A'0 B'0" and c'j2a'0c'0: "C' = ?join A'0 C'0"
+        using ptsdef allp dPdef projective_plane.join_properties2 dsp 
         unfolding desarguesian_def by auto
-      have a0b0c0: "\<not> projective_plane_data.pcollinear Points Lines incid A0 B0 C0"
+      have a0b0c0: "\<not> ?pcollinear A0 B0 C0"
       proof (rule ccontr)
-        assume "\<not> (\<not> projective_plane_data.pcollinear Points Lines incid A0 B0 C0)"
+        assume "\<not> (\<not> ?pcollinear A0 B0 C0)"
         then obtain l1 where l1def: "l1 \<in> Lines \<and> incid A0 l1 \<and> incid B0 l1 \<and> incid C0 l1" 
           using a0 b0 c0 projective_plane_data.pcollinear_def [of _ _ incid] by auto
-        then have "B' = l1" using b' a0 c0 a0c0b' dLdef dPdef dm dualp 
+        then have "B' = l1" using ptsdef a0 c0 a0c0b' dLdef dPdef dm dualp 
           projective_plane.unique_meet [of _ _ dincid] by auto
-        then have "B' = B" using l1def b a0 b0 a0b0b dLdef dPdef dm dualp
+        then have "B' = B" using l1def ptsdef a0 b0 a0b0b dLdef dPdef dm dualp
           projective_plane.unique_meet [of _ _ dincid] by auto
         then show False using alldist by simp
       qed
-      have a'0b'0c'0: "\<not> projective_plane_data.pcollinear Points Lines incid A'0 B'0 C'0"
+      have a'0b'0c'0: "\<not> ?pcollinear A'0 B'0 C'0"
       proof (rule ccontr)
-        assume "\<not> (\<not> projective_plane_data.pcollinear Points Lines incid A'0 B'0 C'0)"
+        assume "\<not> (\<not> ?pcollinear A'0 B'0 C'0)"
         then obtain l2 where l2def: "l2 \<in> Lines \<and> incid A'0 l2 \<and> incid B'0 l2 \<and> incid C'0 l2" 
           using a'0 b'0 c'0 projective_plane_data.pcollinear_def [of _ _ incid] by auto
-        then have "C = l2" using c a'0 b'0 a'0b'0c dLdef dPdef dm dualp 
+        then have "C = l2" using ptsdef a'0 b'0 a'0b'0c dLdef dPdef dm dualp 
           projective_plane.unique_meet [of _ _ dincid] by auto
-        then have "C = C'" using l2def c' a'0 c'0 a'0c'0c' dLdef dPdef dm dualp
+        then have "C = C'" using l2def ptsdef a'0 c'0 a'0c'0c' dLdef dPdef dm dualp
           projective_plane.unique_meet [of _ _ dincid] by auto
         then show False using alldist by simp
       qed
@@ -362,82 +352,51 @@ proof
         and b0ab'0a: "incid B0 A \<and> incid B'0 A \<and> B0 \<noteq> B'0" 
         and "incid C0 A' \<and> incid C'0 A' \<and> C0 \<noteq> C'0"
         using a0 b0 c0 a'0 b'0 c'0 alldist0 by simp+
-      then have "M = (projective_plane_data.join Points Lines incid A0 A'0)" 
-        and "A = (projective_plane_data.join Points Lines incid B0 B'0)"
-        and "A' = (projective_plane_data.join Points Lines incid C0 C'0)"
-        using m a a' a0 b0 c0 a'0 b'0 c'0 dLdef dPdef dm dualp mmi_eq
+      then have "M = (?join A0 A'0)" "A = (?join B0 B'0)" "A' = (?join C0 C'0)"
+        using ptsdef a0 b0 c0 a'0 b'0 c'0 dLdef dPdef dm dualp mmi_eq
         dual_plane_is_projective projective_plane.join_properties2 by metis+
-      then have a0a'0b0b'0c0c'0: 
-        "(distinct[(projective_plane_data.join Points Lines incid A0 A'0),
-          (projective_plane_data.join Points Lines incid B0 B'0),
-          (projective_plane_data.join Points Lines incid C0 C'0)])" 
+      then have joins0dist: "(distinct[(?join A0 A'0),(?join B0 B'0),(?join C0 C'0)])" 
         using alldist by auto
-      let ?P' = "(projective_plane_data.meet Points Lines incid 
-        (projective_plane_data.join Points Lines incid A0 B0)
-        (projective_plane_data.join Points Lines incid A'0 B'0))"
-      let ?Q' = "(projective_plane_data.meet Points Lines incid 
-        (projective_plane_data.join Points Lines incid A0 C0)
-        (projective_plane_data.join Points Lines incid A'0 C'0))"
-      let ?R' = "(projective_plane_data.meet Points Lines incid 
-        (projective_plane_data.join Points Lines incid B0 C0)
-        (projective_plane_data.join Points Lines incid B'0 C'0))"
-      have p'q'r': "projective_plane_data.pcollinear Points Lines incid ?P' ?Q' ?R'"
-        using alldist0 dsp allp m0a0a'0 m0b0b'0 m0c0c'0 a0b0c0 a'0b'0c'0 a0a'0b0b'0c0c'0
-        unfolding desarguesian_def projective_plane_data.pcollinear_def by blast
-      have "?P' = projective_plane_data.meet Points Lines incid B C" 
-        using bj2a0b0 cj2a'0b'0 by auto
-      then have p'bc: "?P' = projective_plane_data.join dPoints dLines dincid B C"
-        using dm dsp dPdef dLdef dual_join_is_meet [of _ _ incid _ B C] 
-        unfolding desarguesian_def by auto
-      have "?Q' = projective_plane_data.meet Points Lines incid B' C'" 
-        using b'j2a0c0 c'j2a'0c'0 by auto
-      then have q'b'c': "?Q' = projective_plane_data.join dPoints dLines dincid B' C'"
-        using dm dsp dPdef dLdef dual_join_is_meet [of _ _ incid _ B' C'] 
-        unfolding desarguesian_def by auto
-      have "?R' = projective_plane_data.meet Points Lines incid ?P ?Q" 
-        using alldist a a' b b' c c' b0 c0 b'0 c'0 dLdef dPdef dual_meet_is_join 
-        [of _ _ incid _ B0 C0] dual_meet_is_join [of _ _ incid _ B'0 C'0]
+      let ?P' = "(?meet (?join A0 B0) (?join A'0 B'0))"
+      let ?Q' = "(?meet (?join A0 C0) (?join A'0 C'0))"
+      let ?R' = "(?meet (?join B0 C0) (?join B'0 C'0))"
+      have p'q'r': "?pcollinear ?P' ?Q' ?R'"
+        using alldist0 dsp allp m0a0a'0 m0b0b'0 m0c0c'0 a0b0c0 a'0b'0c'0 joins0dist
+        unfolding desarguesian_def projective_plane_data.pcollinear_def by smt
+      have "?P' = ?meet B C" using bj2a0b0 cj2a'0b'0 by auto
+      then have p'bc: "?P' = ?djoin B C" using dm dsp dPdef dLdef
+        dual_join_is_meet [of _ _ incid _ B C] unfolding desarguesian_def by auto
+      have "?Q' = ?meet B' C'" using b'j2a0c0 c'j2a'0c'0 by auto
+      then have q'b'c': "?Q' = ?djoin B' C'" using dm dsp dPdef dLdef 
+        dual_join_is_meet [of _ _ incid _ B' C'] unfolding desarguesian_def by auto
+      have "?R' = ?meet ?P ?Q" using alldist ptsdef b0 c0 b'0 c'0 dLdef dPdef 
+        dual_meet_is_join [of _ _ incid _ B0 C0] dual_meet_is_join [of _ _ incid _ B'0 C'0]
         dm dsp dualp projective_plane.join_properties2 [of _ _ dincid] 
         unfolding desarguesian_def [of _ _ incid] by auto
-      then have r'pq: "?R' = projective_plane_data.join dPoints dLines dincid ?P ?Q"
-        using dm dsp dPdef dLdef dual_join_is_meet [of _ _ incid] 
-        unfolding desarguesian_def by auto
-      have p'def: "?P' \<in> Points" and q'def: "?Q' \<in> Points"
+      then have r'pq: "?R' = ?djoin ?P ?Q" using dm dsp dPdef dLdef 
+        dual_join_is_meet [of _ _ incid] unfolding desarguesian_def by auto
+      then have pr'qr': "dincid ?P ?R' \<and> dincid ?Q ?R'" using pqr PneqQ 
+        dualp projective_plane.join_properties1 [of _ _ dincid] by simp
+      have p'q'pts: "?P' \<in> Points" "?Q' \<in> Points"
         using alldist projective_plane.join_properties1 [of _ _ dincid] 
-        b c b' c' p'bc q'b'c' b'0ac b0ab b0ab'0a dLdef dualp by auto
-      have r'def: "?R' \<in> Points" using b0 c0 b'0 c'0 a0a'0b0b'0c0c'0 alldist0 
+        ptsdef p'bc q'b'c' b'0ac b0ab b0ab'0a dLdef dualp by auto
+      have r'pt: "?R' \<in> Points" using b0 c0 b'0 c'0 joins0dist alldist0 
         distinct_length_2_or_more dsp projective_plane.join_properties1 
         [of _ _ incid] projective_plane.join_properties2 [of Points _ incid] 
         projective_plane.meet_properties2 unfolding desarguesian_def by metis
-      have p'nq': "?P' \<noteq> ?Q'" using b c b' c' a0 a'0 a0ma'0m p'bc q'b'c' 
-        alldist distinct_length_2_or_more dLdef dm dualp mdualize.elims(3) 
-        projective_plane.unique_meet [of _ _ dincid] 
-        projective_plane.join_properties1 by metis
-      have "?R = projective_plane_data.meet dPoints dLines dincid ?P' ?Q'"
-        using p'bc q'b'c' by auto
-      then have "?R = projective_plane_data.join Points Lines incid ?P' ?Q'"
-        using dLdef dPdef dm unfolding projective_plane_data.join_def
-        projective_plane_data.meet_def by simp
-      obtain S where "S \<in> Lines \<and> incid ?P' S \<and> incid ?Q' S \<and> incid ?R' S"
-        using p'q'r' p'def q'def r'def 
-        unfolding projective_plane_data.pcollinear_def by auto
+      have p'nq': "?P' \<noteq> ?Q'" using ptsdef a0 a'0 a0ma'0m p'bc q'b'c' 
+        alldist dLdef dm dualp mdualize.elims(3) projective_plane.join_properties1
+        projective_plane.unique_meet [of _ _ dincid] by metis
+      obtain S where "S \<in> Lines \<and> incid ?P' S \<and> incid ?Q' S \<and> incid ?R' S" using p'q'r' 
+        p'q'pts r'pt unfolding projective_plane_data.pcollinear_def by auto
       then have p'q'r's: "S \<in> dPoints \<and> dincid S ?P' \<and> dincid S ?Q' \<and> dincid S ?R'"
         using dPdef dm by simp
-      then have "S = ?R" using p'def q'def p'bc q'b'c' p'nq' dLdef dualp 
+      then have "S = ?R" using p'q'pts r'pt p'bc q'b'c' p'nq' dLdef dualp 
         projective_plane.meet_properties2 [of _ _ dincid] 
         projective_plane.unique_meet [of _ _ dincid] by simp
       then have rr': "dincid ?R ?R'" using p'q'r's by simp
-      have "?P \<noteq> ?Q" using a b c a' b' c' alldist b0 c0 b'0 c'0 alldist0 dLdef dm
-        projective_plane.join_properties2 [of dPoints dLines dincid A B] 
-        projective_plane.join_properties2 [of dPoints dLines dincid A C] 
-        projective_plane.join_properties2 [of dPoints dLines dincid A'] 
-        projective_plane.meet_properties2 [of dPoints dLines dincid C0 B0] 
-        projective_plane.meet_properties2 [of dPoints dLines dincid C'0 B'0] 
-        dualp distinct_length_2_or_more mdualize.elims(3) by (metis (full_types))
-      then have "dincid ?P ?R' \<and> dincid ?Q ?R'" using pdef qdef r'pq dualp 
-        projective_plane.join_properties1 [of _ _ dincid] by simp
       then show ?thesis unfolding projective_plane_data.pcollinear_def
-        using pdef qdef rdef rr' r'def dLdef by auto
+        using pqr pr'qr' rr' r'pt dLdef by auto
     qed
   qed
 qed
@@ -473,16 +432,14 @@ theorem double_dual_isomorphic:
   defines ddLdef: "ddLines \<equiv> dPoints"
   fixes ddincid :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
   assumes ddm: "ddincid = mdualize dincid"
-  shows "\<exists>(f::('p \<Rightarrow> 'p)). (bij_betw f Points ddPoints) 
-    \<and> (\<forall>A B C. (projective_plane_data.pcollinear Points Lines incid A B C) 
-    \<longrightarrow> (projective_plane_data.pcollinear ddPoints ddLines ddincid (f A) (f B) (f C)))" 
+  shows "\<exists>f. pp_isomorphism Points Lines incid ddPoints ddLines ddincid f" 
 proof -
   obtain f::"'p \<Rightarrow> 'p" where fdef: "f P = P" for P by simp
-  then have fbij: "bij_betw f Points ddPoints" using dLdef ddPdef bij_betwI' [of _ f] by simp
-  have "\<forall>A B C. (projective_plane_data.pcollinear Points Lines incid A B C) 
-    \<longrightarrow> (projective_plane_data.pcollinear ddPoints ddLines ddincid (f A) (f B) (f C))"
-    using assms fdef projective_plane_data.pcollinear_def [of Points Lines] by simp
-  then show ?thesis using fbij by auto
+  then have "bij_betw f Points ddPoints" 
+    using dLdef ddPdef bij_betwI' [of _ f] by simp
+  then show ?thesis using fdef dPdef dLdef ddPdef ddLdef dm ddm mmi_eq pp
+    unfolding pp_morphism_def pp_morphism_axioms_def pp_isomorphism_def
+    pp_isomorphism_axioms_def by metis
 qed
 text \<open>\done\<close>
 
@@ -523,28 +480,28 @@ proof
     using assms dual_plane_is_projective unfolding nonfano_def by auto
   show "\<forall>A B C D. distinct[A,B,C,D] 
     \<and> A \<in> dPoints \<and> B \<in> dPoints \<and> C \<in> dPoints \<and> D \<in> dPoints
-    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid A B C 
-    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid A B D
-    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid A C D
-    \<and> \<not> projective_plane_data.pcollinear dPoints dLines dincid B C D
-    \<longrightarrow> (\<not> projective_plane_data.pcollinear dPoints dLines dincid
-      (projective_plane_data.meet dPoints dLines dincid
+    \<and> \<not> ?dpcollinear A B C 
+    \<and> \<not> ?dpcollinear A B D
+    \<and> \<not> ?dpcollinear A C D
+    \<and> \<not> ?dpcollinear B C D
+    \<longrightarrow> (\<not> ?dpcollinear
+      (?dmeet
         (projective_plane_data.join dPoints dLines dincid A B)
         (projective_plane_data.join dPoints dLines dincid C D))
-      (projective_plane_data.meet dPoints dLines dincid
+      (?dmeet
         (projective_plane_data.join dPoints dLines dincid A C)
         (projective_plane_data.join dPoints dLines dincid B D))
-      (projective_plane_data.meet dPoints dLines dincid
+      (?dmeet
         (projective_plane_data.join dPoints dLines dincid A D)
         (projective_plane_data.join dPoints dLines dincid B C)))"
   proof (clarify)
     fix A B C D
     assume alldist: "distinct[A,B,C,D]"
     and a:"A \<in> dPoints" and b:"B \<in> dPoints" and c:"C \<in> dPoints" and d:"D \<in> dPoints"
-    and abc: "\<not> projective_plane_data.pcollinear dPoints dLines dincid A B C" 
-    and abd: "\<not> projective_plane_data.pcollinear dPoints dLines dincid A B D"
-    and acd: "\<not> projective_plane_data.pcollinear dPoints dLines dincid A C D"
-    and bcd: "\<not> projective_plane_data.pcollinear dPoints dLines dincid B C D"
+    and abc: "\<not> ?dpcollinear A B C" 
+    and abd: "\<not> ?dpcollinear A B D"
+    and acd: "\<not> ?dpcollinear A C D"
+    and bcd: "\<not> ?dpcollinear B C D"
     let ?P = "projective_plane_data.meet dPoints dLines dincid
       (projective_plane_data.join dPoints dLines dincid A B)
       (projective_plane_data.join dPoints dLines dincid C D)"
@@ -554,9 +511,9 @@ proof
     let ?R = "projective_plane_data.meet dPoints dLines dincid
       (projective_plane_data.join dPoints dLines dincid A D)
       (projective_plane_data.join dPoints dLines dincid B C)"
-    show "projective_plane_data.pcollinear dPoints dLines dincid ?P ?Q ?R \<Longrightarrow> False"
+    show "?dpcollinear ?P ?Q ?R \<Longrightarrow> False"
     proof -
-      assume pqr: "projective_plane_data.pcollinear dPoints dLines dincid ?P ?Q ?R"
+      assume pqr: "?dpcollinear ?P ?Q ?R"
       obtain A0 B0 C0 D0 where a0: "A0 \<in> Points \<and> incid A0 B \<and> incid A0 D"
         and b0: "B0 \<in> Points \<and> incid B0 C \<and> incid B0 D"
         and c0: "C0 \<in> Points \<and> incid C0 A \<and> incid C0 B"
