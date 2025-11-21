@@ -2040,6 +2040,56 @@ proof (safe)
     using assms s [of n k] meet_def by (metis (no_types, lifting))+
 qed
 
+theorem (in projective_plane) pcollinear_if_two_points_equal:
+  fixes A B C
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points"
+  assumes "A = B"
+  shows "pcollinear A B C"
+proof - 
+  show ?thesis by (metis assms(1,2) p1 p3 pcollinear_def)
+qed
+
+theorem (in projective_plane_data) collinear_comm:
+  fixes A B C
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points"
+  assumes "pcollinear A B C"
+  shows "pcollinear A C B \<and> pcollinear B A C \<and> pcollinear B C A \<and>
+        pcollinear C A B \<and> pcollinear C B A"
+proof - 
+  show ?thesis using assms pcollinear_def[of A B C] pcollinear_def by auto
+qed
+
+
+lemma (in projective_plane) join_of_meet: 
+  fixes a b c
+  assumes "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines"
+  assumes "distinct[a, b, c]"
+  fixes A B
+  assumes "A \<noteq> B"
+  assumes "A \<in> Points \<and> A = meet a b"
+  assumes "B \<in> Points \<and> B = meet a c"
+  shows "join A B = a"
+proof - 
+  show ?thesis using assms distinct3_def join_properties2 meet_properties2 by metis
+qed
+
+lemma (in projective_plane) meet_comm:
+  fixes a b
+  assumes "a \<in> Lines \<and> b \<in> Lines \<and> a \<noteq> b"
+  shows "meet a b = meet b a"
+proof - 
+  show ?thesis using assms meet_def meet_properties2 unique_meet by force
+qed
+
+lemma (in projective_plane) join_comm:
+  fixes A B
+  assumes "A \<in> Points \<and> B \<in> Points \<and> A \<noteq> B"
+  shows "join A B = join B A"
+proof - 
+  show ?thesis using assms join_def join_properties1 join_properties2 by blast
+qed
+
+
 end
 
 text \<open>\hadi\<close>
