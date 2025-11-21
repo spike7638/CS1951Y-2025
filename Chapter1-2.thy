@@ -44,7 +44,6 @@ text\<open>\spike Current definition of projective relation
 is that there's nonzero constant c such that u = cv. The alternative definition 
 is that the cross product is zero.  Let's start
 with the big theorem that these two things are equivalent\<close>
-
 lemma alt_rp2rel:
   assumes "u \<noteq> zvec"
   assumes "v \<noteq> zvec"
@@ -69,8 +68,7 @@ proof
     then have "(\<exists> t::real . (t \<noteq>0) \<and> u =  t *\<^sub>R  v)" using sr  divide_eq_0_iff by blast
     then show "rp2rel u v" using rp2rel_def ah2 assms by blast
   qed
-  text 
-\<open>\done\<close>
+text \<open>\done\<close>
 
 lemma vt:
   shows "(vector[1,0,0]::real^3) \<noteq> zvec" 
@@ -173,7 +171,7 @@ proof -
   finally show "(P1 \<bullet> k1 = 0) = (P2 \<bullet> k2 = 0)" .
 qed
 
-lemma incid_commute[iff]:
+lemma incid_commute:
   shows "rp2_incid A B \<longleftrightarrow> rp2_incid B A"
   by (simp add: inner_commute rp2_incid.rep_eq)
 text \<open>\done\<close>
@@ -189,17 +187,15 @@ lemma rp2_line_equation:
   fixes l::rp2
   assumes "l \<in> rp2_Lines"
   shows "\<exists>a1 a2 a3::real. (\<forall>V \<in> rp2_Points. rp2_incid V l
-    \<longleftrightarrow> ((a1 * (Rep_rp2 V)$1) + (a2 * (Rep_rp2 V)$2) + (a3 * (Rep_rp2 V)$3) = 0) \<and> \<not> (a1 = 0 \<and> a2 = 0 \<and> a3 = 0))"
+    \<longleftrightarrow> ((a1 * (Rep_rp2 V)$1) + (a2 * (Rep_rp2 V)$2) + (a3 * (Rep_rp2 V)$3) = 0))"
 proof -
   obtain l1 l2 l3::real where lcoords: "Rep_rp2 l = (vector[l1,l2,l3]::v3)"
     using exists_rp2_coords rp2_Points_def by blast
-  have 0: "\<forall>V \<in> rp2_Points. rp2_incid V l
+  have "\<forall>V \<in> rp2_Points. rp2_incid V l
     \<longleftrightarrow> ((l1 * (Rep_rp2 V)$1) + (l2 * (Rep_rp2 V)$2) + (l3 * (Rep_rp2 V)$3) = 0)"
     using exists_rp2_coords lcoords rp2_incid.rep_eq vector_3 inner_commute sum_3 
-      inner_real_def unfolding inner_vec_def by (metis (lifting))
-  have 1: "\<not> (l1 = 0 \<and> l2 = 0 \<and> l3 = 0)" 
-  by (metis lcoords rep_P_nz zvec_def)
-  show ?thesis using 0 1 by auto
+    inner_real_def unfolding inner_vec_def by (metis (lifting))
+  then show ?thesis by auto
 qed
 text \<open>\done\<close>
 
@@ -359,7 +355,7 @@ lemma rp2_P2:
   assumes a1: "m \<in> rp2_Lines" 
   assumes a2: "k \<in> rp2_Lines"
   assumes a3: "m \<noteq> k"
-  shows "(\<exists>P . P \<in> rp2_Points \<and> rp2_incid P m \<and> rp2_incid P k)"
+  shows "(\<exists>P. P \<in> rp2_Points \<and> rp2_incid P m \<and> rp2_incid P k)"
   using rp2_P1a [of m k] incid_commute rp2_Points_def by auto
 text \<open>\done \spike\<close>
 
@@ -368,6 +364,7 @@ lemma orthog_implies_not_rp2rel:
   assumes wnz: "w \<noteq> zvec"
   assumes dotz: "v \<bullet> w = 0"
   shows "\<not> rp2rel v w"
+(* sledgehammer:   by (metis alt_rp2rel assms(2) cross_refl exists_rp2rel_refl norm_and_cross_eq_0 rp2rel_def) *)
 proof (rule ccontr)
   assume ch: "\<not> \<not> rp2rel v w"
   then have ch1: "rp2rel v w" by auto
@@ -478,9 +475,9 @@ proof (rule ccontr)
 
   have "(Rep_rp2 P) \<bullet> (Rep_rp2 k) \<noteq> 0" using rp2_incid.rep_eq not_incid by auto
   then have "(e *\<^sub>R x) \<bullet> (Rep_rp2 k) \<noteq> 0" using edef by auto
-  then have "e *\<^sub>R (x \<bullet> kvec) \<noteq> 0" 
-    using assms alt_rp2rel equal_implies_rp2rel not_incid rep_P_nz rp2_incid.abs_eq rp2rel_self zvec_def by metis
-  then have "e*\<^sub>R 0 \<noteq> 0" using assms by auto
+  then have "e *\<^sub>R (x \<bullet> kvec) \<noteq> 0" using assms alt_rp2rel equal_implies_rp2rel 
+    not_incid rep_P_nz rp2_incid.abs_eq cross_refl by metis
+  then have "e *\<^sub>R 0 \<noteq> 0" using assms by auto
   then show False using scaleR_zero_right by fastforce
 qed
 
@@ -489,7 +486,7 @@ lemma rp2_P4:
   fixes U
   assumes "k \<in> rp2_Lines"
   assumes "U = {X . X \<in> rp2_Points \<and> rp2_incid X k}"
-  shows "\<exists>P Q R. P \<in> U \<and> Q \<in> U \<and> R \<in> U \<and> distinct[P, Q, R]"
+  shows "\<exists>P Q R. P \<in> U \<and> Q \<in> U \<and> R \<in> U \<and> distinct [P,Q,R]"
 proof - 
   obtain kvec where kvec_def: "kvec = Rep_rp2 k" by auto
   have kvec_nz: "kvec \<noteq> zvec" using rep_P_nz using kvec_def by auto
@@ -553,8 +550,7 @@ proof -
     have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
 
     have "k = Abs_rp2 kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
-    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v2) (Abs_rp2 kvec)"
-      by auto
+    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v2) (Abs_rp2 kvec)" by auto
 
     have abs_proj_kvec: "k = Abs_rp2 kvec" using ar kvec_def by auto
 
@@ -586,10 +582,9 @@ proof -
       using rp2rel_v4 rp2rel_v3 a_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
-    have pqr_distinct: "distinct[?P, ?Q, ?R]" unfolding distinct3_def using p_not_q p_not_r q_not_r by auto
-    have inclusions: "?P \<in> U \<and> ?Q \<in> U \<and> ?R \<in> U" using inc_P inc_Q inc_R  assms rp2_Points_def by auto
+    have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
 
-    then show ?thesis using inclusions pqr_distinct unfolding distinct_def assms by meson
+    then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
   next
     case b_nz
     let ?v4 = "?v1 + ?v3"
@@ -636,8 +631,7 @@ proof -
     have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
 
     have "k = Abs_rp2 kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
-    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v1) (Abs_rp2 kvec)"
-      by auto
+    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v1) (Abs_rp2 kvec)" by auto
 
     have abs_proj_kvec: "k = Abs_rp2 kvec" using ar kvec_def by auto
 
@@ -669,10 +663,9 @@ proof -
       using rp2rel_v4 rp2rel_v3 b_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
-    have pqr_distinct: "distinct[?P, ?Q, ?R]" unfolding distinct3_def using p_not_q p_not_r q_not_r by auto
-    have inclusions: "?P \<in> U \<and> ?Q \<in> U \<and> ?R \<in> U" using inc_P inc_Q inc_R  assms rp2_Points_def by auto
+    have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
 
-    show ?thesis unfolding distinct3_def using inclusions using p_not_q p_not_r q_not_r by blast
+    then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
   next
     case c_nz
     let ?v4 = "?v1 + ?v2"
@@ -719,8 +712,7 @@ proof -
     have r_point: "?R \<in> rp2_Points" unfolding rp2_Points_def by auto 
 
     have "k = Abs_rp2 kvec" using kvec_def using Quotient3_abs_rep Quotient3_rp2 by fastforce
-    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v1) (Abs_rp2 kvec)"
-      by auto
+    then have "rp2_incid ?P k = rp2_incid (Abs_rp2 ?v1) (Abs_rp2 kvec)" by auto
 
     have abs_proj_kvec: "k = Abs_rp2 kvec" using ar kvec_def by auto
 
@@ -752,10 +744,9 @@ proof -
       using rp2rel_v4 rp2rel_v2 c_nz alt_rp2rel cross3_def rp2rel_def vector_3_eq_iff
       by force 
 
-    have pqr_distinct: "distinct[?P, ?Q, ?R]" unfolding distinct3_def using p_not_q p_not_r q_not_r by auto
-    have inclusions: "?P \<in> U \<and> ?Q \<in> U \<and> ?R \<in> U" using inc_P inc_Q inc_R  assms rp2_Points_def by auto
+    have pqr_distinct: "distinct[?P, ?Q, ?R]" using p_not_q p_not_r q_not_r by auto
 
-    then show ?thesis using inclusions pqr_distinct assms(2) unfolding distinct3_def  by meson 
+    then show ?thesis using inc_P inc_Q inc_R pqr_distinct assms(2) p_point q_point r_point by blast
   qed
 qed
 text \<open>\done\done\<close>
@@ -766,17 +757,16 @@ theorem analytic_rp2:
 proof (unfold_locales)
   show "\<lbrakk>P \<noteq> Q; P \<in> rp2_Points; Q \<in> rp2_Points\<rbrakk> 
     \<Longrightarrow> (\<exists>!k. k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k)" for P Q 
-    using rp2_P1a [of P Q] rp2_P1b [of P Q] rp2_Lines_def 
-    by (metis incid_commute rp2_P2 rp2_Points_def)
+    using rp2_P1a [of P Q] rp2_P1b [of P Q] rp2_Lines_def by auto
   show "\<lbrakk>k \<in> rp2_Lines; n \<in> rp2_Lines\<rbrakk> 
     \<Longrightarrow> \<exists>P. (P \<in> rp2_Points \<and> rp2_incid P k \<and> rp2_incid P n)" for k n
-    using rp2_P2 [of k n] rp2_P4 
-    by (metis rp2_Lines_def rp2_P2 rp2_P3 rp2_Points_def)
+    using rp2_P2 [of k n] rp2_P4 by auto
   show "\<exists>P Q R. P \<in> rp2_Points \<and> Q \<in> rp2_Points \<and> R \<in> rp2_Points \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R 
     \<and> \<not> (projective_plane_data.pcollinear rp2_Points rp2_Lines rp2_incid P Q R)"
-    using rp2_P3 unfolding projective_plane_data.pcollinear_def unfolding distinct3_def  by metis
+    using rp2_P3 unfolding projective_plane_data.pcollinear_def by auto
   show "\<lbrakk>k \<in> rp2_Lines; U = {P. (P \<in> rp2_Points \<and> rp2_incid P k)}\<rbrakk> 
-    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q, R, S]" for k U using rp2_P4 by presburger 
+    \<Longrightarrow> \<exists>Q R S. Q \<in> U \<and> R \<in> U \<and> S \<in> U \<and> distinct[Q,R,S]" for k U 
+    using rp2_P4 by auto
 qed
 text \<open>\done\<close>
 
