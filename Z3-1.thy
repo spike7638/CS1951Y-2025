@@ -414,6 +414,37 @@ proof -
 qed 
   show ?thesis using req1 req2 by auto
 qed 
+
+
+definition v3coplanar :: "(v3) \<Rightarrow> (v3) \<Rightarrow> v3  \<Rightarrow> bool"
+  where "v3coplanar x y z \<longleftrightarrow> (x \<noteq> zvec) \<and> (y \<noteq> zvec) \<and> (z \<noteq> zvec) \<and>
+    (\<exists>k::v3. k \<noteq> zvec \<and> k \<bullet> x = 0 \<and> k \<bullet> y = 0 \<and> k \<bullet> z = 0)" 
+
+lift_definition rp2coll::"rp2 \<Rightarrow> rp2 \<Rightarrow> rp2 \<Rightarrow> bool"
+is "v3coplanar" 
+  by (smt (verit, best) Domainp_cr_proj Quotient3_rel Quotient3_rp2 cross_nz cross_refl rp2.domain rp2_incid.abs_eq v3coplanar_def
+      zvec_alt)
+
+
+definition maps_lines_to_lines2 :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
+  where "maps_lines_to_lines2 f \<longleftrightarrow> (\<forall>P Q R . ((rp2coll P Q R) \<longrightarrow> 
+                                   (rp2coll (f P) (f Q) (f R))))"
+
+definition matrix_scalar_mult :: "’a \<Rightarrow> ’a^’n^’m \<Rightarrow> ’a^’n^’m"
+(infixl "*k" 70) where "k *k A \<equiv> (\<chi> i j. k * A $ i $ j)"
+
+Need to prove some associativity things for this, I suspect. 
+
+The statements for the real matrix version and the general one are different:
+lemma scalar_matrix_vector_assoc:
+fixes A :: "real^’m^’n"
+shows "k * R (A *v v) = k * R A *v v"
+lemma scalar_matrix_vector_assoc:
+fixes A :: "’a::field^’m^’n"
+shows "k *s (A *v v) = k *k A *v v"
+
+
+
 lemma s0:
   assumes "k \<in> rp2_Lines"
   shows "rp2_incid P k \<longleftrightarrow>  ((Rep_rp2 P) \<bullet> (Rep_rp2 k)  = 0)"
