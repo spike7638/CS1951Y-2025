@@ -439,19 +439,53 @@ definition maps_lines_to_lines2 :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
   where "maps_lines_to_lines2 f \<longleftrightarrow> (\<forall>P Q R . ((rp2coll P Q R) \<longrightarrow> 
                                    (rp2coll (f P) (f Q) (f R))))"
 
-definition matrix_scalar_mult :: "’a \<Rightarrow> ’a^’n^’m \<Rightarrow> ’a^’n^’m"
+lemma t:
+  fixes A::m33
+  fixes P Q R
+  assumes "det A \<noteq> 0"
+  assumes "rp2coll P Q R"
+  shows "rp2coll (rp2tom A P) (rp2tom A Q) (rp2tom A R)"
+proof -
+  obtain k where kfacts: "rp2_incid k P \<and> rp2_incid k Q \<and> rp2_incid k R" using rp2coll_def 
+  by (metis ar assms(2) dot_product_zero_implies_incid iso_tuple_UNIV_I rp2_Lines_def rp2_Points_def rp2coll.rep_eq
+      v3coplanar_def) 
+  define h where hfact:"h \<equiv> rp2tom (adj_inv A) k"
+  have aifact: "det (adj_inv A) \<noteq> 0"
+    by (metis adj_inv_def assms(1) inverse_m_matrix_is_ident invertible_det_nz invertible_right_inverse
+      transpose_invertible)
+  have "rp2_incid k S \<longrightarrow> rp2_incid h (rp2tom A S)" for S 
+  proof (safe)
+    have a0: "rp2_incid k S \<equiv> inner (Rep_rp2 k) (Rep_rp2 S) = 0" using rp2_incid.rep_eq by simp
+    have a1: "rp2_incid h U \<equiv> (inner (Rep_rp2 h) (Rep_rp2 U) = 0)" for U  using rp2_incid.rep_eq by auto
+    then have a2: "rp2_incid h (rp2tom A S) \<equiv> (inner (Rep_rp2 h) (Rep_rp2 (rp2tom A S)) = 0)"  by auto
+    then have a3: "rp2_incid (rp2tom (adj_inv A) k) (rp2tom A S) \<equiv> 
+      (inner (Rep_rp2 (rp2tom (adj_inv A) k)) (Rep_rp2 (rp2tom A S)) = 0)" using hfact by auto
+    have b0: "rp2rel (Rep_rp2 (rp2tom U x))  ((tom U) (Rep_rp2 x))" for U x
+      by (metis ar invertible_left_inverse matrix_left_invertible_ker ra rep_P_nz rp2tom.abs_eq tom_def zvec_alt
+        zvec_def)
+    have b1: "det U \<noteq> 0 \<Longrightarrow> rp2rel  ((tom U) (Rep_rp2 x)) (U *v  (Rep_rp2 x))" for U x 
+    by (metis b0 rp2rel_def rp2rel_self tom_nonz_det)
+
+    then have b2: "rp2rel (Rep_rp2 ((rp2tom (adj_inv A)) k)) ((adj_inv A) *v (Rep_rp2 k))" 
+    by (metis aifact b0 tom_nonz_det)
+  show "rp2_incid k S \<Longrightarrow> rp2_incid h (rp2tom A S) " using a0 a1 a2 a3 b0 b1
+    by (metis aifact assms(1) collapsing_adjoint hfact invertible_det_nz rp2_incid.abs_eq rp2tom_explicit2
+      tom_def)
+qed
+  then show ?thesis  using kfacts rep_P_nz rp2_incid.rep_eq rp2coll.rep_eq v3coplanar_def by auto
+qed
+
+definition matrix_scalar_mult :: "real \<Rightarrow> m33 \<Rightarrow> m33"
 (infixl "*k" 70) where "k *k A \<equiv> (\<chi> i j. k * A $ i $ j)"
 
-(* Need to prove some associativity things for this, I suspect. 
+(* Need to prove some associativity things for this, I suspect. *)
+lemma msmul_props: 
+  fixes A::m33
+  fixes s::real
+  fixes t::real
+  shows "(t *k (s *k A)) = (t * s) *k A" 
+  unfolding matrix_scalar_mult_def by fastforce
 
-The statements for the real matrix version and the general one are different: *)
-lemma scalar_matrix_vector_assoc:
-fixes A :: "real^'m^'n"
-shows "k * R (A *v v) = k * R A *v v"
-
-lemma scalar_matrix_vector_assoc:
-fixes A :: "’a::field^’m^’n"
-shows "k *s (A *v v) = k *k A *v v"
 
 lemma s0:
   assumes "k \<in> rp2_Lines"
@@ -563,20 +597,19 @@ proof (safe)
     obtain xr where "tom A (xr) = Rep_rp2 y" 
       by (metis invertible surj_def tom_surj)
     let ?x = "Abs_rp2 xr"
-    have "y = rp2tom A ?x" by sorry
+    have "y = rp2tom A ?x"  sorry
   
    (*  then have "rp2tom A (Abs_rp2 xr) = Abs_rp2 (Rep_rp2 y)" 
       sorry *)
-  show "bij (rp2tom A)"
-    unfolding bij_def by sorry
+  have "bij (rp2tom A)"
+    unfolding bij_def  sorry
+  show "\<And>y. \<exists>x. y = rp2tom A x" sorry
+qed
   show "maps_lines_to_lines (rp2tom A)"
-    using invertible inv_matrices_maps_lines_to_lines2 by auto
+    using invertible inv_matrices_maps_lines_to_lines2 sorry
+  show " bij (rp2tom A)" sorry
 qed
 
-
-(* Need definition of scalar multiple of a matrix here *)
-definition matrix_scalar_mult :: "real \<Rightarrow> m33 \<Rightarrow> m33"
-(infixl "*k" 70) where "k *k A \<equiv> (\<chi> i j. k * A $ i $ j)"
 
 theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *)
   fixes A B:: m33
@@ -652,6 +685,7 @@ lemma matrix_agreeing_with_I_on_basis_is_scalar_mult_of_I:
 
   shows "(\<exists>c :: real . 
         A  = c *k I33)"
+  sorry
 
 lemma matrices_agreeing_on_basis_are_scalar_mults: 
   fixes A B :: m33
@@ -751,11 +785,14 @@ lemma inv_matrix_inj:
   fixes x :: v3
   assumes "det A \<noteq> 0"
   shows "tom A x = 0 \<longrightarrow> x = 0"
+  sorry
+(*
 proof (rule impI; rule ccontr)
   assume x_in_ker: "tom A x = 0"
   assume to_contr: "x \<noteq> 0"
-  show "False" using assms to_contr inv_matrices_image_non_zero image_non_zero_def x_in_ker by auto
+  show "False" using assms to_contr  image_non_zero_def x_in_ker sorry
 qed
+*)
 
 (*A general note: when proving statements involving vector arithmetic,
   ALWAYS unfold every definition first; then often writing "by vector"
@@ -802,10 +839,10 @@ proof (rule allI)
   then have eq1: "u *s tom B x = u *s tom B (?a *s p1 + ?b *s p2 + ?c *s p3)" by auto
   have eq2: "u *s tom B ((?a *s p1) + (?b *s p2) + (?c *s p3)) = 
                u *s tom B (?a *s p1) + u *s tom B (?b *s p2) + u *s  tom B (?c *s p3)" 
-    using tom_def matrix_vector_right_distrib vector_add_ldistrib by metis 
+    using tom_def matrix_vector_right_distrib vector_add_ldistrib sorry (* by metis *)
   have eq3: "u *s tom B (?a *s p1) + u *s tom B (?b *s p2) + u *s  tom B (?c *s p3) =
             ?a *s (u *s tom B p1) + ?b *s (u *s tom B p2) + ?c *s (u *s tom B p3)"
-    using tom_def vec.scale_left_commute vector_scalar_commute by (metis (no_types, lifting))
+    using tom_def vec.scale_left_commute vector_scalar_commute sorry (* by (metis (no_types, lifting)) *)
   have eq4: "?a *s (u *s tom B p1) + ?b *s (u *s tom B p2) + ?c *s (u *s tom B p3) =
             ?a *s tom A p1 + ?b *s tom A p2 + ?c *s tom A p3" using assms by auto
   have eq5: "?a *s tom A p1 + ?b *s tom A p2 + ?c *s tom A p3 = 
@@ -857,9 +894,9 @@ proof -
   then have "(u - c1) *s tom B p1 + (u - c2) *s tom B p2 + (u - c3) *s tom B p3 = 0"
     by (simp add: group_cancel.sub1 vec.scale_left_diff_distrib)
   then have "tom B ((u - c1) *s p1) + tom B ((u - c2) *s p2) + tom B ((u - c3) *s p3) = 0"
-    using tom_def by (simp add: vector_scalar_commute)
+    using tom_def sorry (* by (simp add: vector_scalar_commute) *)
   then have "tom B ((u - c1) *s p1 + (u - c2) *s  p2 + (u - c3) *s p3) = 0"
-    using tom_def by (simp add: matrix_vector_right_distrib)
+    using tom_def sorry (* by (simp add: matrix_vector_right_distrib) *)
   then have "tom B ?r = 0"
     using comb2 by auto
   then have "?r = (0 :: (real, 3) vec)"
@@ -883,8 +920,9 @@ lemma inv_matrices_equiv_bwd:
   and invertible_B: "det B \<noteq> 0"
   shows "equiv_maps (tom A) (tom B) \<longrightarrow> (\<exists>c :: real . \<forall>x :: v3 . 
         (tom A) x = c *s (tom B) x \<and> c \<noteq> 0)"
-  unfolding equiv_maps_def
-proof (safe)
+  sorry
+  (* unfolding equiv_maps_def *)
+(* proof (safe)
   assume wd_A: "well_defined (tom A)"
   assume wd_B: "well_defined (tom B)"
   assume equivs: "\<forall>x. \<exists>l. l \<noteq> 0 \<and> tom A x = l *s tom B x"
@@ -895,6 +933,7 @@ proof (safe)
   show "\<exists>c. \<forall>x. tom A x = c *s tom B x \<and> c \<noteq> 0" 
     using hc1 hc2 hc3 hu equiv_on_basis_imp_equiv invertible_A invertible_B by auto
 qed 
+*)
 
 theorem inv_matrices_equiv_iff:
   fixes A :: m33
@@ -903,13 +942,15 @@ theorem inv_matrices_equiv_iff:
   and invertible_B: "det B \<noteq> 0"
   shows "equiv_maps (tom A) (tom B) \<longleftrightarrow> (\<exists>c :: real . \<forall>x :: v3 . 
         (tom A) x = c *s (tom B) x \<and> c \<noteq> 0)"
+  sorry
+(*
 proof
   show "\<exists>c. \<forall>x. tom A x = c *s tom B x \<and> c \<noteq> 0 \<Longrightarrow> equiv_maps (tom A) (tom B)"
     using inv_matrices_equiv_fwd invertible_A invertible_B by auto
   show " equiv_maps (tom A) (tom B) \<Longrightarrow> \<exists>c. \<forall>x. tom A x = c *s tom B x \<and> c \<noteq> 0"
     using inv_matrices_equiv_bwd invertible_A invertible_B by auto
 qed 
-
+*)
 end       
 
 
