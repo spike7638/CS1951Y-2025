@@ -923,19 +923,11 @@ lemma lines_distinctD:
     by auto
 
 lemma desargues_three_lines: (* every pt lies on 3 lines *)
-  fixes X::"pointD"
   assumes "X \<in> PointsD"
-  shows "\<exists>l m n. distinct[l,m,n] 
-    \<and> incidD X l \<and> incidD X m \<and> incidD X n 
-    \<and> l \<in> LinesD \<and> m \<in> LinesD \<and> n \<in> LinesD" 
-  using lines_distinctD unfolding incidD_def LinesD_def distinct3_def
-  sorry
+  shows "\<exists>l m n. l \<noteq> m \<and> m \<noteq> n \<and> l \<noteq> n \<and> incidD X l \<and> incidD X m \<and> incidD X n 
+    \<and> l \<in> LinesD \<and> m \<in> LinesD \<and> n \<in> LinesD" unfolding LinesD_def incidD_def 
+  by (cases X, (meson insertCI lines_distinctD)+)
 
-  (*by (cases X)
-
-    (simp only: insert_iff empty_iff conj_disj_distribL conj_disj_distribR
-     ex_disj_distrib simp_thms(39); simp; fail)+
-*)
 lemma desargues_three_points: (* every line contains 3 points *)
   assumes "k \<in> LinesD"
   shows "card k = 3"
@@ -1748,7 +1740,7 @@ proof (erule contrapos_np)
 qed
 
 lemma three_elements: (* From a set with cardinality more than 2, we can obtain 3 distinct items *)
-  fixes U::"'a set"
+  fixes U
   assumes a: "card U > 2"
   shows "\<exists>A B C. A \<in> U \<and> B \<in> U \<and> C \<in> U  \<and> distinct[A,B,C]"
 proof -
@@ -1757,9 +1749,8 @@ proof -
   obtain B where bb: "B \<in>  (U - {A})"
     by (metis c1 all_not_in_conv bot_nat_0.extremum_strict card.empty)
   have "B \<noteq> A" using bb by blast
-  have c2: "card (U - {A,B}) > 0" using aa bb assms 
-    using not_numeral_le_zero by fastforce
-  obtain C where cc: "C \<in> (U - {A, B})" by (metis c2 card_gt_0_iff equals0I)
+  have "card (U - {A,B}) > 0" using aa bb assms not_numeral_le_zero by fastforce
+  then obtain C where cc: "C \<in> (U - {A, B})" by (metis card_gt_0_iff equals0I)
   have "C \<noteq> A \<and> C \<noteq> B" using cc by blast
   show ?thesis using aa bb cc DiffE insert_iff by auto
 qed
@@ -1778,16 +1769,16 @@ proof (rule ccontr)
   then have "card ?kpts < 2" by (metis (mono_tags, lifting) card.empty card.insert finite.intros(1) insert_absorb less_2_cases_iff)
   let ?g = "\<lambda> x .  Base_point x"
   let ?Upts = "?g ` U"
-  have Upts_pi: "?Upts \<subseteq> Pi_points"
-  by (smt (verit, best) assms(3) imageE mem_Collect_eq new_points.simps(1) pi_points_contents subset_iff)
-  have "card ?Upts = 4"  
+  have Upts_pi: "?Upts \<subseteq> Pi_points" 
+    by (smt (verit, best) assms(3) imageE mem_Collect_eq new_points.simps(1) pi_points_contents subset_iff)
+  have "card ?Upts = 4" 
     by (simp add: assms card_image inj_on_def)
   have s: "card (?Upts - ?kpts) > 2"
   by (metis (lifting) Diff_empty Diff_insert0 \<open>card (Base_point ` U) = 4\<close> add_2_eq_Suc add_diff_cancel_left' card_Diff_singleton
       diff_is_0_eq kpchoice lessI linorder_not_le numeral_Bit0 plus_1_eq_Suc zero_neq_numeral)
   then obtain P Q R where pqr_def: "P \<in> (?Upts - ?kpts) \<and> Q \<in> (?Upts - ?kpts) \<and> R \<in> (?Upts - ?kpts) \<and> 
-    distinct[P,Q,R]" using configuration.three_elements emptyE configuration_def by (smt (z3))
-  have "{P,Q,R} \<subseteq> ?Upts" using  pqr_def by blast
+    distinct[P,Q,R]" using s three_elements[of "(?Upts - ?kpts)"] by auto
+  have "{P,Q,R} \<subseteq> ?Upts" using pqr_def by blast
   then have "{P,Q,R} \<subseteq> Pi_points" using Upts_pi by order
   then have not_k: "(\<not> (fppincid P k)) \<and> (\<not> (fppincid Q k)) \<and> (\<not> (fppincid R k))" using pqr_def by blast
   obtain uP uQ uR where upqr_def: "P = Base_point uP \<and> Q = Base_point uQ \<and> R = Base_point uR \<and>  
@@ -1813,10 +1804,11 @@ proof -
 thm line_level2 
 thm line_level2 [of k 1] 
   have "k \<in> new_lines 1" using assms line_level2 [of k 1] by auto
-  then obtain S T where join_def: "k = Join (Upair S T) 1 \<and> S \<noteq> T" and contents: "S \<in> Pi_points \<and> T \<in> Pi_points"  using new_lines.simps
+  then obtain S T where join_def: "k = Join (Upair S T) 1 \<and> S \<noteq> T" 
+    and contents: "S \<in> Pi_points \<and> T \<in> Pi_points" using new_lines.simps
     by (smt (verit, ccfv_threshold) One_nat_def mem_Collect_eq point_containment point_set.simps(1))
-  then have "fppincid S k \<and> fppincid T k \<and> S \<in> Pi_points \<and> T \<in> Pi_points"  using join_def 
-    using fppincid.elims(3) by blast
+  then have "fppincid S k \<and> fppincid T k \<and> S \<in> Pi_points \<and> T \<in> Pi_points" 
+    using join_def fppincid.elims(3) by blast
   then show ?thesis  using join_def by blast
 qed
 
@@ -1863,5 +1855,3 @@ lemma fpp_two_points:
 
 end
 end
-
-
