@@ -315,18 +315,36 @@ lemma projectivity_not_nice:
   assumes "is_proj_data ds"
   assumes "\<not>(P \<in> Points) \<or> \<not>(P \<lhd> proj_domain ds)"
   shows "projectivity ds P = undefined"
-proof -
-  consider (not_point) "\<not>(P \<in> Points)" | (is_point) "\<not>(P \<lhd> proj_domain ds)" using assms by blast
-  then show ?thesis
-  proof cases
-    case not_point
-    then show ?thesis sorry
+using assms
+proof (induction ds arbitrary: P)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons d ds)
+  show ?case
+  proof (cases "ds = []")
+    case True
+    then have "projectivity (d # ds) P = perspectivity d P"
+      by simp
+    moreover have "\<not>(P \<in> Points) \<or> \<not>(P \<lhd> persp_domain d)"
+      using Cons.prems True by auto
+    ultimately show ?thesis
+      using Cons.prems(1) is_persp_data.simps is_proj_made_up_of_persp
+    by fastforce
   next
-    case is_point
-    then show ?thesis sorry
+    case False
+    then have h0: "projectivity (d # ds) P = (projectivity ds \<circ> perspectivity d) P"
+      by (metis neq_Nil_conv projectivity.simps(2))
+    then have "... = (projectivity ds (perspectivity d P))"
+      by auto
+    moreover have "\<not>(P \<in> Points) \<or> \<not>(P \<lhd> persp_domain d)"
+      using Cons.prems(2) proj_domain.simps(2) by (metis False neq_Nil_conv) 
+    moreover have "perspectivity d P = undefined" using Cons.prems(1) calculation(2) is_proj_made_up_of_persp
+      by fastforce
+    moreover have "(projectivity ds (undefined)) = undefined" sorry
+    ultimately show ?thesis using h0 by presburger
   qed
 qed
-
 
 (*
 fun composition :: "'p list \<Rightarrow> 'l list \<Rightarrow> 'p list \<Rightarrow> 'l list \<Rightarrow> ('p \<Rightarrow> 'p)"
@@ -643,53 +661,202 @@ proof -
   show ?thesis using h1 h3 by auto
 qed
 
+
 lemma triplet_to_triplet_diff_lines:
   fixes A B C A' B' C' l l'
   assumes ABC_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
   assumes ABC'_def: "A' \<in> Points \<and> B' \<in> Points \<and> C' \<in> Points \<and> distinct [A', B', C']"
   assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l"
   assumes l'_def: "l' \<in> Lines \<and> A' \<lhd> l' \<and> B' \<lhd> l' \<and> C' \<lhd> l'"
-  shows "\<exists> ds . \<exists> f . (f = projectivity ds) 
-                        \<and> (is_proj_data ds) 
-                        \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"
-  sorry  
+  assumes distinct_lines: "l \<noteq> l'"
+  assumes A_not_on_l': "\<not> A \<lhd> l'"
+  assumes A'_not_on_l: "\<not> A' \<lhd> l"
+  shows "\<exists> ds f. (f = projectivity ds) \<and> (is_proj_data ds) \<and> 
+                 (f A = A') \<and> (f B = B') \<and> (f C = C')"
+proof -
+  let ?AA' = "join A A'"
+  have AA'_line: "?AA' \<in> Lines \<and> A \<lhd> ?AA' \<and> A' \<lhd> ?AA'"
+    using ABC_def ABC'_def join_properties1 join_properties2 by (metis A'_not_on_l
+    l_def)
+  
+  let ?AB' = "join A B'"
+  have AB'_line: "?AB' \<in> Lines \<and> A \<lhd> ?AB' \<and> B' \<lhd> ?AB'"
+    using ABC_def ABC'_def join_properties1 join_properties2 by (metis A_not_on_l'
+    l'_def)
+  
+  let ?A'B = "join A' B"
+  have A'B_line: "?A'B \<in> Lines \<and> A' \<lhd> ?A'B \<and> B \<lhd> ?A'B"
+    using ABC_def ABC'_def join_properties1 join_properties2 by (metis A'_not_on_l
+    l_def)
+  
+  let ?B'' = "meet ?AB' ?A'B"
+  have B''_def: "?B'' \<in> Points \<and> ?B'' \<lhd> ?AB' \<and> ?B'' \<lhd> ?A'B"
+    using AB'_line A'B_line meet_properties2 sorry
 
-(* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l.
-Then there is a projectivity of l into itself which sends A, B, C into A\<Zprime>, B\<Zprime>, C\<Zprime>. *)
-lemma (in projective_plane) triplet_to_triplet_same_line:
+  let ?AC' = "join A C'"
+  have AC'_line: "?AC' \<in> Lines \<and> A \<lhd> ?AC' \<and> C' \<lhd> ?AC'"
+    using ABC_def ABC'_def join_properties1 join_properties2 sorry
+
+  let ?A'C = "join A' C"
+  have A'C_line: "?A'C \<in> Lines \<and> A' \<lhd> ?A'C \<and> C \<lhd> ?A'C"
+    using ABC_def ABC'_def join_properties1 join_properties2 sorry
+
+  let ?C'' = "meet ?AC' ?A'C"
+  have C''_def: "?C'' \<in> Points \<and> ?C'' \<lhd> ?AC' \<and> ?C'' \<lhd> ?A'C"
+    using AC'_line A'C_line meet_properties2 sorry
+
+  let ?l'' = "join ?B'' ?C''"
+  have l''_line: "?l'' \<in> Lines \<and> ?B'' \<lhd> ?l'' \<and> ?C'' \<lhd> ?l''"
+    using B''_def C''_def join_properties1 join_properties2 sorry
+
+  let ?A'' = "meet ?l'' ?AA'"
+  have A''_def: "?A'' \<in> Points \<and> ?A'' \<lhd> ?l'' \<and> ?A'' \<lhd> ?AA'"
+    using l''_line AA'_line meet_properties2 sorry
+  
+  (* First perspectivity *)
+  let ?d1 = "(A', l, ?l'')"
+  have d1_persp: "is_persp_data ?d1"
+    using ABC'_def l_def l''_line A'_not_on_l sorry
+  
+  (* Second perspectivity *)
+  let ?d2 = "(A, ?l'', l')"
+  have d2_persp: "is_persp_data ?d2"
+    using ABC_def l'_def l''_line A_not_on_l' sorry
+  
+  (* First perspectivity: A \<rightarrow> A'', B \<rightarrow> B'', C \<rightarrow> C'' *)
+  have persp1_A: "perspectivity ?d1 A = ?A''"
+    using d1_persp ABC_def l_def A''_def AA'_line
+    sorry
+  
+  have persp1_B: "perspectivity ?d1 B = ?B''"
+    using d1_persp ABC_def l_def B''_def A'B_line
+    sorry
+  
+  have persp1_C: "perspectivity ?d1 C = ?C''"
+    using d1_persp ABC_def l_def C''_def A'C_line
+    sorry
+  
+  (* Second perspectivity: A'' \<rightarrow> A', B'' \<rightarrow> B', C'' \<rightarrow> C' *)
+  have persp2_A'': "perspectivity ?d2 ?A'' = A'"
+    using d2_persp A''_def l''_line ABC'_def AA'_line
+    sorry
+  
+  have persp2_B'': "perspectivity ?d2 ?B'' = B'"
+    using d2_persp B''_def l''_line ABC'_def AB'_line
+    sorry
+  
+  have persp2_C'': "perspectivity ?d2 ?C'' = C'"
+    using d2_persp C''_def l''_line ABC'_def AC'_line
+    sorry
+  
+  (* Compose perspectivities *)
+  let ?ds = "[?d1, ?d2]"
+  let ?f = "projectivity ?ds"
+  
+  have ds_valid: "is_proj_data ?ds"
+    using d1_persp d2_persp sorry
+  
+  have f_A: "?f A = A'"
+    using persp1_A persp2_A'' sorry
+  
+  have f_B: "?f B = B'"
+    using persp1_B persp2_B'' sorry
+  
+  have f_C: "?f C = C'"
+    using persp1_C persp2_C'' sorry
+  
+  show ?thesis
+    using ds_valid f_A f_B f_C by blast
+qed
+
+(* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l. Then there is a projectivity of l into itself which sends A, B, C into A\<Zprime>, B\<Zprime>, C\<Zprime>. *)
+lemma triplet_to_triplet_same_line:
   fixes A B C A' B' C' l
   assumes ABC_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
   assumes ABC'_def: "A' \<in> Points \<and> B' \<in> Points \<and> C' \<in> Points \<and> distinct [A', B', C']"
   assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l \<and> A' \<lhd> l \<and> B' \<lhd> l \<and> C' \<lhd> l"
-  shows "\<exists> ds . \<exists> f . (f = projectivity ds)
-                        \<and> (is_proj_data ds)
-                        \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"
-  sorry
-(* proof-
-  have h1: "\<exists> l' . l' \<in> Lines \<and> l' \<noteq> l" using non_containing_line p1 p3 by blast
-  obtain l' where l'_def: "l' \<in> Lines \<and> l' \<noteq> l \<and> \<not> A \<lhd> l' \<and> \<not> A' \<lhd> l'" 
-    using double_non_containing_line[of A A' l] ABC'_def ABC_def l_def by auto
-  obtain A'' B'' C'' where ABC''_def: "A'' \<in> Points \<and> B'' \<in> Points \<and> C'' \<in> Points 
-    \<and> distinct [A'', B'', C''] \<and> A'' \<lhd> l' \<and> B'' \<lhd> l' \<and> C'' \<lhd> l'"
-    using p4 l'_def ABC'_def by fastforce
-  obtain ps ls f where f_def: "(f = projectivity ps ls) \<and> (hd ls = l) \<and> (last ls = l') 
-    \<and> (f A = A'') \<and> (f B = B'') \<and> (f C = C'')"
-    using triplet_to_triplet_diff_lines[of A B C A'' B'' C'' l l'] ABC_def ABC''_def l'_def l_def by blast
-  obtain ps' ls' f' where f'_def: "(f' = projectivity ps' ls') \<and> (hd ls' = l') \<and> (last ls' = l) 
-    \<and> (f' A'' = A') \<and> (f' B'' = B') \<and> (f' C'' = C')"
-    using triplet_to_triplet_diff_lines[of A'' B'' C'' A' B' C' l' l] ABC''_def ABC'_def l'_def l_def by blast
-  let ?ps'' = "ps @ ps'"
-  let ?ls'' = "ls @ tl ls'"
-  let ?f'' = "f' \<circ> f"
-  have h2: "?f'' = projectivity ?ps'' ?ls''" 
-    using proj_composition_is_proj[of f ps ls f' ps' ls'] f_def f'_def by auto
-  have h3: "(hd ?ls'' = l) \<and> (last ?ls'' = l)" 
-    using h2 f'_def f_def hd_Nil_eq_last hd_append2 l'_def last_ConsL last_append last_tl list.collapse
-    by metis
-  have h4: "(?f'' A = A') \<and> (?f'' B = B') \<and> (?f'' C = C')"
-    using f_def f'_def by auto
-  show ?thesis using h2 h3 h4 by auto
-qed *)
+  shows "\<exists> ds f. (f = projectivity ds) \<and> (is_proj_data ds) \<and> 
+                 (f A = A') \<and> (f B = B') \<and> (f C = C')"
+proof -
+  obtain l' where l'_props: "l' \<in> Lines \<and> l' \<noteq> l \<and> \<not> A \<lhd> l' \<and> \<not> A' \<lhd> l'"
+    using double_non_containing_line[of A A' l] ABC_def ABC'_def l_def
+    by blast
+  
+  obtain Or where Or_def: "Or \<in> Points \<and> \<not> Or \<lhd> l \<and> \<not> Or \<lhd> l'"
+    using p3 pcollinear_def l_def l'_props sorry
+  
+  let ?d_proj = "(Or, l, l')"
+  have d_proj_persp: "is_persp_data ?d_proj"
+    using Or_def l_def l'_props by simp
+  
+  let ?A'' = "perspectivity ?d_proj A'"
+  let ?B'' = "perspectivity ?d_proj B'"
+  let ?C'' = "perspectivity ?d_proj C'"
+  
+  have A''_props: "?A'' \<in> Points \<and> ?A'' \<lhd> l'"
+    using perspectivity_nice[of A' Or l l'] d_proj_persp ABC'_def l_def
+    by simp
+  
+  have B''_props: "?B'' \<in> Points \<and> ?B'' \<lhd> l'"
+    using perspectivity_nice[of B' Or l l'] d_proj_persp ABC'_def l_def
+    by simp
+  
+  have C''_props: "?C'' \<in> Points \<and> ?C'' \<lhd> l'"
+    using perspectivity_nice[of C' Or l l'] d_proj_persp ABC'_def l_def
+    by simp
+  
+  have A''_not_on_l: "\<not> ?A'' \<lhd> l"
+    using A''_props l'_props l_def p1 by (smt (verit, best) ABC'_def
+    d_proj_persp
+    persp_domain.simps
+    persp_range.simps
+    perspectivity_of_meet_is_itself
+    projective_plane.perspectivity_inj
+    projective_plane_axioms)
+  
+  obtain ds1 f1 where f1_props: 
+    "f1 = projectivity ds1 \<and> is_proj_data ds1 \<and> 
+     f1 A = ?A'' \<and> f1 B = ?B'' \<and> f1 C = ?C''"
+    using triplet_to_triplet_diff_lines[of A B C ?A'' ?B'' ?C'' l l']
+          ABC_def A''_props B''_props C''_props l_def l'_props A''_not_on_l
+    by (metis (no_types, lifting)
+    ABC'_def d_proj_persp
+    distinct_length_2_or_more
+    distinct_singleton
+    inverse_persp)
+  
+  obtain ds2 f2 where f2_props:
+    "f2 = projectivity ds2 \<and> is_proj_data ds2 \<and>
+     f2 ?A'' = A' \<and> f2 ?B'' = B' \<and> f2 ?C'' = C'"
+    using triplet_to_triplet_diff_lines[of ?A'' ?B'' ?C'' A' B' C' l' l]
+          A''_props B''_props C''_props ABC'_def l_def l'_props A''_not_on_l
+    by (metis d_proj_persp
+    inverse_persp
+    is_proj_data.simps(1)
+    persp_data_sym
+    projectivity.simps(1))
+  
+  let ?ds = "ds1 @ ds2"
+  let ?f = "f2 \<circ> f1"
+  
+  have ds_valid: "is_proj_data ?ds"
+    using f1_props f2_props proj_data_append_is_data sorry
+  
+  have f_comp: "?f = projectivity ?ds"
+    using f1_props f2_props proj_composition_is_proj sorry
+  
+  have f_A: "?f A = A'"
+    using f1_props f2_props sorry
+  
+  have f_B: "?f B = B'"
+    using f1_props f2_props sorry
+  
+  have f_C: "?f C = C'"
+    using f1_props f2_props sorry
+  
+  show ?thesis
+    using ds_valid f_comp f_A f_B f_C by blast
+qed
 
 lemma perspectivity_hquad_to_hquad:
   fixes A B C D f
@@ -736,7 +903,6 @@ proof -
 qed
 
 
-
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
 lemma projectivity_hquad_to_hquad:
   fixes A B C D f
@@ -774,7 +940,6 @@ locale perspectivity =
      p2: "l1 \<in> Lines \<and> l2 \<in> Lines" and
      p3: "(\<not> (incid Or l1) \<and> \<not> (incid Or l2))"
 end*)
-end
 end
 
 
