@@ -707,17 +707,11 @@ proof -
     also have h2: "... = projectivity (ds' @ ds)" 
       using f_proj g_proj proj_composition_is_proj[of "ds'" "ds"] by argo
     have h3: "proj_domain (ds' @ ds) = l" 
-    by (metis f_proj g_proj
-    is_proj_data.simps(3)
-    proj_domain_append)
+    by (metis f_proj g_proj proj_domain_append)
     have h4: "proj_range (ds' @ ds) = l" 
-      by (metis f_proj g_proj
-      is_proj_data.simps(3)
-      proj_range_append)
+      by (metis f_proj g_proj proj_range_append)
     have h5: "is_proj_data (ds' @ ds)" 
-      by (metis f_proj g_proj
-      is_proj_data.simps(3)
-      proj_data_append_is_data)
+      by (metis f_proj g_proj is_proj_data.simps(3) proj_data_append_is_data)
     then show ?case using f_proj g_proj unfolding PJ_def using assms h2 h3 h4
     by auto
   next
@@ -767,9 +761,7 @@ proof -
     then have h6: "\<not>(Q \<in> Points \<and> Q \<lhd> l) \<longrightarrow> one (PJ l) Q = undefined" for Q 
       using PJ_one assms by presburger
     then have h7: "\<not>(Q \<in> Points \<and> Q \<lhd> l) \<longrightarrow> x Q = undefined" for Q 
-      by (metis h0
-      is_proj_data.simps(3)
-      projectivity_not_nice)
+      by (metis h0 projectivity_not_nice)
     show ?case using PJ_mult assms comp_apply h2 h5 h7
       by fastforce
   next
