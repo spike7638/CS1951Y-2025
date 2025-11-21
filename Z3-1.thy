@@ -150,11 +150,13 @@ lemma not_all_zero_eqv: "not_all_zero x y z \<longleftrightarrow> vector[x, y, z
   unfolding not_all_zero_def using vect_zero_eqv by auto
 lemma not_all_zero_eqv2: "not_all_zero x y z \<longleftrightarrow> vector[x, y, z] \<noteq> zvec"
   unfolding not_all_zero_def using vect_zero_eqv by (metis zvec_def) 
+   (*Robert: could we simplify this definition by using rp2_coll? *)
 
-(*Robert: could we simplify this definition by using rp2_coll? *)
+
 definition maps_lines_to_lines :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
   where "maps_lines_to_lines f \<longleftrightarrow> (\<forall>k P Q R . ((k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k) \<longrightarrow> 
                                    (\<exists>m . m \<in> rp2_Lines  \<and>  rp2_incid (f P) m \<and> rp2_incid (f Q) m \<and> rp2_incid (f R) m)))"
+
 
 (*Note that inclusion is sufficient. See also this MSE post:
 https://math.stackexchange.com/questions/3481844/is-isomorphic-between-projective-planes-actually-equivalence-relation *)
@@ -464,21 +466,33 @@ qed
        (\<exists>m. m \<in> rp2_Lines \<and> rp2_incid (rp2tom A P) m \<and> rp2_incid (rp2tom A Q) m \<and> rp2_incid (rp2tom A R) m)" using a0 by blast
 qed
 
-theorem inv_matrices_are_auts:
+theorem inv_matrices_are_auts: (* theorem 3.7 *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
-  shows "is_RP2_auto (tom A)" 
+  shows "is_RP2_auto (rp2tom A)" 
   unfolding is_RP2_auto_def
 (*  unfolding well_defined_def *)
 proof (safe)
-  show "bij (tom A)"
-    using tom_def invertible invertible_det_nz invertible_eq_bij by auto
-  show "maps_lines_to_lines (Tom A)"
+  show "bij (rp2tom A)"
+    using tom_def invertible invertible_det_nz invertible_eq_bij sorry
+  show "maps_lines_to_lines (rp2tom A)"
     using invertible inv_matrices_maps_lines_to_lines by auto
 qed
 
+
+(* Need definition of scalar multiple of a matrix here *)
+definition matrix_scalar_mult :: "real \<Rightarrow> m33 \<Rightarrow> m33"
+(infixl "*k" 70) where "k *k A \<equiv> (\<chi> i j. k * A $ i $ j)"
+
+theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *)
+  fixes A B:: m33
+  assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
+  assumes equal_maps: "rp2tom A = rp2tom B"
+  shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *k B" 
+  sorry
+
 definition RP2_auto :: "(rp2 \<Rightarrow> rp2) set" where 
-"RP2_auto = {A :: (rp2 \<Rightarrow> rp2) . (\<exists> f :: v3 \<Rightarrow> v3 . make_RP2_auto f = A)}"
+"RP2_auto = {A :: (rp2 \<Rightarrow> rp2) . is_RP2_auto A}"
 
 definition rp2_auto_to_transf :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (v3 \<Rightarrow> v3)"
   where "rp2_auto_to_transf r = Rep_rp2 \<circ> r \<circ> Abs_rp2"
@@ -487,11 +501,13 @@ definition rp2_auto_to_transf :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (v3 \<Ri
 (*== Page 21 ==*)
 (*The above theorem justifies the following definition: *)
 definition PGL2R :: "(rp2 \<Rightarrow> rp2) set" where
-"PGL2R = {A :: (rp2 \<Rightarrow> rp2) . (\<exists> f :: m33 . matrix_to_rp2_auto f = A)}"
+"PGL2R = {rp2tom A | A . det ((A::m33)) \<noteq> 0}"
 
 (* What we have proved above is that 3x3 matrices give rise to a subset of
    the set of all automorphisms of rp2. The next theorem makes this explicit. *)
 theorem inv_matrices_subset_auts: "PGL2R \<subseteq> RP2_auto"
+  sorry
+(*
 proof 
   fix A
   assume A_assm: "A \<in> PGL2R"
@@ -500,15 +516,18 @@ proof
     using tom_def make_RP2_auto_def rp2tom_def by auto
   then show "A \<in> RP2_auto" using RP2_auto_def by auto
 qed
-  
-(*The next section deals with the proof of Proposition 3.8 *)
+*)
 
+(*The next section deals with the proof of Proposition 3.8 *)
+(*
 definition equiv_maps :: "(v3 \<Rightarrow> v3) \<Rightarrow> (v3 \<Rightarrow> v3) \<Rightarrow> bool"
   where "equiv_maps f g \<longleftrightarrow>
   (well_defined f) \<and> (well_defined g) \<and> (\<forall>x :: v3 . \<exists>t :: real . t \<noteq> 0 \<and> f x = t *s (g x))"
-
-lift_definition RP2_equiv_maps :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (rp2 \<Rightarrow> rp2) \<Rightarrow> bool" is equiv_maps
-proof (transfer, clarsimp)
+*)
+(*
+lift_definition RP2_equiv_maps :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (rp2 \<Rightarrow> rp2) \<Rightarrow> bool" is equiv_maps sorry
+*)
+(* proof (transfer, clarsimp)
   show "\<And>f g h r . 
          (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
          (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps f h = equiv_maps g r"
@@ -522,6 +541,38 @@ proof (transfer, clarsimp)
          (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
          (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps g r \<Longrightarrow> equiv_maps f h" sorry
 qed
+*)
+
+definition p1 :: v3 where "p1 = vector[1, 0, 0]"
+definition p2 :: v3 where "p2 = vector[0, 1, 0]"
+definition p3 :: v3 where "p3 = vector[0, 0, 1]"
+definition q :: v3 where "q = vector[1, 1, 1]"
+
+lemma matrix_agreeing_with_I_on_basis_is_scalar_mult_of_I: 
+  fixes A :: m33
+  assumes invertible_A: "det A \<noteq> 0"
+  assumes "rp2rel (A *v p1) p1"
+  assumes "rp2rel (A *v p2) p2"
+  assumes "rp2rel (A *v p3) p3"
+  assumes "rp2rel (A *v q) q"
+
+  shows "(\<exists>c :: real . 
+        A  = c *k I33)"
+
+lemma matrices_agreeing_on_basis_are_scalar_mults: 
+  fixes A B :: m33
+  assumes invertible_A: "det A \<noteq> 0"
+  assumes invertible_B: "det A \<noteq> 0"
+  assumes "rp2rel (A *v p1) (B *v p1)"
+  assumes "rp2rel (A *v p2) (B *v p2)"
+  assumes "rp2rel (A *v p3) (B *v p3)"
+  assumes "rp2rel (A *v q) (B *v q)"
+  shows "\<exists>c :: real .  A  = c *k B"
+  sorry (* should follow instantly from previous lemma, applied to AB^{-1} *)
+
+
+
+
 
 (* If the transformations for matrices A and B are equal up to a constant factor c,
   then they are "equiv_maps", i.e., they represent the same maps when considered as 
@@ -531,8 +582,17 @@ lemma inv_matrices_equiv_fwd:
   fixes A B :: m33
   assumes invertible_A: "det A \<noteq> 0"
   and invertible_B: "det B \<noteq> 0"
-  shows "(\<exists>c :: real . \<forall>x :: v3 . 
-        (tom A) x = c *s (tom B) x) \<longrightarrow> equiv_maps (tom A) (tom B)"
+shows "(\<exists>c :: real .  A  = c *k B) \<longleftrightarrow> ((rp2tom A) = (rp2tom B))"
+  sorry
+
+(* WHAT REMAINS 
+** ## State that A B C are coplanar in v3 iff det([A,B,C]) = 0
+** ## State that (rp2abs A) (rp2abs B) (rp2abs C) are collinear in rp3, iff det([A,B,C]) = 0 (i.e. them 3.10)
+*)
+
+
+(* =========prior stuff ===========*)
+(*
 proof (rule impI; safe)
   fix c :: real
   assume c_scales: "\<forall>x . (tom A) x = c *s (tom B) x"
@@ -561,11 +621,7 @@ proof (rule impI; safe)
       using c_nonzero c_scales by auto
   qed 
 qed
-
-definition p1 :: v3 where "p1 = vector[1, 0, 0]"
-definition p2 :: v3 where "p2 = vector[0, 1, 0]"
-definition p3 :: v3 where "p3 = vector[0, 0, 1]"
-definition q :: v3 where "q = vector[1, 1, 1]"
+*)
 
 (*Some matrix-vector multiplication lemmas, which might be helpful *)
 
