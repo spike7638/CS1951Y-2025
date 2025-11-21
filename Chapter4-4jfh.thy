@@ -194,27 +194,44 @@ fun is_proj_data :: "(('p, 'l) persp_data) proj_data \<Rightarrow> bool" where
     (is_persp_data d \<and> persp_range d = persp_domain d' \<and> is_proj_data (Cons d' ds))" |
   "is_proj_data [] = False"
 
+lemma is_proj_non_empty:
+  fixes ds
+  assumes "is_proj_data ds"
+  shows "ds \<noteq> []"
+  using assms by auto
+
+lemma is_proj_made_up_of_persp:
+  fixes ds
+  assumes "is_proj_data ds"
+  shows "\<exists> d. is_persp_data d \<and> d = hd ds"
+  by (metis assms
+    is_proj_data.simps(1,2,3)
+    list.collapse) 
+
 lemma proj_domain_cons [sym]:
   fixes d ds
   assumes "is_persp_data d"
   assumes "is_proj_data ds"
-  assumes "ds \<noteq> []"
   shows "proj_domain (d # ds) = persp_domain d"
-  by (metis assms(3) list.exhaust proj_domain.simps(2))
+  by (metis assms(2)
+    is_proj_data.simps(3)
+    list.exhaust
+    proj_domain.simps(2))
 
 lemma proj_range_cons [sym]:
   fixes d ds
   assumes "is_persp_data d"
   assumes "is_proj_data ds"
-  assumes "ds \<noteq> []"
   shows "proj_range (d # ds) = proj_range ds"
-  by (metis assms(3) list.exhaust proj_range.simps(2))
+  by (metis assms(2)
+    is_proj_data.simps(3)
+    list.exhaust
+    proj_range.simps(2))
 
 lemma proj_domain_append [sym]:
   fixes d ds
   assumes "is_proj_data d"
   assumes "is_proj_data ds"
-  assumes "ds \<noteq> []"
   shows "proj_domain (d @ ds) = proj_domain d"
   by (smt (verit)
     append_is_Nil_conv[of d ds]
@@ -231,7 +248,6 @@ lemma proj_range_append [sym]:
   fixes d ds
   assumes "is_proj_data d"
   assumes "is_proj_data ds"
-  assumes "ds \<noteq> []"
   shows "proj_range (d @ ds) = proj_range ds"
   using assms
 proof (induction d)
@@ -239,11 +255,11 @@ proof (induction d)
   then show ?case by auto
 next
   case (Cons a ds)
-  then show ?case by (metis (no_types, lifting)
-    append.left_neutral
-    append_Cons
+  then show ?case by (metis append_Cons
+    append_Nil
     is_proj_data.simps(2)
-    neq_Nil_conv
+    is_proj_non_empty
+    list.exhaust
     proj_range.simps(2))
 qed
 
@@ -296,7 +312,7 @@ qed
 
 lemma projectivity_not_nice: 
   fixes ds P
-  assumes "ds \<noteq> []"
+  assumes "is_proj_data ds"
   assumes "\<not>(P \<in> Points) \<or> \<not>(P \<lhd> proj_domain ds)"
   shows "projectivity ds P = undefined"
 proof -
