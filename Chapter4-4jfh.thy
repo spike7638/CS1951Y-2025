@@ -79,7 +79,7 @@ proof (rule ccontr)
 qed*)
 
 lemma inverse_persp:
-  fixes f d Q
+  fixes f Or l1 l2 Q
   assumes data_def: "is_persp_data (Or, l1, l2)"
   assumes f_def: "f = perspectivity (Or, l1, l2)"
   assumes g_def: "g = perspectivity (Or, l2, l1)"
@@ -95,6 +95,26 @@ proof -
   then have "g (f Q) = (Or \<bar> ((Or \<bar> Q) \<sqdot> l2)) \<sqdot> l1" using f2 by auto
   then show ?thesis 
     by (smt (verit) Q_facts data_def is_persp_data.simps join_properties1 meet_properties2 unique_meet)
+qed
+
+lemma persp_inv_is_persp:
+  fixes f Or l1 l2 B
+  assumes data_def: "is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
+  assumes g_def: "g = perspectivity (Or, l2, l1)"
+  assumes B_facts: "B \<in> {P \<in> Points. P \<lhd> l2}"
+  shows "g B = (the_inv_into {P \<in> Points. P \<lhd> l1} f) B"
+proof - 
+  thm the_inv_into_def
+  have h1: "is_persp_data (Or, l2, l1)" using data_def by auto
+  have h2: "B \<in> Points \<and> B \<lhd> l2" using B_facts by auto
+  obtain A where A_def: "A \<in> Points \<and> A \<lhd> l1 \<and> f A = B" 
+    using f_def h1 h2 inverse_persp persp_domain.simps persp_range.simps perspectivity_nice by metis
+  have h3: "A \<in> {P \<in> Points. P \<lhd> l1}" using A_def by auto
+  have h4: "g B = A" using A_def data_def f_def g_def inverse_persp by blast
+  have h5: "(the_inv_into {P \<in> Points. P \<lhd> l1} f) B = A" using assms B_facts A_def
+    by (smt (verit) inj_on_def inverse_persp mem_Collect_eq the_inv_into_f_f)
+  show ?thesis using h4 h5 by auto
 qed
 
 lemma perspectivity_inj:
@@ -253,7 +273,7 @@ lemma projectivity_nice:
   shows "is_proj_data ds \<Longrightarrow> P \<in> Points \<and> P \<lhd> proj_domain ds \<Longrightarrow>
         projectivity ds P \<in> Points \<and> 
         projectivity ds P \<lhd> proj_range ds"
-proof (induction ds arbitrary: "P" )
+proof (induction ds arbitrary: "P")
   case Nil
   then have "False" using Nil.prems(1) is_proj_data.simps(3) by auto
   then show ?case by auto
@@ -322,6 +342,13 @@ lemma proj_is_persp_data2:
   shows "is_persp_data (hd d)"
   using assms list.collapse proj_is_persp_data by metis
 
+lemma proj_tail_is_data:
+  fixes d ds
+  assumes "is_proj_data (d # ds)"
+  assumes "ds \<noteq> []"
+  shows "is_proj_data ds"
+  using assms is_proj_data.elims by blast
+
 lemma proj_data_append_is_data:
   fixes d d'
   assumes "d' \<noteq> []"
@@ -337,30 +364,6 @@ next
   case (Cons a ds)
   then show ?case sorry
 qed
-
-(* cvc5: Try this:
-  by (smt (verit) append_Cons
-    append_eq_append_conv2
-    append_is_Nil_conv
-    is_proj_data.elims(1)
-    list.inject proj_domain.elims
-    proj_range.elims
-    proj_range.simps(1)) (> 1.0 s, timed out) 
-cvc5: Try this:
-  by (smt (verit) append_Cons
-    append_self_conv2
-    is_proj_data.simps(2)
-    list.inject proj_domain.elims
-    proj_is_persp_data
-    proj_range.elims) (> 1.0 s, timed out) 
-cvc5: Try this:
-  by (smt (verit) append_Cons
-    append_is_Nil_conv
-    append_self_conv2
-    is_proj_data.elims(1)
-    list.inject proj_domain.elims
-    proj_range.elims
-    proj_range.simps(1))  *)
 
 lemma persp_proj_composition_is_proj:
   fixes d d'
@@ -407,6 +410,140 @@ next
   then show ?case using h1 h2 h3 h4
     by argo
 qed 
+
+lemma proj_inj:
+  fixes f d
+  assumes data_def: "is_proj_data d"
+  assumes f_def: "f = projectivity d"
+  shows "inj_on f {P \<in> Points. P \<lhd> proj_domain d}" 
+using assms
+proof (induction d arbitrary: "f")
+  case Nil
+  then show ?case by auto
+next
+  case (Cons a ds)
+  consider (empty) "ds = []" | (nonempty) "ds \<noteq> []" by auto
+  then show ?case
+  proof cases
+    case empty
+    have h1: "f = perspectivity a" by (simp add: Cons.prems(2) empty)
+    have h2: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
+    show ?thesis using h1 h2 ext bij_betw_def empty perspectivity_bij proj_domain.simps(1) 
+      by (metis (lifting))
+  next
+    case nonempty
+    let ?g = "perspectivity a"
+    have h1a: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
+    then have h1: "inj_on ?g {P \<in> Points. P \<lhd> persp_domain a}" using bij_betw_def perspectivity_bij 
+        proj_domain.simps(1) by (metis (lifting))
+    let ?h = "projectivity ds"
+    have "is_proj_data ds" using Cons.prems(1) nonempty proj_tail_is_data by auto
+    then have h2: "inj_on ?h {P \<in> Points. P \<lhd> proj_domain ds}" using Cons.prems Cons.IH by auto
+    have h3: "f = ?h \<circ> ?g" by (metis Cons.prems(2) nonempty projectivity.cases projectivity.simps(2))
+    have "persp_range a = proj_domain ds" 
+      by (metis Cons.prems(1) is_proj_data.simps(2) nonempty proj_domain.elims)
+    then have h4: "\<forall>P \<in> {P \<in> Points. P \<lhd> persp_domain a}. ?g P \<in> {P \<in> Points. P \<lhd> proj_domain ds}"
+      by (metis (lifting) h1a is_proj_data.simps(1) mem_Collect_eq proj_domain.simps(1) 
+          proj_range.simps(1) projectivity.simps(1) projectivity_nice)
+    show ?thesis using h1 h2 h3 h4 by (smt (verit) A2C_Points_def Collect_cong Cons.prems(1) assms(2) 
+          inj_on_def is_proj_data.elims(1) list.simps(1) nonempty o_apply proj_domain_cons)
+  qed
+qed
+
+lemma proj_surj:
+  fixes f d
+  assumes data_def: "is_proj_data d"
+  assumes f_def: "f = projectivity d"
+  shows "f ` {P \<in> Points. P \<lhd> proj_domain d} = {Q \<in> Points. Q \<lhd> proj_range d}"
+using assms
+proof (induction d arbitrary: "f")
+  case Nil
+  then show ?case by auto
+next
+  case (Cons a ds)
+  consider (empty) "ds = []" | (nonempty) "ds \<noteq> []" by auto
+  then show ?case
+  proof cases
+    case empty
+    have h1: "f = perspectivity a" by (simp add: Cons.prems(2) empty)
+    have h2: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
+    show ?thesis using h1 h2 ext bij_betw_def empty perspectivity_bij proj_domain.simps(1) 
+      by (metis (no_types, lifting) proj_range.simps(1))
+  next
+    case nonempty
+    let ?g = "perspectivity a"
+    have h1a: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
+    then have h1: "?g ` {P \<in> Points. P \<lhd> persp_domain a} = {Q \<in> Points. Q \<lhd> persp_range a}" 
+      using bij_betw_def perspectivity_bij proj_domain.simps(1) by (metis (lifting))
+    let ?h = "projectivity ds"
+    have "is_proj_data ds" using Cons.prems(1) nonempty proj_tail_is_data by auto
+    then have h2: "?h ` {P \<in> Points. P \<lhd> proj_domain ds} = {Q \<in> Points. Q \<lhd> proj_range ds}" 
+      using Cons.prems Cons.IH by auto
+    have h3: "f = ?h \<circ> ?g" by (metis Cons.prems(2) nonempty projectivity.cases projectivity.simps(2))
+    have h4a: "persp_range a = proj_domain ds" 
+      by (metis Cons.prems(1) is_proj_data.simps(2) nonempty proj_domain.elims)
+    then have h4: "\<forall>P \<in> {P \<in> Points. P \<lhd> persp_domain a}. ?g P \<in> {P \<in> Points. P \<lhd> proj_domain ds}"
+      by (metis (lifting) h1a is_proj_data.simps(1) mem_Collect_eq proj_domain.simps(1) 
+          proj_range.simps(1) projectivity.simps(1) projectivity_nice)
+    show ?thesis using h1 h2 h3 h4a h4 Collect_cong Cons.prems(1) assms(2) projective_plane_axioms
+           is_proj_data.elims(1) list.simps(1) nonempty proj_domain_cons projective_plane.proj_range.simps(2)
+           image_comp by (smt (verit, best))
+  qed
+qed
+
+lemma proj_bij:
+  fixes f d
+  assumes data_def: "is_proj_data d"
+  assumes f_def: "f = projectivity d"
+  shows "bij_betw f {P \<in> Points. P \<lhd> proj_domain d} {Q \<in> Points. Q \<lhd> proj_range d}"
+  using assms proj_inj proj_surj by (simp add: bij_betw_def)
+
+lemma proj_has_inverse:
+  fixes f d P
+  assumes "is_proj_data d"
+  assumes "f = projectivity d"
+  assumes "P \<in> Points \<and> P \<lhd> proj_domain d"
+  shows "\<exists> d' . projectivity d' (f P) = P"
+using assms
+proof (induction d arbitrary: "P")
+  case Nil
+  then show ?case by auto
+next
+  case (Cons a ds)
+  consider (empty) "ds = []" | (nonempty) "ds \<noteq> []" by auto
+  then show ?case
+  proof cases
+    case empty
+    have "f = perspectivity a" by (simp add: Cons.prems(2) empty)
+    have "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
+    thm persp_inv_is_persp
+    obtain g where "\<forall> B \<in> {Q \<in> Points. Q \<lhd> persp_range f} . the_inv_into {P \<in> Points. P \<lhd> ?l1.0} ?f ?B"
+    thm inverse_persp
+    then show ?thesis sorry
+  next
+    case nonempty
+    then show ?thesis sorry
+  qed
+
+  have p1: "(ds = [] \<longrightarrow> (\<exists> d' . projectivity d' (f P) = P))"
+  proof - 
+    have h1: "ds = []"
+  qed
+  have p2: "(ds \<noteq> [] \<longrightarrow> (\<exists> d' . projectivity d' (f P) = P))"
+  proof -
+    show ?thesis sorry
+  qed
+  show ?case sorry
+qed
+
+lemma inverse_persp:
+  fixes f d Q
+  assumes data_def: "is_persp_data (Or, l1, l2)"
+  assumes f_def: "f = perspectivity (Or, l1, l2)"
+  assumes g_def: "g = perspectivity (Or, l2, l1)"
+  assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> l1"
+  shows "(g (f Q)) = Q"
+  by sorry
 
 definition PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
   where "PJ l = (if (l \<in> Lines) then
@@ -526,7 +663,7 @@ proof -
   next
     case 6
     have "\<And>f . f \<in> carrier (PJ l) \<longrightarrow> True" by blast
-    then show ?case using inverse_persp perspectivity_bij unfolding PJ_def
+    then show ?case using inverse_persp perspectivity_bij unfolding PJ_def sorry
   qed
 qed
 
