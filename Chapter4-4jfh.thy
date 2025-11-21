@@ -341,7 +341,7 @@ next
       using Cons.prems(2) proj_domain.simps(2) by (metis False neq_Nil_conv) 
     moreover have "perspectivity d P = undefined" using Cons.prems(1) calculation(2) is_proj_made_up_of_persp
       by fastforce
-    moreover have "(projectivity ds (undefined)) = undefined" sorry
+    moreover have "projectivity ds undefined = undefined" using projectivity.simps sorry
     ultimately show ?thesis using h0 by presburger
   qed
 qed
@@ -641,7 +641,7 @@ proof -
   next
     case 6
     have "\<And>f . f \<in> carrier (PJ l) \<longrightarrow> True" by blast
-    then show ?case using inverse_persp perspectivity_bij unfolding PJ_def
+    then show ?case using inverse_persp perspectivity_bij unfolding PJ_def sorry
   qed
 qed
 
@@ -691,79 +691,138 @@ proof -
   
   let ?B'' = "meet ?AB' ?A'B"
   have B''_def: "?B'' \<in> Points \<and> ?B'' \<lhd> ?AB' \<and> ?B'' \<lhd> ?A'B"
-    using AB'_line A'B_line meet_properties2 sorry
+    using AB'_line A'B_line meet_properties2 by (metis A'_not_on_l ABC_def
+    distinct_length_2_or_more
+    l_def unique_meet)
 
   let ?AC' = "join A C'"
   have AC'_line: "?AC' \<in> Lines \<and> A \<lhd> ?AC' \<and> C' \<lhd> ?AC'"
-    using ABC_def ABC'_def join_properties1 join_properties2 sorry
+    using ABC_def ABC'_def join_properties1 join_properties2 by (metis A_not_on_l'
+    l'_def)
 
   let ?A'C = "join A' C"
   have A'C_line: "?A'C \<in> Lines \<and> A' \<lhd> ?A'C \<and> C \<lhd> ?A'C"
-    using ABC_def ABC'_def join_properties1 join_properties2 sorry
+    using ABC_def ABC'_def join_properties1 join_properties2 using A'_not_on_l l_def
+    by blast
 
   let ?C'' = "meet ?AC' ?A'C"
   have C''_def: "?C'' \<in> Points \<and> ?C'' \<lhd> ?AC' \<and> ?C'' \<lhd> ?A'C"
-    using AC'_line A'C_line meet_properties2 sorry
+    using AC'_line A'C_line meet_properties2 by (metis A'_not_on_l ABC_def
+    distinct_length_2_or_more
+    l_def unique_meet)
 
   let ?l'' = "join ?B'' ?C''"
   have l''_line: "?l'' \<in> Lines \<and> ?B'' \<lhd> ?l'' \<and> ?C'' \<lhd> ?l''"
-    using B''_def C''_def join_properties1 join_properties2 sorry
+    using B''_def C''_def join_properties1 join_properties2 by (smt (verit, del_insts)
+    A'_not_on_l ABC'_def ABC_def
+    A_not_on_l'
+    distinct_length_2_or_more
+    l'_def l_def)
 
   let ?A'' = "meet ?l'' ?AA'"
   have A''_def: "?A'' \<in> Points \<and> ?A'' \<lhd> ?l'' \<and> ?A'' \<lhd> ?AA'"
-    using l''_line AA'_line meet_properties2 sorry
+    using l''_line AA'_line meet_properties2 by (smt (verit, ccfv_threshold)
+    A'B_line A'_not_on_l AB'_line
+    ABC'_def ABC_def A_not_on_l'
+    distinct_length_2_or_more
+    l'_def l_def
+    unique_meet)
   
   (* First perspectivity *)
   let ?d1 = "(A', l, ?l'')"
   have d1_persp: "is_persp_data ?d1"
-    using ABC'_def l_def l''_line A'_not_on_l sorry
+    using ABC'_def l_def l''_line A'_not_on_l by (smt (z3) A'B_line A'C_line
+    AB'_line ABC_def AC'_line
+    A_not_on_l' B''_def C''_def
+    distinct_length_2_or_more
+    is_persp_data.simps l'_def
+    s)
   
   (* Second perspectivity *)
   let ?d2 = "(A, ?l'', l')"
   have d2_persp: "is_persp_data ?d2"
-    using ABC_def l'_def l''_line A_not_on_l' sorry
+    using ABC_def l'_def l''_line A_not_on_l' by (smt (verit, del_insts)
+    A'B_line A'C_line A'_not_on_l
+    AB'_line ABC'_def AC'_line
+    B''_def C''_def
+    distinct_length_2_or_more
+    is_persp_data.simps l_def
+    unique_meet)
+
+  have A_dp_eq_meet_join_Ap_A_ldp: "?A'' = (meet (join A' A) ?l'')"
+    by (smt (verit, ccfv_SIG) AA'_line ABC'_def
+    ABC_def join_properties2 l''_line
+    meet_properties2)
+  
+  have B_dp_eq_meet_join_Ap_B_ldp: "?B'' = (meet (join A' B) ?l'')" 
+    by (metis A'B_line B''_def d1_persp
+    is_persp_data.simps l''_line
+    meet_properties2 unique_meet)
+  
+  have C_dp_eq_meet_join_Ap_C_ldp: "?C'' = (meet (join A' C) ?l'')" 
+    by (metis A'C_line C''_def d1_persp
+    is_persp_data.simps l''_line
+    meet_properties2 unique_meet)
+  
+  have Ap_eq_meet_join_Ap_Adp_lp: "A' = (meet (join A ?A'') l')"
+    by (smt (verit, del_insts) AA'_line ABC'_def
+    d2_persp is_persp_data.simps
+    join_properties2 l'_def
+    meet_properties2)
+  
+  have Bp_eq_meet_join_Ap_Bdp_lp: "B' = (meet (join A ?B'') l')"
+    by (metis (full_types) AB'_line ABC'_def
+    B''_def d2_persp is_persp_data.simps
+    join_properties2 l''_line l'_def
+    meet_properties2)
+  
+  have Cp_eq_meet_join_Ap_Cdp_lp: "C' = (meet (join A ?C'') l')"
+    by (metis (full_types) ABC'_def AC'_line
+    C''_def d2_persp is_persp_data.simps
+    join_properties2 l''_line l'_def
+    meet_properties2)
   
   (* First perspectivity: A \<rightarrow> A'', B \<rightarrow> B'', C \<rightarrow> C'' *)
   have persp1_A: "perspectivity ?d1 A = ?A''"
-    using d1_persp ABC_def l_def A''_def AA'_line
-    sorry
+    using d1_persp ABC_def l_def A''_def AA'_line AA'_line A_dp_eq_meet_join_Ap_A_ldp
+    perspectivity.simps by auto
   
   have persp1_B: "perspectivity ?d1 B = ?B''"
-    using d1_persp ABC_def l_def B''_def A'B_line
-    sorry
+    using d1_persp ABC_def l_def B''_def A'B_line B_dp_eq_meet_join_Ap_B_ldp
+    perspectivity.simps by presburger
   
   have persp1_C: "perspectivity ?d1 C = ?C''"
-    using d1_persp ABC_def l_def C''_def A'C_line
-    sorry
+    using d1_persp ABC_def l_def C''_def A'C_line C_dp_eq_meet_join_Ap_C_ldp
+    perspectivity.simps by presburger
   
   (* Second perspectivity: A'' \<rightarrow> A', B'' \<rightarrow> B', C'' \<rightarrow> C' *)
   have persp2_A'': "perspectivity ?d2 ?A'' = A'"
-    using d2_persp A''_def l''_line ABC'_def AA'_line
-    sorry
+    using d2_persp A''_def l''_line ABC'_def AA'_line Ap_eq_meet_join_Ap_Adp_lp
+    perspectivity.simps by presburger
   
   have persp2_B'': "perspectivity ?d2 ?B'' = B'"
-    using d2_persp B''_def l''_line ABC'_def AB'_line
-    sorry
+    using d2_persp B''_def l''_line ABC'_def AB'_line Bp_eq_meet_join_Ap_Bdp_lp
+    perspectivity.simps by presburger
   
   have persp2_C'': "perspectivity ?d2 ?C'' = C'"
-    using d2_persp C''_def l''_line ABC'_def AC'_line
-    sorry
+    using d2_persp C''_def l''_line ABC'_def AC'_line Cp_eq_meet_join_Ap_Cdp_lp
+    perspectivity.simps by presburger
   
   (* Compose perspectivities *)
   let ?ds = "[?d1, ?d2]"
   let ?f = "projectivity ?ds"
   
   have ds_valid: "is_proj_data ?ds"
-    using d1_persp d2_persp sorry
+    using d1_persp d2_persp by simp
   
   have f_A: "?f A = A'"
-    using persp1_A persp2_A'' sorry
+    using persp1_A persp2_A'' by simp
   
   have f_B: "?f B = B'"
-    using persp1_B persp2_B'' sorry
+    using persp1_B persp2_B'' by simp
   
   have f_C: "?f C = C'"
-    using persp1_C persp2_C'' sorry
+    using persp1_C persp2_C'' by simp
   
   show ?thesis
     using ds_valid f_A f_B f_C by blast
@@ -846,13 +905,13 @@ proof -
     using f1_props f2_props proj_composition_is_proj sorry
   
   have f_A: "?f A = A'"
-    using f1_props f2_props sorry
+    using f1_props f2_props by force
   
   have f_B: "?f B = B'"
-    using f1_props f2_props sorry
+    using f1_props f2_props by force
   
   have f_C: "?f C = C'"
-    using f1_props f2_props sorry
+    using f1_props f2_props by force
   
   show ?thesis
     using ds_valid f_comp f_A f_B f_C by blast
