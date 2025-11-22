@@ -376,6 +376,7 @@ l \<noteq> join A B \<and> incid A l \<and>  incid A m \<and> m \<noteq> join A 
 A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines
 ) then meet (join A B) (join (meet (join B (meet l n)) m) (meet (join B (meet m n)) l)) else undefined)"
 
+text\<open>\oliver \jackson\<close>
 lemma (in projective_plane_7) conjugate_is_harmonic:
   fixes A B C l m n D
     (* harmonic_conjugate assumptions *)
@@ -493,6 +494,7 @@ proof -
   then show ?thesis sorry
 qed
 
+text\<open>\oliver \jackson\<close>
 theorem (in projective_plane_7) harmonic_is_conjugate:
   fixes A B C D
   assumes "A \<in> Points" and "B \<in> Points" and "C \<in> Points" and "D \<in> Points"
@@ -547,10 +549,53 @@ proof -
   show ?thesis using conjugate_prelims d_fact unfolding harmonic_conjugate_def 
     by (metis assms(1,2,3) distinct_length_2_or_more harmon lines pcollinear_def)
 qed
+text\<open>\done\<close>
 
-  
+text\<open>\oliver \jackson\<close>
+lemma (in projective_plane_7) conjugate_swap_ml:
+  fixes A B C l m n D
+  shows "(harmonic_conjugate A B C l m n) = (harmonic_conjugate A B C m l n)"
+  using join_properties1 join_properties2 join_def 
+  unfolding harmonic_conjugate_def
+  by (smt (verit))
+text\<open>\done\<close>
 
+text\<open>\oliver \jackson\<close>
+lemma (in projective_plane_5_7) conjugate_change_l:
+  fixes A B C l l' m n D
+    (* harmonic_conjugate assumptions *)
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> l' \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines"
+  assumes "distinct[A,B,C]"
+  assumes "pcollinear A B C"
+  assumes "l \<noteq> join A B \<and> incid A l \<and> l' \<noteq> join A B \<and> incid A l' 
+           \<and> incid A m \<and> m \<noteq> join A B \<and> m \<noteq> l \<and> m \<noteq> l' \<and> n \<noteq> join A B \<and> incid C n"
+  shows "harmonic_conjugate A B C l m n = harmonic_conjugate A B C l' m n"
+  sorry
 
+text\<open>\oliver \jackson\<close>
+lemma (in projective_plane_5_7) conjugate_change_m:
+  fixes A B C l m m' n D
+    (* harmonic_conjugate assumptions *)
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> m' \<in> Lines \<and> n \<in> Lines"
+  assumes "distinct[A,B,C]"
+  assumes "pcollinear A B C"
+  assumes "l \<noteq> join A B \<and> incid A l \<and> 
+           incid A m \<and> m \<noteq> join A B \<and> incid A m' \<and> m' \<noteq> join A B \<and> m \<noteq> l \<and> m' \<noteq> l \<and> n \<noteq> join A B \<and> incid C n"
+  shows "harmonic_conjugate A B C l m n = harmonic_conjugate A B C l m' n"
+  using assms(1,2,3,4) conjugate_change_l conjugate_swap_ml by metis
+text\<open>\done\<close>
+
+text\<open>\oliver \jackson\<close>
+lemma (in projective_plane_5_7) conjugate_change_n:
+  fixes A B C l m n n' D
+    (* harmonic_conjugate assumptions *)
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines \<and> n' \<in> Lines"
+  assumes "distinct[A,B,C]"
+  assumes "pcollinear A B C"
+  assumes "l \<noteq> join A B \<and> incid A l \<and> 
+           incid A m \<and> m \<noteq> join A B \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and> n' \<noteq> join A B \<and> incid C n'"
+  shows "harmonic_conjugate A B C l m n = harmonic_conjugate A B C l m n'"
+  sorry
 
 
 text\<open>\oliver \jackson\<close>
@@ -745,6 +790,10 @@ theorem (in projective_plane) p4_6_uniqueness:
   shows "D = E"
   sorry
 
+  have a0: "D = harmonic_conjugate A B C l m n" using d_fact by auto
+
+  then show ?thesis sorry
+qed
 
 text\<open>Definition: fourth harmonic point of A,B,C is the D satisfying 4.6.\<close>
 
@@ -1338,7 +1387,6 @@ proof -
 
     show ?thesis using final_statement unfolding harmonic_quadruple_def by metis
 qed
-text\<open>\done\<close>   
 
 
 text\<open>\oliver \jackson\<close>
