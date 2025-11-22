@@ -546,8 +546,6 @@ qed
   
 
 
-
-
 text\<open>\oliver \jackson\<close>
 theorem (in projective_plane_7) p4_6_existence:
   fixes A B C
