@@ -1,10 +1,61 @@
-theory "Chapter2-2"
+theory "Chapter2-3"
   imports  "HOL-Library.Uprod" 
            "Chapter2-1"
 
 begin
 declare [[smt_timeout = 1500]]
 declare [[smt_reconstruction_step_timeout = 1500]]
+
+subsection\<open> A missing statement and proof, needed to show that a fpp
+is in fact a projective plane\<close>
+
+(* A theorem we don't know how to prove, and Hartshorne finesses it! *)
+
+theorem free_planes_unique_join: (* two distinct points are joined by a UNIQUE line ... still unproved *)
+  fixes  U
+  assumes "U \<subseteq> CPoints"
+  assumes "card U \<ge> 4"
+  fixes P Q
+  assumes "P \<in> Pi_points "
+  assumes "Q \<in> Pi_points "
+  assumes "P \<noteq> Q"
+  fixes k n
+  assumes "k \<in> Pi_lines"
+  assumes "n \<in> Pi_lines"
+  assumes "fppincid P k \<and> fppincid Q k \<and> fppincid P n \<and> fppincid Q n"
+  shows "k = n"
+proof -
+  obtain rk where rkfact: "k \<in> new_lines rk" using assms(6) line_level4 by auto
+  obtain rn where rnfact: "n \<in> new_lines rn" using assms(7) line_level4 by auto
+  obtain rp where rpfact: "P \<in> new_points rp" using assms(3) pt2 by blast
+  obtain rq where rqfact: "Q \<in> new_points rq" using assms(4) pt2 by blast
+  show ?thesis   by sledgehammer
+
+  sorry
+
+(* gist of possible proof:
+Lemma: every line has a pair of generators; unless l_level = 1, one of these has the level l_level
+
+Lemma: If, in k = Join A B, we have level A \<le> level B, then all other points have levels strictly 
+  greater than level b, and are of the form Meet (k m) for some m; Meet (k m) is added ONLY if k and m
+  have no points in common. 
+
+Lemma: If, in Base k, we
+Cases: P Q both basepoints. Then either PQ is a base-line (whose only additional points have level > 1)
+or it's a level-1 line, and its only additional points have level 2 or greater (i.e., all other points have level > 2, 
+except perhaps 
+(i) if they're joined in the base, it's easy
+(ii) if they're both base points, they're joined at level 1. All NEW points on that line have level \<ge> 2. 
+(iii) If ONE is a base-point, then the level of the line is some odd number n, one of constructor poijnts in is
+the base, the other's at level n-1. All OTHER points on this line are of level > n
+(iv) If NEITHER is a base-point, then one is at level n-1, and the other is at or below level n-1, and 
+all other points on this line are at level > n. [actually,this subsumes case iii]
+
+Now look at another line containing P and Q. Either P and.or Q is a constructor point, or both are
+'new' points with levels higher than the line level. That means ... what DOES it mean? 
+*)
+
+
 
 subsection \<open>Setup and proof of P4 for a free projective plane on four points.\<close>
 text\<open>
