@@ -591,16 +591,6 @@ next
     
     then show ?thesis sorry
   qed
-
-  have p1: "(ds = [] \<longrightarrow> (\<exists> d' . projectivity d' (f P) = P))"
-  proof - 
-    have h1: "ds = []"
-  qed
-  have p2: "(ds \<noteq> [] \<longrightarrow> (\<exists> d' . projectivity d' (f P) = P))"
-  proof -
-    show ?thesis sorry
-  qed
-  show ?case sorry
 qed
 
 (*lemma inverse_proj:
@@ -616,6 +606,7 @@ proof (induction ds)
   then show ?case by auto
 next
   case (Cons a rs)
+<<<<<<< HEAD
   then show ?case 
 qed*)
 
@@ -733,7 +724,7 @@ proof -
     have h4: "proj_range (ds' @ ds) = l" 
       by (metis f_proj g_proj proj_range_append)
     have h5: "is_proj_data (ds' @ ds)" 
-      by (metis f_proj g_proj is_proj_data.simps(3) proj_data_append_is_data)
+      by (metis f_proj g_proj proj_data_append_is_data)
     then show ?case using f_proj g_proj unfolding PJ_def using assms h2 h3 h4
     by auto
   next
@@ -823,6 +814,7 @@ lemma triplet_to_triplet_diff_lines:
   assumes A_not_on_l': "\<not> A \<lhd> l'"
   assumes A'_not_on_l: "\<not> A' \<lhd> l"
   shows "\<exists> ds f. (f = projectivity ds) \<and> (is_proj_data ds) \<and> 
+                 (proj_domain ds = l) \<and> (proj_range ds = l') \<and>
                  (f A = A') \<and> (f B = B') \<and> (f C = C')"
 proof -
   let ?AA' = "join A A'"
@@ -888,6 +880,7 @@ proof -
     distinct_length_2_or_more
     is_persp_data.simps l'_def
     s)
+  have d1_domain: "proj_domain [?d1] = l" using d1_persp by auto
   
   (* Second perspectivity *)
   let ?d2 = "(A, ?l'', l')"
@@ -899,6 +892,7 @@ proof -
     distinct_length_2_or_more
     is_persp_data.simps l_def
     unique_meet)
+  have d2_range: "proj_range [?d2] = l'" using d2_persp by auto
 
   have A_dp_eq_meet_join_Ap_A_ldp: "?A'' = (meet (join A' A) ?l'')"
     by (smt (verit, ccfv_SIG) AA'_line ABC'_def
@@ -975,8 +969,11 @@ proof -
   have f_C: "?f C = C'"
     using persp1_C persp2_C'' by simp
   
+  have ds_domain: "proj_domain ?ds = l" using d1_domain by auto
+  have ds_range: "proj_range ?ds = l'" using d2_range by auto
+  
   show ?thesis
-    using ds_valid f_A f_B f_C by blast
+    using ds_valid f_A f_B f_C ds_domain ds_range by blast
 qed
 
 (* Proposition 4.9 Let l be a line, and let A, B, C, and A\<Zprime>, B\<Zprime>, C\<Zprime> be two triples of three distinct points each on l. Then there is a projectivity of l into itself which sends A, B, C into A\<Zprime>, B\<Zprime>, C\<Zprime>. *)
@@ -1026,6 +1023,7 @@ proof -
   
   obtain ds1 f1 where f1_props: 
     "f1 = projectivity ds1 \<and> is_proj_data ds1 \<and> 
+    proj_domain ds1 = l \<and> proj_range ds1 = l' \<and> 
      f1 A = ?A'' \<and> f1 B = ?B'' \<and> f1 C = ?C''"
     using triplet_to_triplet_diff_lines[of A B C ?A'' ?B'' ?C'' l l']
           ABC_def A''_props B''_props C''_props l_def l'_props A''_not_on_l
@@ -1037,23 +1035,25 @@ proof -
   
   obtain ds2 f2 where f2_props:
     "f2 = projectivity ds2 \<and> is_proj_data ds2 \<and>
+    proj_domain ds2 = l' \<and> proj_range ds2 = l \<and> 
      f2 ?A'' = A' \<and> f2 ?B'' = B' \<and> f2 ?C'' = C'"
     using triplet_to_triplet_diff_lines[of ?A'' ?B'' ?C'' A' B' C' l' l]
           A''_props B''_props C''_props ABC'_def l_def l'_props A''_not_on_l
-    by (metis d_proj_persp
-    inverse_persp
-    is_proj_data.simps(1)
-    persp_data_sym
-    projectivity.simps(1))
+    by (metis (no_types, lifting)
+    ABC'_def d_proj_persp
+    distinct_length_2_or_more
+    distinct_singleton
+    inverse_persp)
+  
   
   let ?ds = "ds1 @ ds2"
   let ?f = "f2 \<circ> f1"
   
   have ds_valid: "is_proj_data ?ds"
-    using f1_props f2_props proj_data_append_is_data sorry
+    using f1_props f2_props proj_data_append_is_data by presburger
   
   have f_comp: "?f = projectivity ?ds"
-    using f1_props f2_props proj_composition_is_proj sorry
+    using f1_props f2_props proj_composition_is_proj by presburger
   
   have f_A: "?f A = A'"
     using f1_props f2_props by force
@@ -1068,6 +1068,7 @@ proof -
     using ds_valid f_comp f_A f_B f_C by blast
 qed
 
+(* So suppose l O  [ l\<Zprime>, and H(AB, CD), where A, B, C, D \<in> l. Let A\<Zprime>, B\<Zprime>, C\<Zprime>, D\<Zprime>  be their images. Let l\<Zprime>\<Zprime> = AB\<Zprime>. Then  lO  [ l\<Zprime>\<Zprime> O  [ l\<Zprime>  is the same mapping, so it is sufficient to consider l O  [ l\<Zprime>\<Zprime> and l\<Zprime>\<Zprime> O  [ l\<Zprime> separately.  Here one has the advantage that the intersection of the two lines is one of the four points considered. By relabeling, we may assume it is A in each case. So we have the following problem: Let l O  [ l\<Zprime>, and let A = l \<sqdot> l\<Zprime>, B, C, D be four points on l such that H(AB, CD).  Prove that H(AB\<Zprime>, C\<Zprime>D\<Zprime>), where B\<Zprime>, C\<Zprime>, D\<Zprime> are the images of B, C, D. Draw BC\<Zprime>, and let it meet OA at X. Consider the complete quadrangle OXB\<Zprime>C\<Zprime>. Two of its diagonal points are A, B; C lies on the side OC\<Zprime>. Hence the intersection of XB\<Zprime> with l must be the fourth harmonic point of ABC, i.e. XB\<Zprime> \<sqdot> l = D. (Here we use the unicity of the fourth harmonic point.) Now consider the complete quadrangle OXBD. Two of its diagonal points are A and B\<Zprime>; the other two sides meet l\<Zprime> in C\<Zprime> and D\<Zprime>. Hence H(AB\<Zprime>, C\<Zprime>D\<Zprime>). *)
 lemma perspectivity_hquad_to_hquad:
   fixes A B C D A' B' C' D' l1 l2 Or
   assumes ABCD_on_l1: "A \<in> Points \<and> A \<lhd> l1 \<and> B \<in> Points \<and> B \<lhd> l1 \<and> 
@@ -1134,7 +1135,10 @@ next
     
     have intermediate_on_domain: "?A1 \<lhd> proj_domain ds \<and> ?B1 \<lhd> proj_domain ds \<and>
                                   ?C1 \<lhd> proj_domain ds \<and> ?D1 \<lhd> proj_domain ds"
-      using Cons.prems persp_d perspectivity_nice sorry (* Bad sledgehammer *)
+      using Cons.prems persp_d perspectivity_nice by (smt (z3) False is_persp_data.elims(2)
+    is_proj_data.simps(2) list.inject
+    neq_Nil_conv
+    proj_domain.simps(1,2))
     
     have composition: "A' = ?f2 ?A1 \<and> B' = ?f2 ?B1 \<and> 
                        C' = ?f2 ?C1 \<and> D' = ?f2 ?D1"
