@@ -1131,22 +1131,19 @@ theorem free_planes_meet: (* two distinct lines have a point in common in fpp wh
   using assms crossing_point linorder_linear by metis
 
 theorem non_collinear_persistence:(*if P Q R in the configuration are not collinear, then they are also not collinear in the free projective plane. *)
-  fixes CPoints::"'a set"
-  fixes CLines::"'b set"
   fixes P Q R
   assumes "card {P, Q, R} = 3"
-  assumes "{P, Q, R} \<subseteq> CPoints"
-  shows "\<not> (\<exists>k \<in> CLines . incidx P k \<and> incidx Q k \<and> incidx R k)
+  assumes "{P, Q, R} \<subseteq> Points"
+  shows "\<not> (\<exists>k \<in> Lines . incid P k \<and> incid Q k \<and> incid R k)
     \<Longrightarrow> \<not> (\<exists>m \<in> Pi_lines . fppincid (Base_point P) m \<and> fppincid (Base_point Q) m \<and> fppincid (Base_point R) m)" 
 proof (erule contrapos_np)
   assume " \<not> \<not> (\<exists>m\<in>Pi_lines. fppincid (Base_point P) m \<and> fppincid (Base_point Q) m \<and> fppincid (Base_point R) m) "
   then obtain m where  ch: "m\<in>Pi_lines \<and> fppincid (Base_point P) m \<and> fppincid (Base_point Q) m \<and> fppincid (Base_point R) m" by blast
-    then show "\<exists>k\<in>CLines. incidx P k \<and> incidx Q k \<and> incidx R k" 
+    then show "\<exists>k\<in>Lines. incid P k \<and> incid Q k \<and> incid R k" 
   proof (cases m)
-    case (Base_line L)
-    have "incidx P L \<and> incidx Q L \<and> incidx R L"  using Base_line assms ch by (metis base_in_base)
-    then show ?thesis using Base_line  assms ch line_level2
-    by (meson base_in_base)
+    case b: (Base_line L)
+    then show ?thesis using b  assms ch line_level2  
+    using line_level4 by fastforce
   next
     case (Join Pair n)
     obtain S T where b: "Pair = (Upair S T)" using uprod_exhaust by auto
@@ -1217,9 +1214,9 @@ proof (rule ccontr)
     using assms(3,4) upqr_def in_mono pcollinear_def by fastforce
   show False unfolding configuration_def 
   proof -
-    show ?thesis using configuration.base_in_base configuration.fppincid.simps(1) configuration_def 
+    show ?thesis using configuration.base_in_base configuration.fppincid.simps(1) configuration_def by sledgehammer
   proof -
-    have "\<forall>p pa P. p (pa::pointD) P \<or> pa \<notin> P"
+    have "\<forall>p pa P. p (pa::pointD) P \<or> pa \<notin> P" by sledgehammer
       by (metis (no_types) configuration.base_in_base configuration.fppincid.simps(1) desargues_is_config incidD_def)
     then show ?thesis
       by auto

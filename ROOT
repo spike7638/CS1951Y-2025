@@ -8,7 +8,7 @@ theories
     "Chapter1-2"
     "Chapter1-3"
     "Chapter2-1"
-    "Chapter2-2"
+ 
 
   document_files
     "root.tex"
