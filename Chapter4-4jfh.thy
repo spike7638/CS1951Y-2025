@@ -971,7 +971,7 @@ proof -
     by blast
   
   obtain Or where Or_def: "Or \<in> Points \<and> \<not> Or \<lhd> l \<and> \<not> Or \<lhd> l'"
-    using p3 pcollinear_def l_def l'_props sorry
+    using p3 pcollinear_def l_def l'_props exists_p_on_neither_l sorry
   
   let ?d_proj = "(Or, l, l')"
   have d_proj_persp: "is_persp_data ?d_proj"
@@ -1128,6 +1128,7 @@ locale perspectivity =
      p2: "l1 \<in> Lines \<and> l2 \<in> Lines" and
      p3: "(\<not> (incid Or l1) \<and> \<not> (incid Or l2))"
 end*)
+end
 end
 
 

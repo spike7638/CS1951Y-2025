@@ -2137,6 +2137,8 @@ proof -
     have "\<not> B \<lhd> l1 \<and> \<not> B \<lhd> l2" using B_facts assms(1,2) join_properties1 meet_properties2 
         neq points1 points2 unique_meet by metis
     then show ?thesis using B_facts by auto
+  qed
+qed
 text \<open>\done\<close>
 
 text \<open>
