@@ -403,7 +403,6 @@ lemma proj_tail_is_data:
 
 lemma proj_data_append_is_data:
   fixes d d'
-  assumes "d' \<noteq> []"
   assumes "proj_range d = proj_domain d'"
   assumes "is_proj_data d"
   assumes "is_proj_data d'"
@@ -411,7 +410,7 @@ lemma proj_data_append_is_data:
 using assms
 proof (induction d)
   case Nil
-  then show ?case using assms(4) by auto
+  then show ?case by fastforce
 next
   case (Cons a ds)
   then show ?case sorry
@@ -550,7 +549,7 @@ lemma proj_bij:
   shows "bij_betw f {P \<in> Points. P \<lhd> proj_domain d} {Q \<in> Points. Q \<lhd> proj_range d}"
   using assms proj_inj proj_surj by (simp add: bij_betw_def)
 
-lemma proj_has_inverse:
+(* lemma proj_has_inverse:
   fixes f d P
   assumes "is_proj_data d"
   assumes "f = projectivity d"
@@ -586,16 +585,23 @@ next
     show ?thesis sorry
   qed
   show ?case sorry
-qed
+qed *)
 
-lemma inverse_persp:
-  fixes f d Q
-  assumes data_def: "is_persp_data (Or, l1, l2)"
-  assumes f_def: "f = perspectivity (Or, l1, l2)"
-  assumes g_def: "g = perspectivity (Or, l2, l1)"
-  assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> l1"
+lemma inverse_proj:
+  fixes f ds Q
+  assumes data_def: "is_proj_data ds"
+  assumes f_def: "f = projectivity ds"
+  assumes g_def: "g = projectivity (rev (map inverse_persp ds))"
+  assumes Q_facts: "Q \<in> Points \<and> Q \<lhd> proj_domain ds"
   shows "(g (f Q)) = Q"
-  by sorry
+  using assms
+proof (induction ds)
+  case Nil
+  then show ?case by auto
+next
+  case (Cons a rs)
+  then show ?case by sledgehammer
+qed
 
 definition PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
   where "PJ l = (if (l \<in> Lines) then
@@ -1047,59 +1053,91 @@ proof -
 qed
 
 lemma perspectivity_hquad_to_hquad:
-  fixes A B C D f
-  assumes ABCD_def: "(A \<in> Points \<and> A \<lhd> l1) \<and> (B \<in> Points \<and> A \<lhd> l1) \<and> (C \<in> Points \<and> C \<lhd> l1) \<and> (D \<in> Points \<and> D \<lhd> l1)"
-  assumes ABCD_harmonic_quadruple: "harmonic_quadruple A B C D"
-  assumes data_def: "is_persp_data d"
-  assumes f_def: "f = perspectivity d"
-  assumes f_domain: "persp_domain d = l1"
-  assumes f_domain: "persp_range d = l2"
-  assumes ABCD'_def: "A' = f A \<and> B' = f B \<and> C' = f C \<and> D' = f D"
+  fixes A B C D A' B' C' D' l1 l2 Or
+  assumes ABCD_on_l1: "A \<in> Points \<and> A \<lhd> l1 \<and> B \<in> Points \<and> B \<lhd> l1 \<and> 
+                       C \<in> Points \<and> C \<lhd> l1 \<and> D \<in> Points \<and> D \<lhd> l1"
+  assumes ABCD_harmonic: "harmonic_quadruple A B C D"
+  assumes persp_data: "is_persp_data (Or, l1, l2)"
+  assumes images: "A' = perspectivity (Or, l1, l2) A \<and> 
+                   B' = perspectivity (Or, l1, l2) B \<and>
+                   C' = perspectivity (Or, l1, l2) C \<and> 
+                   D' = perspectivity (Or, l1, l2) D"
   shows "harmonic_quadruple A' B' C' D'"
-proof -
-   have A'_def: "A' = (perspectivity d) A" 
-    and B'_def: "B' = (perspectivity d) B"
-    and C'_def: "C' = (perspectivity d) C"
-    and D'_def: "D' = (perspectivity d) D"
-    using f_def ABCD'_def by blast+
-
-  have A'_on_l2: "A' \<in> Points \<and> A' \<lhd> l2"
-    and B'_on_l2: "B' \<in> Points \<and> B' \<lhd> l2"
-    and C'_on_l2: "C' \<in> Points \<and> C' \<lhd> l2"
-    and D'_on_l2: "D' \<in> Points \<and> D' \<lhd> l2"
-    using A'_def B'_def C'_def D'_def ABCD_def ABCD'_def f_def data_def
-    f_domain is_persp_data.elims(2) perspectivity_nice assms(5) sorry
-
-  let ?l'' = "join A B'"
-
-  let ?X = "meet (join B C') (join Q A)"
-
-  have X_on_OA: "?X \<in> Points \<and> ?X \<lhd> (join Q A)"
-    and X_on_BC': "?X \<in> Points \<and> ?X \<lhd> (join B C')"
-    using join_properties1 meet_properties2 sorry
-
-  have "meet (join X B') ?l'' = D"
-  proof -
-    have "C \<in> Points \<and> C \<lhd> (join Q C')"
-      using C'_def join_properties1 join_properties2 meet_properties2 sorry
-
-    have "meet (join ?X B') ?l'' = D"
-      using ABCD_def A'_def B'_def C'_def D'_def sorry
-    thus ?thesis sorry
-  qed
-  thus ?thesis sorry
-qed
+  sorry
 
 
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
 lemma projectivity_hquad_to_hquad:
-  fixes A B C D f
-  assumes ABCD_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> C \<in> Points \<and> (harmonic_quadruple A B C D)"
-  assumes f_def: "\<exists> ds . (f = projectivity ds)"
-  assumes ds_def: "is_proj_data ds"
-  assumes ABCD'_def: "A' = f(A) \<and> B' = f(B) \<and> C' = f(C) \<and> D' = f(D)"
+  fixes A B C D A' B' C' D' ds
+  assumes ABCD_points: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points"
+  assumes ABCD_on_domain: "A \<lhd> proj_domain ds \<and> B \<lhd> proj_domain ds \<and> 
+                           C \<lhd> proj_domain ds \<and> D \<lhd> proj_domain ds"
+  assumes ABCD_harmonic: "harmonic_quadruple A B C D"
+  assumes proj_data: "is_proj_data ds"
+  assumes images: "A' = projectivity ds A \<and> B' = projectivity ds B \<and>
+                   C' = projectivity ds C \<and> D' = projectivity ds D"
   shows "harmonic_quadruple A' B' C' D'"
-  sorry
+using proj_data ABCD_points ABCD_on_domain ABCD_harmonic images
+proof (induction ds arbitrary: A B C D A' B' C' D')
+  case Nil
+  then show ?case by simp
+next
+  case (Cons d ds)
+  show ?case
+  proof (cases "ds = []")
+    case True
+    then have "projectivity (d # ds) = perspectivity d"
+      by simp
+    then show ?thesis
+      using Cons.prems perspectivity_hquad_to_hquad by (smt (verit) True is_persp_data.elims(2)
+    persp_domain.simps proj_domain.simps(1)
+    proj_is_persp_data)
+  next
+    case False
+    let ?f1 = "perspectivity d"
+    let ?f2 = "projectivity ds"
+    
+    let ?A1 = "?f1 A"
+    let ?B1 = "?f1 B"
+    let ?C1 = "?f1 C"
+    let ?D1 = "?f1 D"
+    
+    have persp_d: "is_persp_data d"
+      using Cons.prems(4) proj_is_persp_data Cons.prems(1) by blast
+    
+    have intermediate_harmonic: "harmonic_quadruple ?A1 ?B1 ?C1 ?D1"
+      using perspectivity_hquad_to_hquad
+            Cons.prems persp_d by (smt (verit, ccfv_threshold) False
+    is_persp_data.elims(2) proj_domain_cons
+    proj_tail_is_data
+    projective_plane.persp_domain.simps
+    projective_plane_axioms)
+    
+    have ds_valid: "is_proj_data ds"
+      using Cons.prems(4) False proj_tail_is_data Cons.prems(1) by blast
+    
+    have intermediate_on_domain: "?A1 \<lhd> proj_domain ds \<and> ?B1 \<lhd> proj_domain ds \<and>
+                                  ?C1 \<lhd> proj_domain ds \<and> ?D1 \<lhd> proj_domain ds"
+      using Cons.prems persp_d perspectivity_nice sorry (* Bad sledgehammer *)
+    
+    have composition: "A' = ?f2 ?A1 \<and> B' = ?f2 ?B1 \<and> 
+                       C' = ?f2 ?C1 \<and> D' = ?f2 ?D1"
+      using Cons.prems False by (smt (z3) comp_apply is_proj_data.simps(2)
+    list.exhaust persp_proj_composition_is_proj
+    proj_domain.simps(1)
+    proj_domain_cons)
+    
+    show ?thesis
+      using Cons.IH[of ?A1 ?B1 ?C1 ?D1 A' B' C' D']
+            ds_valid intermediate_harmonic intermediate_on_domain composition
+      by (metis Cons.prems(2,3)
+    is_proj_data.simps(1) persp_d
+    proj_domain.simps(1) proj_domain_cons
+    projectivity.simps(1)
+    projectivity_nice)
+  qed
+qed
+
 
 (* Previous attempts:
 
