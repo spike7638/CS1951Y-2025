@@ -549,7 +549,7 @@ lemma proj_bij:
   shows "bij_betw f {P \<in> Points. P \<lhd> proj_domain d} {Q \<in> Points. Q \<lhd> proj_range d}"
   using assms proj_inj proj_surj by (simp add: bij_betw_def)
 
-(* lemma proj_has_inverse:
+lemma proj_has_inverse:
   fixes f d P
   assumes "is_proj_data d"
   assumes "f = projectivity d"
@@ -565,14 +565,30 @@ next
   then show ?case
   proof cases
     case empty
-    have "f = perspectivity a" by (simp add: Cons.prems(2) empty)
-    have "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
-    thm persp_inv_is_persp
-    obtain g where "\<forall> B \<in> {Q \<in> Points. Q \<lhd> persp_range f} . the_inv_into {P \<in> Points. P \<lhd> ?l1.0} ?f ?B"
-    thm inverse_persp
-    then show ?thesis sorry
+    have h1: "f = perspectivity a" by (simp add: Cons.prems(2) empty)
+    have h2: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
+    obtain g where "B \<in> {Q \<in> Points. Q \<lhd> proj_range d} \<longrightarrow>
+           g B = the_inv_into {P \<in> Points. P \<lhd> persp_domain a} f B" for B by blast
+    then show ?thesis by (smt (verit) One_nat_def RP2Q.proj_range.simps(3) Rep_Proj_def h1 h2 
+          assms(2) empty local.Cons(4) normalize_nat_def persp_domain.simps
+          proj_range.simps(3) projective_plane.inverse_persp projective_plane.is_persp_data.elims(2)
+          projective_plane.proj_domain.simps(1) projective_plane_axioms projectivity.simps(1)
+          punctured_r_3_def rp2_Points_def)
   next
     case nonempty
+    have ha: "is_proj_data ds" using Cons.prems(1) nonempty proj_tail_is_data by blast
+    have h0: " (\<And>P. f = projectivity ds \<Longrightarrow>
+             P \<in> Points \<and> P \<lhd> proj_domain ds \<Longrightarrow> \<exists>d'. projectivity d' (f P) = P)" 
+      using Cons.IH ha by blast
+    obtain d' where "(\<And>P. f = projectivity ds \<Longrightarrow>
+             P \<in> Points \<and> P \<lhd> proj_domain ds \<Longrightarrow> projectivity d' (f P) = P)" using h0 sorry
+    have h1: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
+    have h2: "is_proj_data (a # ds)" using Cons.prems(1) by auto
+    have h3: "f = projectivity (a # ds)" using Cons.prems(2) by auto
+(* WTS  P \<in> Points \<and> P \<lhd> proj_domain (a # d) \<Longrightarrow> \<exists>d'. projectivity d' (f P) = P *)
+    obtain g where "B \<in> {Q \<in> Points. Q \<lhd> proj_range d} \<longrightarrow>
+           g B = the_inv_into {P \<in> Points. P \<lhd> persp_domain a} f B" for B by blast
+    
     then show ?thesis sorry
   qed
 
@@ -585,9 +601,9 @@ next
     show ?thesis sorry
   qed
   show ?case sorry
-qed *)
+qed
 
-lemma inverse_proj:
+(*lemma inverse_proj:
   fixes f ds Q
   assumes data_def: "is_proj_data ds"
   assumes f_def: "f = projectivity ds"
@@ -600,8 +616,8 @@ proof (induction ds)
   then show ?case by auto
 next
   case (Cons a rs)
-  then show ?case by sledgehammer
-qed
+  then show ?case 
+qed*)
 
 definition PJ :: "'l \<Rightarrow> (('p \<Rightarrow> 'p) monoid)" 
   where "PJ l = (if (l \<in> Lines) then
