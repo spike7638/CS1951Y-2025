@@ -971,7 +971,7 @@ proof -
     by blast
   
   obtain Or where Or_def: "Or \<in> Points \<and> \<not> Or \<lhd> l \<and> \<not> Or \<lhd> l'"
-    using p3 pcollinear_def l_def l'_props exists_p_on_neither_l sorry
+    using l_def l'_props exists_p_on_neither_l by metis
   
   let ?d_proj = "(Or, l, l')"
   have d_proj_persp: "is_persp_data ?d_proj"
