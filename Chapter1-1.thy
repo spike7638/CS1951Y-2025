@@ -2115,6 +2115,55 @@ proof -
 qed
 text \<open>\done\<close>
 
+text \<open>\nick\<close>
+lemma (in projective_plane) exists_second_point:
+  fixes l P
+  assumes "l \<in> Lines"
+  assumes "P \<in> Points \<and> P \<lhd> l"
+  shows "\<exists>Q \<in> Points . Q \<lhd> l \<and> Q \<noteq> P"
+  by (metis (no_types, lifting) assms(1) distinct_length_2_or_more mem_Collect_eq p4)
+text \<open>\done\<close>
+
+text \<open>\nick\<close>
+lemma (in projective_plane) exists_third_point:
+  fixes l P Q
+  assumes "l \<in> Lines"
+  assumes "P \<in> Points \<and> P \<lhd> l"
+  assumes "Q \<in> Points \<and> Q \<lhd> l"
+  assumes "P \<noteq> Q"
+  shows "\<exists>R \<in> Points . R \<lhd> l \<and> R \<noteq> P \<and> R \<noteq> Q"
+  using assms distinct_length_2_or_more mem_Collect_eq p4 by (metis (no_types, lifting))
+text \<open>\done\<close>
+
+text \<open>\nick\<close>
+lemma (in projective_plane) exists_p_on_neither_l:
+  fixes l1 l2::'l
+  assumes "l1 \<in> Lines" and "l2 \<in> Lines"
+  shows "\<exists>P \<in> Points . \<not> P \<lhd> l1 \<and> \<not> P \<lhd> l2"
+proof - 
+  consider (eq) "l1 = l2" | (neq) "l1 \<noteq> l2" by auto
+  then show ?thesis
+  proof cases
+    case eq
+    show ?thesis using assms(2) eq p3 pcollinear_def by fastforce
+  next
+    case neq
+    let ?M = "l1 \<sqdot> l2"
+    obtain A1 where points1: "A1 \<in> Points \<and> A1 \<lhd> l1 \<and> A1 \<noteq> ?M"
+      using assms p4 exists_second_point p2 by metis
+    obtain A2 where points2: "A2 \<in> Points \<and> A2 \<lhd> l2 \<and> A2 \<noteq> ?M"
+      using assms p4 exists_second_point p2 by metis
+    have h1: "A1 \<noteq> A2" by (metis assms(1,2) meet_properties2 neq points1 points2 unique_meet)
+    let ?l3 = "join A1 A2"
+    obtain B where B_facts: "B \<in> Points \<and> B \<lhd> ?l3 \<and> B \<noteq> A1 \<and> B \<noteq> A2"
+      using exists_third_point h1 join_properties1 points1 points2 by blast
+    have "\<not> B \<lhd> l1 \<and> \<not> B \<lhd> l2" using B_facts assms(1,2) join_properties1 meet_properties2 
+        neq points1 points2 unique_meet by metis
+    then show ?thesis using B_facts by auto
+  qed
+qed
+text \<open>\done\<close>
+
 text \<open>
 \hartshorne
 \prop[1.3] The completion $S$ of an affine plane $A,$ as described above, is a projective plane.
