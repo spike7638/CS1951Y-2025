@@ -135,81 +135,86 @@ proof -
     \<and> incid A' l' \<and> incid B' l' \<and> incid C' l'"
 
     let ?k = "projective_plane_data.join Points Lines incid A B'"
+    have distinct_abc: "distinct[A, B, C]" using assms assmsimpl by auto
 
-    let ?Y = "projective_plane_data.meet Points Lines incid l l'"
-    have ypoints: "?Y \<in> Points" using assmsimpl is_proj_plane
-          projective_plane.meet_properties2 by metis
-    have ab_distinct: "A \<noteq> B'" using assmsimpl assms ypoints projective_plane.nonintersection_distinct[of Points Lines incid l l' A B' ?Y]
-      distinct4_def is_proj_plane projective_plane.meet_properties2 by metis
-    have ab_distinct2: "A' \<noteq> B" using assmsimpl assms ypoints projective_plane.nonintersection_distinct[of Points Lines incid l' l A' B ?Y]
-      distinct4_def is_proj_plane projective_plane.meet_properties2 by metis
-    have ac_distinct: "A \<noteq> C'" using assmsimpl assms ypoints projective_plane.nonintersection_distinct[of Points Lines incid l l' A C' ?Y]
-      distinct4_def is_proj_plane projective_plane.meet_properties2 by metis
-    have ac_distinct2: "A' \<noteq> C" using assmsimpl assms ypoints projective_plane.nonintersection_distinct[of Points Lines incid l' l A' C ?Y]
-      distinct4_def is_proj_plane projective_plane.meet_properties2 by metis
-    have bc_distinct: "B \<noteq> C'" using assmsimpl assms ypoints projective_plane.nonintersection_distinct[of Points Lines incid l l' B C' ?Y]
-      distinct4_def is_proj_plane projective_plane.meet_properties2 by metis
-    have bc_distinct2: "B' \<noteq> C" using assmsimpl assms ypoints projective_plane.nonintersection_distinct[of Points Lines incid l' l B' C ?Y]
-      distinct4_def is_proj_plane projective_plane.meet_properties2 by metis
+    obtain Y where ydef: "Y = projective_plane_data.meet Points Lines incid l l' \<and> Y \<in> Points" 
+      using assmsimpl is_proj_plane projective_plane.meet_properties2 by metis
+
+    have ab_distinct: "A \<noteq> B'" using assmsimpl assms projective_plane.nonintersection_distinct[of Points Lines incid l l' A B' Y]
+      distinct4_def is_proj_plane projective_plane.meet_properties2 ydef by metis
+    have ab_distinct2: "A' \<noteq> B" using assmsimpl assms projective_plane.nonintersection_distinct[of Points Lines incid l' l A' B Y]
+      distinct4_def is_proj_plane projective_plane.meet_properties2 ydef by metis
+    have ac_distinct: "A \<noteq> C'" using assmsimpl assms projective_plane.nonintersection_distinct[of Points Lines incid l l' A C' Y]
+      distinct4_def is_proj_plane projective_plane.meet_properties2 ydef by metis
+    have ac_distinct2: "A' \<noteq> C" using assmsimpl assms projective_plane.nonintersection_distinct[of Points Lines incid l' l A' C Y]
+      distinct4_def is_proj_plane projective_plane.meet_properties2 ydef by metis
+    have bc_distinct: "B \<noteq> C'" using assmsimpl assms projective_plane.nonintersection_distinct[of Points Lines incid l l' B C' Y]
+      distinct4_def is_proj_plane projective_plane.meet_properties2 ydef by metis
+    have bc_distinct2: "B' \<noteq> C" using assmsimpl assms projective_plane.nonintersection_distinct[of Points Lines incid l' l B' C Y]
+      distinct4_def is_proj_plane projective_plane.meet_properties2 ydef by metis
     have aa_distinct: "A \<noteq> A'" using assmsimpl is_proj_plane projective_plane.meet_properties2 projective_plane.unique_meet
       by fastforce
     have bb_distinct: "B \<noteq> B'" using assmsimpl is_proj_plane projective_plane.meet_properties2 projective_plane.unique_meet
       by fastforce
     have cc_distinct: "C \<noteq> C'" using assmsimpl is_proj_plane projective_plane.meet_properties2 projective_plane.unique_meet
       by fastforce
-    have d7: "distinct[A, B, C, A', B', C', ?Y]" 
-      using aa_distinct ab_distinct ab_distinct2 ac_distinct ac_distinct2 assmsimpl bb_distinct bc_distinct
-        bc_distinct2 cc_distinct by blast
 
-    let ?AB'= "projective_plane_data.join Points Lines incid A B'" 
-    have ab'_line: "?AB' \<in> Lines" using ab_distinct assms
-      by (simp add: assmsimpl is_proj_plane
-          projective_plane.join_properties1)
-    let ?A'B= "projective_plane_data.join Points Lines incid A' B" 
-    have a'b_line: "?A'B \<in> Lines" using ab_distinct2 assms
-      by (simp add: assmsimpl is_proj_plane
-          projective_plane.join_properties1)
-    let ?AC'= "projective_plane_data.join Points Lines incid A C'" 
-    have ac'_line: "?AC' \<in> Lines" using ac_distinct assms
-      by (simp add: assmsimpl is_proj_plane
-          projective_plane.join_properties1)
-    let ?A'C= "projective_plane_data.join Points Lines incid A' C" 
-    have a'c_line: "?A'C \<in> Lines" using ac_distinct2 assms
-      by (simp add: assmsimpl is_proj_plane
-          projective_plane.join_properties1)
-    
-    let ?P = "projective_plane_data.meet Points Lines incid ?AB' ?A'B"
-    let ?Q = "projective_plane_data.meet Points Lines incid ?AC' ?A'C"
+    have d7: "distinct[A, B, C, A', B', C', Y]" 
+      using aa_distinct ab_distinct ab_distinct2 ac_distinct ac_distinct2 assmsimpl bb_distinct bc_distinct
+        bc_distinct2 cc_distinct ydef by blast
+
+    obtain AB' where ab'_def: "AB' = projective_plane_data.join Points Lines incid A B' \<and> AB' \<in> Lines"
+      using ab_distinct assms by (simp add: assmsimpl is_proj_plane projective_plane.join_properties1)
+    obtain A'B where a'b_def: "A'B = projective_plane_data.join Points Lines incid A' B \<and> A'B \<in> Lines"
+      using ab_distinct2 assms by (simp add: assmsimpl is_proj_plane projective_plane.join_properties1)
+    obtain AC' where ac'_def: "AC' = projective_plane_data.join Points Lines incid A C' \<and> AC' \<in> Lines"
+      using ac_distinct assms by (simp add: assmsimpl is_proj_plane projective_plane.join_properties1)
+    obtain A'C where a'c_def: "A'C = projective_plane_data.join Points Lines incid A' C \<and> A'C \<in> Lines"
+      using ac_distinct2 assms by (simp add: assmsimpl is_proj_plane projective_plane.join_properties1)
+
+    have abab_neq: "AB'\<noteq> A'B" using assms projective_plane.two_joins_of_distinct4_distinct[of Points Lines incid l l' A B A' B' AB' A'B]
+      ab'_def a'b_def ab_distinct ab_distinct2 assmsimpl is_proj_plane projective_plane.join_properties2 aa_distinct bb_distinct 
+      by blast
+    have acac_neq: "AC'\<noteq> A'C" using assms projective_plane.two_joins_of_distinct4_distinct[of Points Lines incid l l' A C A' C' AC' A'C]
+      ac'_def a'c_def ac_distinct ac_distinct2 assmsimpl is_proj_plane projective_plane.join_properties2 distinct4_def aa_distinct cc_distinct 
+      by blast
+        
+    let ?P = "projective_plane_data.meet Points Lines incid AB' A'B"
+    let ?Q = "projective_plane_data.meet Points Lines incid AC' A'C"
     let ?R = "projective_plane_data.meet Points Lines incid (projective_plane_data.join Points Lines incid B C') (projective_plane_data.join Points Lines incid B' C)"
 
-    have abab_neq: "?AB'\<noteq> ?A'B" using assms projective_plane.two_joins_of_distinct4_distinct[of Points Lines incid l l' A B A' B' ?AB' ?A'B]
-      a'b_line ab_distinct ab_distinct2 assmsimpl is_proj_plane
-        projective_plane.join_properties2 by fastforce
-    have acac_neq: "?AC'\<noteq> ?A'C" using assms projective_plane.two_joins_of_distinct4_distinct[of Points Lines incid l l' A C A' C' ?AC' ?A'C]
-      a'c_line ac_distinct ac_distinct2 assmsimpl is_proj_plane
-        projective_plane.join_properties2 by fastforce
-    have pq_points: "?P \<in> Points \<and> ?Q \<in> Points" using ab_distinct ab_distinct2 ac_distinct ac_distinct2 
-         abab_neq acac_neq
-      by (simp add: assmsimpl is_proj_plane projective_plane.mjj_point)
-    have pq_neq: "?P \<noteq> ?Q" using assms pq_points 
-        projective_plane.two_meets_of_distinct8_distinct[of Points Lines incid l l' ?AB' ?A'B ?AC' 
-        ?A'C A B C A' B' C' ?Y ?P ?Q]  a'b_line a'c_line ab'_line abab_neq ac'_line acac_neq
-          assmsimpl  is_proj_plane
-          projective_plane.meet_properties2 d7
-      by (metis (full_types))
-     
-    let ?l'' = "projective_plane_data.join Points Lines incid ?P ?Q"
-    have lpp_line: "?l'' \<in> Lines" using ypoints pq_points
-      by (simp add: is_proj_plane pq_neq projective_plane.join_properties1)
-    have distinct_abc: "distinct[A, B, C]" using assms assmsimpl by auto
-    obtain f where f_def: "f = projective_plane.projectivity Points Lines incid (Cons (A', l, ?l'') (Cons (A, ?l'', l') [])) 
-             \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"  using projective_plane.triplet_to_triplet_diff_lines_two[of Points Lines incid A B C A' B' C' l l' ?l'' ?P ?Q]
-    is_proj_plane assms  assmsimpl distinct_abc
-      using lpp_line pq_points by blast
-    
-    obtain Y' where yp_def: "Y' = projective_plane_data.meet Points Lines incid l' ?l''" using assms
-      by force
-    have p_not_lp: "\<not> incid ?P l'" sorry
+    obtain P where pdef: "P = projective_plane_data.meet Points Lines incid AB' A'B \<and> P \<in> Points" 
+      using ab_distinct ab_distinct2 ac_distinct ac_distinct2 abab_neq acac_neq
+      by (simp add: a'b_def ab'_def assmsimpl is_proj_plane projective_plane.mjj_point)
+    obtain Q where qdef: "Q = projective_plane_data.meet Points Lines incid AC' A'C \<and> Q \<in> Points"
+      using ab_distinct ab_distinct2 ac_distinct ac_distinct2 abab_neq acac_neq
+      by (simp add: a'c_def ac'_def assmsimpl is_proj_plane projective_plane.mjj_point)
+
+    have pq_neq: "?P \<noteq> ?Q" 
+      using assms pdef qdef a'b_def a'c_def ab'_def abab_neq ac'_def ydef
+      projective_plane.two_meets_of_distinct8_distinct[of Points Lines incid l l' AB' A'B AC' A'C A B C A' B' C' Y P Q]  acac_neq
+      assmsimpl is_proj_plane projective_plane.meet_properties2 d7
+      by metis
+
+    obtain l'' where l''_def: "l'' = projective_plane_data.join Points Lines incid P Q \<and> l'' \<in> Lines"
+      using is_proj_plane pdef pq_neq projective_plane.join_properties1 qdef by metis
+
+    obtain f where f_def: "f = projective_plane.projectivity Points Lines incid (Cons (A', l, l'') (Cons (A, l'', l') [])) 
+             \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"  
+      using projective_plane.triplet_to_triplet_diff_lines_two[of Points Lines incid A B C A' B' C' l l' l'' P Q]
+      is_proj_plane assms  assmsimpl distinct_abc l''_def pdef qdef a'b_def a'c_def ab'_def ac'_def 
+      by blast
+    obtain Y' where yp_def: "Y' = projective_plane_data.meet Points Lines incid l' l'' \<and> Y' \<in> Points" 
+      using assms
+      by (smt (verit, del_insts) a'b_def a'c_def ab'_def ac'_def assmsimpl d7 distinct7_def is_proj_plane l''_def
+          pdef pq_neq projective_plane.join_properties1 projective_plane.meet_properties2 projective_plane.unique_meet
+          qdef)
+
+    have p_not_lp: "\<not> incid P l'" 
+      using a'b_def ab'_def assmsimpl distinct4_def is_proj_plane pdef
+          projective_plane.join_properties1 projective_plane.meet_properties2
+          projective_plane.nonintersection_distinct
+      by (smt (verit, ccfv_threshold))
     
     show "(projective_plane_data.pcollinear Points Lines incid 
         (projective_plane_data.meet Points Lines incid 
