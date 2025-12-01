@@ -34,13 +34,13 @@ end
 
 text \<open>\hadi\<close>
 fun rp2iso :: "rp2 \<Rightarrow> ((a2pt, a2ln) projPoint)" where
-  "rp2iso V = (if ((Rep_Proj V)$3 \<noteq> 0) 
+  "rp2iso V = (if ((Rep_rp2 V)$3 \<noteq> 0) 
     then (OrdinaryP (A2Point 
-      ((Rep_Proj V)$1/(Rep_Proj V)$3) 
-      ((Rep_Proj V)$2/(Rep_Proj V)$3))) 
-    else (if ((Rep_Proj V)$1 \<noteq> 0) 
+      ((Rep_rp2 V)$1/(Rep_rp2 V)$3) 
+      ((Rep_rp2 V)$2/(Rep_rp2 V)$3))) 
+    else (if ((Rep_rp2 V)$1 \<noteq> 0) 
     then (Ideal (affine_plane_data.line_pencil A2Points A2Lines a2incid 
-      (A2Ordinary ((Rep_Proj V)$2/(Rep_Proj V)$1) 0))) 
+      (A2Ordinary ((Rep_rp2 V)$2/(Rep_rp2 V)$1) 0))) 
     else (Ideal (affine_plane_data.line_pencil A2Points A2Lines a2incid 
       (A2Vertical 0)))))"
 
@@ -55,8 +55,8 @@ proof
   assume fpisfq: "rp2iso P = rp2iso Q"
   have "P \<in> rp2_Points" and "Q \<in> rp2_Points" using rp2_Points_def by simp+
   then obtain x1 x2 x3 y1 y2 y3::real 
-    where xdef: "(Rep_Proj P) = (vector[x1,x2,x3]::v3)"
-    and ydef: "(Rep_Proj Q) = (vector[y1,y2,y3]::v3)"
+    where xdef: "(Rep_rp2 P) = (vector[x1,x2,x3]::v3)"
+    and ydef: "(Rep_rp2 Q) = (vector[y1,y2,y3]::v3)"
     using exists_rp2_coords by fastforce
   consider (ord) "x3 \<noteq> 0 \<and> y3 \<noteq> 0" | (idl) "x3 = 0 \<and> y3 = 0" using xdef ydef 
     fpisfq rp2iso.simps rp2iso.elims vector_3(3) projPoint.simps(4) by metis
@@ -67,8 +67,8 @@ proof
     then obtain t::real where "t \<noteq> 0 \<and> x1 = t * y1 \<and> x2 = t * y2 \<and> x3 = t * y3" 
       using ord mult.commute divide_eq_0_iff nonzero_mult_div_cancel_left 
       times_divide_eq_right times_divide_eq_left by metis
-    then have "projrel (Rep_Proj P) (Rep_Proj Q)" using xdef ydef rep_P_nz cross3_def
-      cross_nz [of "Rep_Proj P" "Rep_Proj Q"] unfolding zvec_def by fastforce
+    then have "rp2rel (Rep_rp2 P) (Rep_rp2 Q)" using xdef ydef rep_P_nz cross3_def
+      cross_nz [of "Rep_rp2 P" "Rep_rp2 Q"] unfolding zvec_def by fastforce
     then show ?thesis using Quotient3_rel_rep Quotient3_rp2 by fastforce
   next
     case idl
@@ -80,8 +80,8 @@ proof
         A2Lines a2incid (A2Vertical 0)))" using xdef x1z idl by simp
       then have y1nz: "y1 = 0" 
         using fpisfq ydef idl ord_not_vert_pencils A2Lines_def by fastforce
-      then have "projrel (Rep_Proj Q) (Rep_Proj P)" using idl xdef ydef x1z y1nz x2nz 
-        rep_P_nz cross3_def cross_nz [of "Rep_Proj Q" "Rep_Proj P"] by fastforce
+      then have "rp2rel (Rep_rp2 Q) (Rep_rp2 P)" using idl xdef ydef x1z y1nz x2nz 
+        rep_P_nz cross3_def cross_nz [of "Rep_rp2 Q" "Rep_rp2 P"] by fastforce
       then show ?thesis using Quotient3_rel_rep Quotient3_rp2 by fastforce
     next
       case x1nz: False
@@ -99,8 +99,8 @@ proof
         affine_plane_data.parallel_def A2Lines_def by simp
       then obtain t::real where "t \<noteq> 0 \<and> x1 = t*y1 \<and> x2 = t*y2" 
         using x1nz y1nz eq_divide_eq divide_eq_0_iff mult.left_commute by metis
-      then have "projrel (Rep_Proj P) (Rep_Proj Q)" using idl xdef ydef rep_P_nz 
-        cross3_def cross_nz [of "Rep_Proj P" "Rep_Proj Q"] by fastforce
+      then have "rp2rel (Rep_rp2 P) (Rep_rp2 Q)" using idl xdef ydef rep_P_nz 
+        cross3_def cross_nz [of "Rep_rp2 P" "Rep_rp2 Q"] by fastforce
       then show ?thesis using Quotient3_rel_rep Quotient3_rp2 by fastforce
     qed
   qed
@@ -116,11 +116,11 @@ proof (cases Q)
   case QO: (OrdinaryP R)
   then obtain x y::real where xydef: "R = (A2Point x y)" 
     using a2pt.exhaust by auto
-  let ?R = "vector[x,y,1]::v3" let ?P = "Abs_Proj ?R"
+  let ?R = "vector[x,y,1]::v3" let ?P = "Abs_rp2 ?R"
   have Ppt: "?P \<in> rp2_Points" using rp2_Points_def by simp
-  have "projrel (Rep_Proj ?P) ?R"  using ra vector_3_eq_iff by auto
-  then obtain t::real where "t \<noteq> 0 \<and> (Rep_Proj ?P) = t *\<^sub>R ?R"
-    using projrel_def by auto
+  have "rp2rel (Rep_rp2 ?P) ?R"  using ra vector_3_eq_iff by auto
+  then obtain t::real where "t \<noteq> 0 \<and> (Rep_rp2 ?P) = t *\<^sub>R ?R"
+    using rp2rel_def by auto
   then have "rp2iso ?P = Q" using xydef QO by simp
   then show ?thesis using Ppt by blast
 next
@@ -134,12 +134,12 @@ next
     then have kpm0: "affine_plane_data.parallel A2Points A2Lines a2incid 
       k (A2Ordinary m 0)" using A2.a2b a2find_parallel.simps(1) UNIV_I
       add_diff_cancel_left' A2Lines_def A2Points_def by metis
-    let ?R = "vector[1,m,0]::v3" let ?P = "Abs_Proj ?R"
+    let ?R = "vector[1,m,0]::v3" let ?P = "Abs_rp2 ?R"
     have Ppt: "?P \<in> rp2_Points" using rp2_Points_def by simp
-    have "projrel (Rep_Proj ?P) ?R" using ra vector_3_eq_iff by auto
+    have "rp2rel (Rep_rp2 ?P) ?R" using ra vector_3_eq_iff by auto
     then have "rp2iso ?P = (Ideal (affine_plane_data.line_pencil 
       A2Points A2Lines a2incid (A2Ordinary m 0)))" 
-      using projrel_imp_smult by fastforce
+      using rp2rel_imp_smult by fastforce
     then show ?thesis using QI kdef kpm0 Ppt A2_affine same_pencils
       affine_plane_data.parallel_def by metis
   next
@@ -147,12 +147,12 @@ next
     then have kp0: "affine_plane_data.parallel A2Points A2Lines a2incid 
       k (A2Vertical 0)" using A2.a2b a2find_parallel.simps(2) 
       A2Points_def A2Lines_def UNIV_I by metis
-    let ?R = "vector[0,1,0]::v3" let ?P = "Abs_Proj ?R"
+    let ?R = "vector[0,1,0]::v3" let ?P = "Abs_rp2 ?R"
     have Ppt: "?P \<in> rp2_Points" using rp2_Points_def by simp
-    have "projrel (Rep_Proj ?P) ?R" using ra vector_3_eq_iff by auto
+    have "rp2rel (Rep_rp2 ?P) ?R" using ra vector_3_eq_iff by auto
     then have "rp2iso ?P = (Ideal (affine_plane_data.line_pencil 
       A2Points A2Lines a2incid (A2Vertical 0)))" 
-      using projrel_imp_smult by fastforce
+      using rp2rel_imp_smult by fastforce
     then show ?thesis using QI kdef kp0 Ppt A2_affine same_pencils
       affine_plane_data.parallel_def by metis
   qed 
@@ -169,7 +169,7 @@ lemma not_both_ideal:
   fixes a1 a2 a3::real
   assumes a1a2nz: "a1 \<noteq> 0 \<or> a2 \<noteq> 0"
   assumes l_equation: "\<forall>V \<in> rp2_Points. rp2_incid V l
-    \<longleftrightarrow> ((a1 * (Rep_Proj V)$1) + (a2 * (Rep_Proj V)$2) + (a3 * (Rep_Proj V)$3) = 0)"
+    \<longleftrightarrow> ((a1 * (Rep_rp2 V)$1) + (a2 * (Rep_rp2 V)$2) + (a3 * (Rep_rp2 V)$3) = 0)"
   defines ideals_def: "ideals \<equiv> {Ideal t | k t. ((k \<in> A2Lines) 
     \<and> (t = affine_plane_data.line_pencil A2Points A2Lines a2incid k))}"
   shows "\<not> ((rp2iso P) \<in> ideals \<and> (rp2iso Q) \<in> ideals)"
@@ -179,8 +179,8 @@ proof (rule ccontr)
   have Ipq_dist: "(rp2iso P) \<noteq> (rp2iso Q)" 
     using p q pq_dist rp2iso_inj inj_on_eq_iff by metis
   obtain x1 x2 x3 y1 y2 y3::real 
-    where xdef: "(Rep_Proj P) = (vector[x1,x2,x3]::v3)"
-    and ydef: "(Rep_Proj Q) = (vector[y1,y2,y3]::v3)"
+    where xdef: "(Rep_rp2 P) = (vector[x1,x2,x3]::v3)"
+    and ydef: "(Rep_rp2 Q) = (vector[y1,y2,y3]::v3)"
     using p q exists_rp2_coords by fastforce
   then have Pdl: "a1*x1 + a2*x2 + a3*x3 = 0" and Qdl: "a1*y1 + a2*y2 + a3*y3 = 0"
     using p q xdef ydef ldef l_equation by auto
@@ -234,7 +234,7 @@ lemma one_ideal_coll:
   fixes a1 a2 a3::real
   assumes a1a2nz: "a1 \<noteq> 0 \<or> a2 \<noteq> 0"
   assumes l_equation: "\<forall>V \<in> rp2_Points. rp2_incid V l
-    \<longleftrightarrow> ((a1 * (Rep_Proj V)$1) + (a2 * (Rep_Proj V)$2) + (a3 * (Rep_Proj V)$3) = 0)"
+    \<longleftrightarrow> ((a1 * (Rep_rp2 V)$1) + (a2 * (Rep_rp2 V)$2) + (a3 * (Rep_rp2 V)$3) = 0)"
   defines ideals_def: "ideals \<equiv> {Ideal t | k t. ((k \<in> A2Lines) 
     \<and> (t = affine_plane_data.line_pencil A2Points A2Lines a2incid k))}"
   assumes PIQO: "(rp2iso P) \<in> ideals \<and> (rp2iso Q) \<notin> ideals"
@@ -242,9 +242,9 @@ lemma one_ideal_coll:
     (rp2iso P) (rp2iso Q) (rp2iso R)"
 proof -
   obtain x1 x2 x3 y1 y2 y3 z1 z2 z3::real 
-    where xdef: "(Rep_Proj P) = (vector[x1,x2,x3]::v3)"
-    and ydef: "(Rep_Proj Q) = (vector[y1,y2,y3]::v3)"
-    and zdef: "(Rep_Proj R) = (vector[z1,z2,z3]::v3)"
+    where xdef: "(Rep_rp2 P) = (vector[x1,x2,x3]::v3)"
+    and ydef: "(Rep_rp2 Q) = (vector[y1,y2,y3]::v3)"
+    and zdef: "(Rep_rp2 R) = (vector[z1,z2,z3]::v3)"
     using p q r exists_rp2_coords by fastforce
   then have Pdl: "a1 * x1 + a2 * x2 + a3 * x3 = 0" 
     and Qdl: "a1 * y1 + a2 * y2 + a3 * y3 = 0"
@@ -321,14 +321,14 @@ lemma rp2iso_coll_to_coll:
     (rp2iso P) (rp2iso Q) (rp2iso R)"
 proof -
   obtain x1 x2 x3 y1 y2 y3 z1 z2 z3::real 
-    where xdef: "(Rep_Proj P) = (vector[x1,x2,x3]::v3)"
-    and ydef: "(Rep_Proj Q) = (vector[y1,y2,y3]::v3)"
-    and zdef: "(Rep_Proj R) = (vector[z1,z2,z3]::v3)"
+    where xdef: "(Rep_rp2 P) = (vector[x1,x2,x3]::v3)"
+    and ydef: "(Rep_rp2 Q) = (vector[y1,y2,y3]::v3)"
+    and zdef: "(Rep_rp2 R) = (vector[z1,z2,z3]::v3)"
     using p q r exists_rp2_coords by fastforce
   obtain l where ldef: "l \<in> rp2_Lines \<and> rp2_incid P l \<and> rp2_incid Q l \<and> rp2_incid R l"
     using pqr_coll RP2Q.pcollinear_def rp2_Points_def by auto
   then obtain a1 a2 a3::real where l_equation: "\<forall>V \<in> rp2_Points. rp2_incid V l
-    \<longleftrightarrow> ((a1 * (Rep_Proj V)$1) + (a2 * (Rep_Proj V)$2) + (a3 * (Rep_Proj V)$3) = 0)" 
+    \<longleftrightarrow> ((a1 * (Rep_rp2 V)$1) + (a2 * (Rep_rp2 V)$2) + (a3 * (Rep_rp2 V)$3) = 0)" 
     using rp2_line_equation [of l] by auto
   then have Pdl: "a1 * x1 + a2 * x2 + a3 * x3 = 0" and Qdl: "a1 * y1 + a2 * y2 + a3 * y3 = 0"
     and Rdl: "a1 * z1 + a2 * z2 + a3 * z3 = 0" using p q r xdef ydef zdef ldef by auto
@@ -460,7 +460,7 @@ proof (cases "a1 \<noteq> 0 \<or> a2 \<noteq> 0")
   next
     case False
     then have a1a2z: "a1 = 0 \<and> a2 = 0" by simp
-    then have liff: "\<forall>V \<in> rp2_Points. rp2_incid V l \<longleftrightarrow> ((Rep_Proj V)$3) = 0" 
+    then have liff: "\<forall>V \<in> rp2_Points. rp2_incid V l \<longleftrightarrow> ((Rep_rp2 V)$3) = 0" 
       using ldef l_equation rp2_P3 mult_eq_0_iff add_0 by metis
     then have "\<exists>TP TQ. (rp2iso P) = Ideal TP \<and> (rp2iso Q) = Ideal TQ"
       using xdef ydef ldef rp2_Points_def by auto
@@ -488,15 +488,9 @@ proof (unfold_locales)
     assume p: "P \<in> rp2_Points" and q: "Q \<in> rp2_Points" and r: "R \<in> rp2_Points" 
     assume pqr_coll: "RP2Q.pcollinear P Q R"
     show "projective_plane_data.pcollinear A2C_Points A2C_Lines A2C_incid
-      (rp2iso P) (rp2iso Q) (rp2iso R)"
-    proof (cases "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R")
-      case True
-      then show ?thesis using p q r pqr_coll rp2iso_coll_to_coll by simp
-    next
-      case False 
-      then show ?thesis using p q r rp2P_to_A2CP projectivisation_of_A2
-        projective_plane.pcollinear_degeneracy A2C_Points_def A2C_Lines_def by metis
-    qed
+      (rp2iso P) (rp2iso Q) (rp2iso R)" using p q r pqr_coll rp2iso_coll_to_coll 
+      by (cases "P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R", simp, metis A2C_Points_def A2C_Lines_def
+        projectivisation_of_A2 projective_plane.pcollinear_degeneracy rp2P_to_A2CP)
   qed
   show "bij_betw rp2iso rp2_Points A2C_Points" using rp2iso_inj rp2iso_surj 
     rp2P_to_A2CP unfolding bij_betw_def by blast

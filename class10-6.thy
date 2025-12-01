@@ -90,8 +90,11 @@ lemma h:
 lemma "ADD x ZERO = x" 
 proof -
   obtain b n where xfact: "Rep_INTEGER x = (b, n) \<and> (n \<noteq> 0 \<or> b = True)" using Rep_INTEGER by fastforce
-  show ?thesis    sorry
-  qed
+  have "add_integer (b, n) (True, 0) = (b, n)" using xfact h by auto
+  then have "Abs_INTEGER (add_integer (b, n) (True, 0)) = Abs_INTEGER (b, n)" by auto
+  then have "ADD (Abs_INTEGER (b, n)) (Abs_INTEGER (True, 0)) = (Abs_INTEGER (b, n))"
+    using ADD_def Abs_INTEGER_inverse xfact by auto
+  then show ?thesis using  Rep_INTEGER_inverse [of x] ZERO_def xfact by auto
 
 (* Another example of a 'subtype' construction: naturals modeled as non-neg integers.*)
 

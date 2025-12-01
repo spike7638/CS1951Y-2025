@@ -1,10 +1,14 @@
-session "CS1951Y-2025" = HOL +
-  options [document = pdf, document_output = "output"]
+session CS1951Y2025 = HOL +
+  (*options [document = root.tex, document_output = "output"]*)
 sessions
   "HOL-Library"
-  "HOL-Library.Quadratic_Discriminant"
-  "HOL-Library.Uprod"
+  "HOL-Analysis"
 theories 
-    doctest
+    "Chapter1-1"
+    "Chapter1-2"
+    "Chapter1-3"
+    "Chapter2-1"
+ 
+
   document_files
     "root.tex"

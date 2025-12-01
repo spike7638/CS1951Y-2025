@@ -1,485 +1,1290 @@
-theory "Chapter2-2R"
-  imports  "HOL-Library.Uprod" 
-           "../COMPLETED-VERSIONS/ALTERNATIVE-VERSIONs/Chapter1-1R" 
-           "../COMPLETED-VERSIONS/ALTERNATIVE-VERSIONs/Chapter1-2R" 
-           "../COMPLETED-VERSIONS/ALTERNATIVE-VERSIONs/Chapter1-3R" 
-           "Chapter2-1R"
-
+theory "Chapter2-2"
+imports "Chapter1-3" Main
 begin
-declare [[smt_timeout = 1500]]
-declare [[smt_reconstruction_step_timeout = 1500]]
+declare [[smt_timeout = 4500]]
+section \<open>Configurations\<close>
 
-subsection \<open>Setup and proof of P4 for a free projective plane on four points.\<close>
-text\<open>
-Here's the idea of the proof. 
-
-Start with the four points of the configuration, and from them form four Base points, which we'll
-call the basic points; for each pair of these, we have a basic line; these six lines are all distinct.
-
-lemma two_basic_lines: Suppose n and m are distinct basic lines that share the basic point X, 
-and that n . k = m . k is some point P. Then P = X. 
-Proof: both contain X; both contain P. By uniqueness of join, X = P, because n <> m. 
-
-lemma P4_basic: 
-Take the four basic points U
-For any two of these, the line between them has at least 3 points. 
-
-pf: say they're A, B; the others are then P Q.
-Then X = PQ . AB is on the line AB
-If X = A, then P Q A are collinear; similarly for B. Thus X, A, B are all distinct. 
-Done.
-
-
-take any line k in fpp that's NOT a basic line
-show that k has at least 3 points. 
-
-Lemma: every nonbasic line k, k has at least two points:
-for each basic line n, consider the point n . k which lies on k. 
-
-If all of these points are the same point X, 
-then we have AB = XAB and AC = XAC are lines both containing 
-A and X,hence are equal, so B is in AC; contradiction. 
-Hence every line has at least two points. QED
-
-lemma P4_non_basic:
-
-For contradiction, suppose the non-basic line k has ONLY 2 points P and Q.
-
-Each basic line intersects k in either P or Q. Let H and K be the sets of
-basic lines intersecting P and Q respectively. Then their cardinalities sum to 6, 
-hence at least one -- say H -- contains at least 3 basic lines. 
-
-By Spike's lemma, there's a point, say A, on at least two of these basic lines. 
-That means that the points A and P are on two distinct lines...which means A = P. 
-So if the line k has only two points, then one of them is a basic point. And the set
-of basic lines meeting k there consists of at least AB AC and AD. 
-
-If, say, BC were in there too, then the lemma two_basic_lines, applied to AB and BC, would show B = P. 
-But A = P and A <> B.  contradiction. 
-
-Thus there are the three basic lines that do NOT contain P: BC, BD, CD. 
-
-Each of these intersects k SOMEwhere, hence at Q. But that (from lemma two-basic-lines) says B = Q. 
-
-Hence k must be the line AB, a contradiction (because k is non-basic)
-\<close>
-
-text \<open>To continue this discussion, we'll make a locale consisting of the necessary setup (four points,
-no three collinear) of a configuration to ensure that the 'free projective plane' on that configuration 
-is indeed a projective plane (Prop. 2.2); we'll then define a confined configuration, and prove proposition
-2.3 still within the context of this locale, and finish up with the non-Desarguesian projective plane.\<close>
-
-\<comment> \<open>Let's establish a locale for proving things about a finite projective plane over a configuration 
-with at least four points, no three collinear; we'll call such a configuration "ample" in the sense
-that it has enough `starting material' to make the resulting structure an actual projective plane. \<close>
-locale ample_fpp_setup =
-  fixes
-    A B C D::"'p" and
-    U :: "'p set" and
-    CPoints:: "'p set" and
-    CLines:: "'l set" and
-    c :: "('p, 'l) plane_r" and
-    incidx :: "'p \<Rightarrow> 'l \<Rightarrow> bool"
-   assumes
-    a1: "distinct [A, B, C, D]" and
-    a2: "U = {A, B, C, D}"  and
-    a3: "c = \<lparr> Points=CPoints, Lines=CLines, incid=incidx \<rparr>" and
-    a4: "U \<subseteq> Points c" and
-    a5: "\<lbrakk>X\<in> U; Y \<in> U; Z \<in> U; distinct[X,Y,Z]\<rbrakk> \<Longrightarrow>  \<nexists> n . n \<in> (Lines c) \<and>  incid c X n \<and> incid c Y n \<and> incid c Z n"
+locale configuration = projective_plane_data Points Lines incid for
+Points Lines incid +
+  assumes C1: "(U \<in> Points \<and> V \<in> Points \<and> k \<in> Lines \<and> n \<in> Lines 
+    \<and> incid U k \<and> incid V k \<and> incid U n \<and> incid V n \<and> U \<noteq> V) \<Longrightarrow> k = n"
 begin
 
-lemma U_size:   "card U = 4" using a1 a2 by auto
-lemma u_finite: "finite U" using U_size card_eq_0_iff by fastforce
+lemma C1alt: 
+  fixes P Q k n
+  assumes "(P \<in> Points  \<and> Q \<in> Points \<and> k \<in> Lines  \<and> n \<in> Lines 
+    \<and> incid  P k \<and> incid  Q k \<and> incid  P n \<and> incid  Q n \<and> k \<noteq> n)"
+  shows "P = Q" using assms C1 by auto
 
-(* 
-Start with the four points of the configuration, and from them form four Base points, which we'll
-call the basic points; for each pair of these, we have a basic line; these six lines are all distinct.
-*)
-find_theorems "Base_point"
+end
 
-definition "ff \<equiv> (\<lambda> P . Base_point P )"
+subsection examples
+lemma affine_is_config: 
+  fixes incid:: "'p \<Rightarrow> 'l \<Rightarrow> bool"
+  fixes Points:: "'p set"
+  fixes Lines:: "'l set"
+  fixes join::"'p \<Rightarrow> 'p \<Rightarrow> 'l"
+  fixes find_parallel::"'l \<Rightarrow> 'p \<Rightarrow> 'l"
+  assumes "affine_plane Points Lines incid join find_parallel"
+  shows "configuration Points Lines incid"
+  using assms affine_plane.prop1P2 unfolding configuration_def by metis
 
-definition  basic_points::"('p, 'l) fpoint set" where
-"basic_points = ff ` U "
- 
-definition  basic_lines::"('p, 'l) fline set" where
-"basic_lines = {m  . \<exists> P Q . P \<in> basic_points \<and> Q \<in> basic_points \<and> P \<noteq> Q \<and> fppincid c P m \<and> fppincid c Q m}"
+section \<open>The Desargues configuration and the empty configuration\<close>
+datatype pointD = Hd | Ad | Bd | Cd | Dd | Ed | Fd | Pd | Qd | Rd
+definition PointsD::"pointD set" where "PointsD = (UNIV::(pointD set))"
+definition LinesD::"pointD set set" where "LinesD = 
+  {{Ad,Bd, Pd}, {Bd, Cd,Rd}, {Cd, Ad, Qd}, {Dd, Ed, Pd}, {Ed, Fd, Rd}, {Fd, Dd, Qd},
+    {Hd, Ad, Dd}, {Hd, Bd, Ed}, {Hd, Cd, Fd}, {Pd, Qd, Rd}}"
+definition incidD:: "pointD \<Rightarrow> pointD set \<Rightarrow> bool" where "incidD X k = (X \<in> k)"
 
-lemma injbp: "inj ff" 
-  using inj_def ff_def  by (metis fpoint.inject(1))
+lemma lines_distinctD: 
+  shows [simp]:
+    \<open>{Hd, Cd, Fd} \<noteq> {Hd, Bd, Ed}\<close>
+    \<open>{Hd, Cd, Fd} \<noteq> {Hd, Ad, Dd}\<close>
+    \<open>{Hd, Bd, Ed} \<noteq> {Hd, Ad, Dd}\<close>
+    \<open>{Hd, Ad, Dd} \<noteq> {Cd, Ad, Qd}\<close>
+    \<open>{Hd, Ad, Dd} \<noteq> {Ad, Bd, Pd}\<close>
+    \<open>{Cd, Ad, Qd} \<noteq> {Ad, Bd, Pd}\<close>
+    \<open>{Hd, Bd, Ed} \<noteq> {Bd, Cd, Rd}\<close>
+    \<open>{Hd, Bd, Ed} \<noteq> {Ad, Bd, Pd}\<close>
+    \<open>{Bd, Cd, Rd} \<noteq> {Ad, Bd, Pd}\<close>
+    \<open>{Hd, Cd, Fd} \<noteq> {Cd, Ad, Qd}\<close>
+    \<open>{Hd, Cd, Fd} \<noteq> {Bd, Cd, Rd}\<close>
+    \<open>{Cd, Ad, Qd} \<noteq> {Bd, Cd, Rd}\<close>
+    \<open>{Hd, Ad, Dd} \<noteq> {Fd, Dd, Qd}\<close>
+    \<open>{Hd, Ad, Dd} \<noteq> {Dd, Ed, Pd}\<close>
+    \<open>{Fd, Dd, Qd} \<noteq> {Dd, Ed, Pd}\<close>
+    \<open>{Hd, Bd, Ed} \<noteq> {Ed, Fd, Rd}\<close>
+    \<open>{Hd, Bd, Ed} \<noteq> {Dd, Ed, Pd}\<close>
+    \<open>{Ed, Fd, Rd} \<noteq> {Dd, Ed, Pd}\<close>
+    \<open>{Hd, Cd, Fd} \<noteq> {Fd, Dd, Qd}\<close>
+    \<open>{Hd, Cd, Fd} \<noteq> {Ed, Fd, Rd}\<close>
+    \<open>{Fd, Dd, Qd} \<noteq> {Ed, Fd, Rd}\<close>
+    \<open>{Pd, Qd, Rd} \<noteq> {Dd, Ed, Pd}\<close>
+    \<open>{Pd, Qd, Rd} \<noteq> {Ad, Bd, Pd}\<close>
+    \<open>{Dd, Ed, Pd} \<noteq> {Ad, Bd, Pd}\<close>
+    \<open>{Pd, Qd, Rd} \<noteq> {Fd, Dd, Qd}\<close>
+    \<open>{Pd, Qd, Rd} \<noteq> {Cd, Ad, Qd}\<close>
+    \<open>{Fd, Dd, Qd} \<noteq> {Cd, Ad, Qd}\<close>
+    \<open>{Pd, Qd, Rd} \<noteq> {Ed, Fd, Rd}\<close>
+    \<open>{Pd, Qd, Rd} \<noteq> {Bd, Cd, Rd}\<close>
+    \<open>{Ed, Fd, Rd} \<noteq> {Bd, Cd, Rd}\<close>
+    by auto
 
-lemma basep_size: "card basic_points = 4" using a1 a2 u_finite U_size injbp 
-  by (metis UNIV_I basic_points_def card_image inj_on_def)
+lemma desargues_three_lines: (* every pt lies on 3 lines *)
+  assumes "X \<in> PointsD"
+  shows "\<exists>l m n. l \<noteq> m \<and> m \<noteq> n \<and> l \<noteq> n \<and> incidD X l \<and> incidD X m \<and> incidD X n 
+    \<and> l \<in> LinesD \<and> m \<in> LinesD \<and> n \<in> LinesD" unfolding LinesD_def incidD_def 
+  by (cases X, (meson insertCI lines_distinctD)+)
 
-lemma kcollin: 
-  fixes x X Y Z k XY
-  assumes "XY \<in> Pi_lines c \<and> k \<in> Pi_lines c"
-  assumes "fppincid c X XY \<and> fppincid c Y XY"
-  assumes " \<nexists> h. h  \<in> Pi_lines c \<and> fppincid c  X h \<and>fppincid c  Y h \<and> fppincid c  Z h  "
-  shows "\<not> (fppincid c Z XY \<and> fppincid c Z k)"
-  using assms(1,2,3) by blast
-
-lemma nonXY:
-  fixes X Y k XY
-  assumes "fppincid c X XY \<and> fppincid c Y XY"
-  shows "\<lbrakk>X \<noteq> Y; (\<not>fppincid c X k) \<or>  (\<not>fppincid c X k)\<rbrakk> \<Longrightarrow> XY \<noteq> k" using assms by auto
-
-theorem ample_free_planes1:
-  shows "\<And>P Q. P \<noteq> Q \<Longrightarrow> P \<in> Pi_points c \<Longrightarrow> Q \<in> Pi_points c \<Longrightarrow>
-    \<exists>!k. k \<in> Pi_lines c \<and> fppincid c P k \<and> fppincid c Q k" 
-proof (unfold_locales)
-  fix P Q
-  show "P \<noteq> Q \<Longrightarrow> P \<in> Pi_points c \<Longrightarrow>
-           Q \<in> Pi_points c \<Longrightarrow>
-           \<exists>!k. k \<in> Pi_lines c \<and> fppincid c P k \<and> fppincid c Q k"  using free_planes_unique_join
-    by (smt (verit) U_size a3 a4 linorder_linear select_convs(1))
-qed
-
-lemma ample_lines_two_points:
-  shows "\<And>k. k \<in> Pi_lines c \<Longrightarrow>  \<exists>P Q. P \<noteq> Q \<and> fppincid c P k \<and> fppincid c Q k \<and>P \<in> Pi_points c \<and> Q \<in> Pi_points c " 
+lemma desargues_three_points: (* every line contains 3 points *)
+  assumes "k \<in> LinesD"
+  shows "card k = 3"
 proof -
-  fix k
-  assume a: "k \<in> Pi_lines c"
-  have u1: "\<lbrakk>c = \<lparr>Points = CPoints, Lines = CLines, incid = incidx\<rparr>; 
-    k \<in> Pi_lines c;  l_level k = l_level k;   U \<subseteq> CPoints;  card U = 4;
-    (\<And>P Q R. distinct [P, Q, R] \<and> {P, Q, R} \<subseteq> U  \<Longrightarrow>  \<not> projective_plane_data.pcollinear c P Q R) \<rbrakk> \<Longrightarrow>
-    \<exists>P Q. P \<noteq> Q \<and> fppincid c P k \<and> fppincid c Q k \<and> P \<in> Pi_points c \<and> Q \<in> Pi_points c" using  fpp_two_points [of c CPoints CLines incidx k "l_level k" U] by auto
-  then have u2: "\<lbrakk>c = \<lparr>Points = CPoints, Lines = CLines, incid = incidx\<rparr>; 
-    k \<in> Pi_lines c;  U \<subseteq> CPoints;  card U = 4;
-    (\<And>P Q R. distinct [P, Q, R] \<and> {P, Q, R} \<subseteq> U  \<Longrightarrow>  \<not> projective_plane_data.pcollinear c P Q R) \<rbrakk> \<Longrightarrow>
-    \<exists>P Q. P \<noteq> Q \<and> fppincid c P k \<and> fppincid c Q k \<and> P \<in> Pi_points c \<and> Q \<in> Pi_points c" by auto
-  then have u3: "\<lbrakk> k \<in> Pi_lines c;  
-    (\<And>P Q R. distinct [P, Q, R] \<and> {P, Q, R} \<subseteq> U  \<Longrightarrow>  \<not> projective_plane_data.pcollinear c P Q R) \<rbrakk> \<Longrightarrow>
-    \<exists>P Q. P \<noteq> Q \<and> fppincid c P k \<and> fppincid c Q k \<and> P \<in> Pi_points c \<and> Q \<in> Pi_points c" using a2 a3 a4 U_size by auto
-  then have u4: "\<lbrakk>(\<And>P Q R. distinct [P, Q, R] \<and> {P, Q, R} \<subseteq> U  \<Longrightarrow>  \<not> projective_plane_data.pcollinear c P Q R) \<rbrakk> \<Longrightarrow>
-    \<exists>P Q. P \<noteq> Q \<and> fppincid c P k \<and> fppincid c Q k \<and> P \<in> Pi_points c \<and> Q \<in> Pi_points c" using a by auto
-  then show u5: "\<exists>P Q. P \<noteq> Q \<and> fppincid c P k \<and> fppincid c Q k \<and> P \<in> Pi_points c \<and> Q \<in> Pi_points c" 
-    using a4 unfolding projective_plane_data.pcollinear_def
-  by (smt (verit, best) a5 empty_iff insert_subset projective_plane_data.intro projective_plane_data.pcollinear_def
-      subset_trans)
+  consider "k = {Ad,Bd, Pd}" | "k = {Bd, Cd,Rd}" | "k = {Cd, Ad, Qd}" 
+    | "k = {Dd, Ed, Pd}" | "k = {Ed, Fd, Rd}" | "k = {Fd, Dd, Qd}" 
+    | "k = {Hd, Ad, Dd}" | "k = {Hd, Bd, Ed}" | "k = {Hd, Cd, Fd}" 
+    | "k = {Pd, Qd, Rd}" using assms LinesD_def insertE singleton_iff by metis
+  then show ?thesis using pointD.distinct LinesD_def card_3_iff by metis
 qed
 
-theorem ample_free_planes2:
-  shows "\<And>k n.  (k::('p, 'l) fline) \<in> Pi_lines c \<Longrightarrow>  n \<in> Pi_lines c \<Longrightarrow> \<exists>P.
-    P \<in> Pi_points c \<and>
-    fppincid c P k \<and>
-    fppincid c P n" 
-proof (unfold_locales)
-    fix k n
-    assume kdef: "(k::('p, 'l) fline) \<in> Pi_lines c" and ndef: "n \<in> Pi_lines c"
-    show "\<exists>P.  P \<in> Pi_points c \<and> fppincid c P k \<and> fppincid c P n" 
-    proof (cases "k = n")
+lemma desargues_is_config:
+  shows "configuration PointsD LinesD incidD"
+  using LinesD_def incidD_def pointD.simps emptyE insertE
+  unfolding configuration_def by (smt (verit))
+
+lemma no_lines_is_config: 
+  fixes Points::"'a set"
+  shows "configuration Points {} (\<lambda>x L. False)"
+  unfolding configuration_def by simp
+
+section \<open>The free projective plane on a configuration -- introduction\<close>
+
+text \<open>Let $\pi_0$ be a configuration. We will now define the free projective plane generated by $\pi_0$.
+
+Let $\pi_1$ be the new configuration defined as follows: The points of $\pi_1$ are the points of $\pi_0$. The lines of $\pi_1$ 
+are the lines of $\pi_0$, plus, for each pair of points $P_1, P_2 \in \pi_0$ not on a line, a new line $\{P_1, P_2\}$. Then $\pi_1$
+ has the property:
+
+a) Every two distinct points lie on a line.
+
+Construct $\pi_2$ from $\pi_1$ as follows. The points of $\pi_2$ are the points of $\pi_1$, plus, for each pair of lines l1,l2 of $\pi_1$
+ which do not meet, a new point $l_1 \cdot l_2$. The lines of $\pi_2$ are the lines of $\pi_1$, extended by their 
+new points, e.g. the point $l_1 \cdot l_2$ lies on the extensions of the lines $l_1, l_2$. Then \<pi>2 has the property
+
+b) Every pair of distinct lines intersects in a point, but $\pi_2$ no longer has the property a).
+
+We proceed in the same fashion. For $n$ even, we construct $\<pi>_{n+1}$ by adding
+new lines, and for $n$ odd, we construct $\<pi>_{n+1}$ by adding new points.
+Let $\Pi = \bigcup_{n=0}^{\infty}  \pi_n$, and define a line in $\Pi$ to be a subset of $L \subset \Pi$ such that
+for all large enough $n$,  $L \cap ]pi_n$ is a line of $\pi_n$.\<close>
+
+text \<open>Our version of this is slightly modified to suit Isabelle's constraints. Making infinite unions of sets is possible,
+but not pretty. And extending the set of points on a line (creating the "extension") is particularly messy. Instead, we modify the
+`incid' function to say that more points meet a particular line. The definition of 'incid P k" for $k$ a line in $\Pi$ now simplifies:
+first, $k$ can be any line that's been constructed so far (e.g., `join P Q', where $P$ and $Q$ are previously-created points), and 
+`incid P k' becomes the statement that there is some natural number $n$ such that `fppincid ... P k n'. \<close>
+
+text\<open>We define mutually-recursive datatypes for points and lines. Basepoints and Baselines are those that occur at level 0. 
+Every point/line is given an natural-number component to indicate the level at which it was created. If a crossing has level $k$,
+then the two lines that created it must both have level less than $k$; similarly, if a join has level $k$, then the two points 
+that produced it must have level less than $k$. 
+
+Furthermore, for $n > 2$, there's something even more specific: if a crossing has level $k$ (which must be even!), 
+then at least one of the two lines that created it must have level $k-1$. Why? If not, they'd both have
+level no more than $k-3$ (the previous odd number), and this crossing would have been created at level $k-2$.
+
+Note that although levels for points are always even, levels for lines are always odd \emph{except} 
+that a line may have level 0.\<close>
+
+section \<open>Free projective plane datatypes and function definitions\<close>
+
+datatype ('a, 'b) fpoint = Base_point 'a | Crossing "(('a, 'b) fline) uprod" nat 
+  and ('a, 'b) fline = Base_line 'b | Join "(('a, 'b) fpoint) uprod" nat
+
+(* example of a function on a uprod *)
+fun f_example::"int uprod \<Rightarrow> bool" where
+"f_example(x) = (if (\<exists> a b . (x = Upair a b) \<and> (a = b)) then True else False)"
+
+(* go level by level *)
+fun p_level::" ('a, 'b) fpoint \<Rightarrow> nat" where
+  "p_level (Base_point _) = 0" | "p_level (Crossing _ n) = n"
+
+fun l_level::" ('a, 'b) fline \<Rightarrow> nat" where
+  "l_level (Base_line _) = 0" | "l_level (Join _ n) = n"
+
+text \<open>Notice that in the following definition, a BasePoint or BaseLine always (implicitly) has level 0. 
+Also, the definition depends on the set of base points,
+the set of base lines, and a 'incid' function for that configuration. \<close>
+
+context configuration
+begin
+(* Does this point lie on this line in \Pi? *)
+fun fppincid where                                     (* ::  "('a, 'b) fpoint \<Rightarrow> ('a, 'b) fline \<Rightarrow> bool" *)
+(* if lines meet in pi0, they meet in Pi: *)
+  "fppincid (Base_point P) (Base_line m) = (incid  P m)"  
+(* if a basepoint incid a join-line, it must be one of the two ends of the join *) 
+  | "fppincid (Base_point P) (Join x n2) = (\<exists> A1 B1 . (x = Upair A1 B1) 
+    \<and> (A1 = (Base_point P) \<or> (B1 = (Base_point P))))"
+(* if a baseline incid a crossing, it must be one of the two crossing lines *)
+  | "fppincid  (Crossing u n1) (Base_line m) = (\<exists> l k . (u = Upair l k) 
+    \<and> (l = (Base_line m)   \<or> (k =  (Base_line m))))" 
+
+(* If a crossing lies on a join...then either
+(i) it must be one of the two points that formed the join in which case its level is lower than the join or
+(ii) it's a crossing of that join with some other line, in which case its level is HIGHER than the join
+*)
+  | "fppincid  (Crossing u n1)  (Join x n2) = (
+     ((n1 < n2) \<and> 
+      (\<exists> A1 B1 . x = Upair A1 B1 \<and> (A1 = Crossing u n1 \<or> B1 = Crossing u n1))) \<or>
+     ((n1 > n2) \<and> 
+     (\<exists> k m .    u = Upair k m   \<and> (k = Join x n2 \<or> m = Join x n2)))
+   )"   
+(*N.B.:  Two clauses above correspond to (1) previous condition, and (2) a crossing being on the extension of some join *)
+fun point_set and  (* ::"nat \<Rightarrow> (('a, 'b) fpoint) set" *)
+    line_set and   (* ::" nat \<Rightarrow> (('a, 'b) fline) set" *)
+    new_points and (* ::"nat \<Rightarrow> (('a, 'b) fpoint) set" *)
+    new_lines      (* ::"nat \<Rightarrow> (('a, 'b) fline) set" *)    
+    where
+  "point_set  (0 ::nat) = new_points 0" | 
+  "point_set  ( Suc n ::nat) = point_set n \<union> new_points (Suc n)" | 
+  "line_set  (0 ::nat) = new_lines 0" |
+  "line_set  (Suc n ) = line_set n \<union>  new_lines (Suc n)" |
+
+  "new_points 0 = {Base_point Q | Q . Q \<in> Points}" |
+  "new_points (Suc 0) = {}" | (* ::(('a, 'b) fpoint) set *)
+
+  (* A new point at level 2 can arise from a pair of lines at level 0;
+     In general, a crossing of level n has one of its two generators being
+     at level n-1. See level-lemma1 below *)
+  "new_points (Suc (Suc 0)) =
+  {Crossing (Upair k l) (Suc (Suc 0)) | k l . 
+    ((k \<in> new_lines 0) \<or> (k \<in> new_lines (Suc 0))) \<and> 
+    (l \<in> line_set (Suc 0)) \<and> (k \<noteq> l) \<and>
+    \<not> (\<exists>Y \<in> point_set (Suc 0) . fppincid Y k \<and> fppincid Y l)}"  (* ZZZ *) |
+
+  "new_points (Suc (Suc n::nat)) = 
+  (if (odd n) then {} else 
+  {Crossing (Upair k l) (Suc (Suc n)) | k l . 
+    (k \<in> new_lines (Suc n)) \<and> 
+    (l \<in> line_set (Suc n)) \<and> (k \<noteq> l) \<and>
+    \<not> (\<exists>Y \<in> point_set (Suc n) . fppincid Y k \<and> fppincid Y l) })" |
+
+  "new_lines 0 = {Base_line k| k . k \<in> Lines}"  |
+
+  "new_lines (Suc 0) = {Join (Upair S T) 1 | S T . 
+    (S \<in> new_points 0) \<and> 
+    (T \<in> point_set 0) \<and> (S \<noteq> T) \<and>
+    \<not> (\<exists>k \<in> line_set 0 . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> 1))}" |
+
+  "new_lines (Suc (Suc n)) = 
+  (if (even n) then {} else 
+   {Join (Upair S T) (Suc (Suc n)) | S T . 
+    (S \<in> new_points (Suc n)) \<and> 
+    (T \<in> point_set (Suc n)) \<and>  (S \<noteq> T) \<and> 
+    \<not> (\<exists>k \<in> line_set (Suc n) . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> (Suc n)))})" 
+
+definition Pi_points::"((('a, 'b) fpoint) set)" 
+  where "Pi_points = \<Union> ((new_points) ` UNIV)"
+
+definition Pi_lines::" ((('a, 'b) fline) set)" 
+  where "Pi_lines = \<Union> ((new_lines) ` UNIV)"
+
+(* Now claim that Pi_points, Pi_lines, fppincid defines a projective plane. *)
+(* start with many lemmas *)
+(*
+   All lines have odd levels or 0
+   All points have levels that are even
+    
+   If a point has level k, then either 
+      (i) k = 0 or
+      (ii) k = 2 and it's the crossing of two lines, each of level 0 or 1
+      (iii) k = 2i for i > 1 and it's the crossing of two lines, one of which has level 2i-1.
+
+  If a line has level k, then either 
+      (i) k = 0 or
+      (ii) k = 1 and it's the crossing of two lines, each of level 0  [level 1, as in points, is not possible!]
+      (iii) k = 2i+1 for i > 0 and it's the crossing of two lines, one of which has level 2i.
+
+   If two lines have level \<le>= p, then either they intersect already OR they intersect at level p + 1
+   If q incid join A B and level q = level A or level B, then q = A or q = B
+*)
+(* First,a lemma or two *)
+(* Note: lines are added at odd levels; points are added at even levels.
+
+* If n is even and two lines don't intersect at level n, then they don't intersect at level n+1
+* either, but do intersect at level n + 2 
+*
+* If n is odd and two points don't join at level n, then they don't join at level n+1 either, but 
+* do join at level n+2. 
+*
+* in either a Join or a Crossing, the two items in the Upair are distinct.
+*) 
+section \<open>FPP elementary theorems\<close>
+
+lemma increase_initial_segment: (* append n+1 to the naturals from 0 to n, and you get 0:(n+1) *)
+  fixes n::nat
+  shows "({i::nat. i \<le> n} \<union> {Suc n}) = ({i::nat. i \<le> (Suc n)})"
+  by fastforce
+
+
+
+lemma pt1: (* a point in new_points n is in point_set n *)
+  assumes "P \<in> new_points (n::nat)"
+  shows "P \<in> point_set n"
+proof -
+  show ?thesis using assms point_set.simps(2)[of "n-1"] by (metis UnCI point_set.elims)
+qed
+
+
+
+lemma point_level: (* a point in new_points n has level n *)
+  assumes "P \<in> new_points n"
+  shows "p_level P = n"
+proof -
+  consider (zot) "n = 0 \<or> n = (Suc 0) \<or> n = (Suc (Suc 0))" 
+    | (many) "\<exists>p. n = Suc (Suc (Suc p))" using old.nat.exhaust by metis
+  then show ?thesis
+  proof (cases)
+    case zot
+    then show ?thesis using assms by auto
+  next
+    case many
+    then obtain p where nd: "n = Suc (Suc (Suc p))" by auto
+    then obtain k l where "P = Crossing (Upair k l) (Suc (Suc (Suc p)))
+      \<and> k \<in> new_lines (Suc (Suc p)) \<and> l \<in> line_set (Suc (Suc p)) \<and> k \<noteq> l
+      \<and> \<not> (\<exists>Y\<in>point_set (Suc (Suc p)). fppincid Y k \<and> fppincid Y l
+        \<and> p_level Y \<le> Suc (Suc p))"
+    using assms new_points.simps empty_iff mem_Collect_eq by (smt (verit))
+    then show ?thesis using nd p_level.simps by simp
+  qed
+qed
+
+(*
+.S in new_points n => S in point_set n. 
+.S in Pi_points, p_level S = n => S in new_points n, S in point_set n. 
+
+.S in Pi_points, S = Crossing upr n => n > 0
+.S in Pi_points, p_level S = 0 => S = Base P
+S in Pi_points, p_level S > 0 =>  exists upr . S = Crossing upr (p_level S)
+*)
+lemma pt2: 
+"\<lbrakk>P \<in> Pi_points; p_level P = n\<rbrakk> \<Longrightarrow>  P \<in> new_points n \<and> P \<in> point_set n"
+proof -
+  assume minor1: "P \<in> Pi_points" and minor2: "p_level P = n"
+  obtain k where kfact: "P \<in> new_points k" using Pi_points_def minor1 by auto
+  then have "k = n" using point_level minor2 by auto 
+  then show "P \<in> new_points n \<and> P \<in> point_set n" using pt1 kfact by auto
+qed
+
+lemma pt3: 
+"\<lbrakk>P \<in> Pi_points; \<exists> upr . P = Crossing upr n\<rbrakk> \<Longrightarrow>  n > 0"
+  using pt2 by force
+
+lemma pt4: 
+"\<lbrakk>P \<in> Pi_points; p_level P = 0\<rbrakk> \<Longrightarrow> (\<exists> A . P = Base_point A)" 
+  using pt2 by fastforce
+
+lemma pt5: 
+"\<lbrakk>P \<in> Pi_points; p_level P > 0\<rbrakk> \<Longrightarrow> (\<exists> upr . P = Crossing upr (p_level P))" 
+  by (metis not_less0 p_level.elims)
+
+lemma point_level2: 
+  "\<lbrakk>(P \<in> point_set (n::nat))\<rbrakk> \<Longrightarrow> p_level P \<le> n"
+proof (induction n)
+  case 0
+  have "point_set 0 =  {Base_point Q | Q . Q \<in> Points}" using point_set.simps by auto
+  assume a0: "P \<in> point_set 0" 
+  have "p_level P = 0" using "0" by auto
+  then show ?case by auto
+next
+  case (Suc n)
+  assume a0: "P \<in> point_set n \<Longrightarrow> p_level P \<le> n"
+  have a1: "point_set (Suc n) = point_set n \<union> new_points (Suc n)"  by simp
+  have a2: "P \<in> point_set n \<Longrightarrow> p_level P \<le> Suc n" using Suc.IH by force
+  have a3: "P \<in> new_points (Suc n) \<Longrightarrow> p_level P \<le> Suc n" using point_level by auto
+  then show ?case using a1 a2 a3  using Suc.prems by blast
+qed
+
+lemma line_level: (* a line in new_line n has level n *)
+  assumes "k \<in> new_lines n"
+  shows "l_level k = n"
+proof -
+  consider (zot) "n = 0 \<or> n = (Suc 0) \<or> n = (Suc (Suc 0))" 
+    | (many) "\<exists>p. n = Suc (Suc (Suc p))" using old.nat.exhaust by metis
+  then show ?thesis
+  proof (cases)
+    case zot
+    then show ?thesis using assms by auto
+  next
+    case many
+    then obtain p where nd: "n = Suc (Suc (Suc p))" by auto
+    then obtain S T where "k = Join (Upair S T) (Suc (Suc (Suc p))) \<and>
+    (S \<in> new_points (Suc (Suc p))) \<and> 
+    (T \<in> point_set (Suc (Suc p))) \<and>  (S \<noteq> T) \<and> 
+    \<not> (\<exists>k \<in> line_set (Suc (Suc p)) . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> (Suc (Suc p))))"
+      using assms new_lines.simps empty_iff mem_Collect_eq by (smt (verit, ccfv_SIG))
+    then show ?thesis using nd l_level.simps by simp
+  qed
+qed
+
+lemma line_level2: 
+  "\<lbrakk>(k \<in> line_set (n::nat))\<rbrakk> \<Longrightarrow> l_level k \<le> n"
+
+proof (induction n)
+  case 0
+  have "line_set 0 =  {Base_line s | s . s \<in> Lines}" using line_set.simps by auto
+  assume a0: "k \<in> line_set 0" 
+  have "l_level k = 0" using l_level.cases a0 line_level by auto
+  then show ?case by auto
+next
+  case (Suc n)
+  assume a0: "k \<in> line_set n \<Longrightarrow> l_level k \<le> n"
+  have a1: "line_set (Suc n) = line_set n \<union> new_lines (Suc n)"  by simp
+  have a2: "k \<in> line_set n \<Longrightarrow> l_level k \<le> Suc n" using Suc.IH by force
+  have a3: "k \<in> new_lines (Suc n) \<Longrightarrow> l_level k \<le> Suc n" using line_level by auto
+  then show ?case using a1 a2 a3  using Suc.prems by blast
+qed
+
+lemma points_in_join:
+  fixes S T k
+  fixes n::nat
+  assumes "S \<in> Pi_points"
+  assumes "T \<in> Pi_points"
+  assumes "k = Join (Upair S T) n"
+  assumes "k \<in> Pi_lines"
+  shows "fppincid S k" 
+proof -
+  obtain p::nat where pfact: "k \<in> new_lines p" using Pi_lines_def assms by blast
+  have np: "n = p"
+  proof -
+    consider  (zero) "p = 0" | (one) "p = Suc 0" | (many) "\<exists>s . p = Suc (Suc s)"  by (metis nat.exhaust_sel)
+    then show ?thesis
+    proof (cases)
+      case zero
+      have False using assms(3) pfact zero by force
+      then show ?thesis by blast
+    next
+      case one
+      have "k \<in> {Join (Upair S T) 1 | S T .  (S \<in> new_points 0) \<and>  (T \<in> point_set 0) \<and> (S \<noteq> T) \<and>
+        \<not> (\<exists>k \<in> line_set 0 . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> 1))}" using one new_lines.simps pfact by argo
+      then have "l_level k = 1" using l_level.simps(2) by blast
+      then show ?thesis  by (simp add: assms(3) one)
+    next
+      case many
+      obtain s where pfact2: "p = Suc (Suc s)" using many by blast
+      have "k \<in> (if (even s) then {} else 
+   {Join (Upair S T) (Suc (Suc s)) | S T . 
+    (S \<in> new_points (Suc s)) \<and> 
+    (T \<in> point_set (Suc s)) \<and>  (S \<noteq> T) \<and> 
+    \<not> (\<exists>k \<in> line_set (Suc s) . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> (Suc s)))})" using many new_lines.simps pfact using pfact2 by auto
+      have "l_level k = Suc (Suc s)" using line_level pfact pfact2 by presburger  
+      then show ?thesis by (simp add: assms(3) pfact2)
+    qed
+  qed
+  have klev: "k \<in> new_lines n" using pfact np by blast
+  have npos: "n > 0" using klev assms(3) using zero_less_iff_neq_zero by fastforce
+  have "Join (Upair S T) n \<in> new_lines n" using assms klev by blast
+  consider  (one) "n = Suc 0" | (many) "\<exists>s . n = Suc (Suc s)" using npos not0_implies_Suc by blast
+  then have "p_level S \<le> n \<and> p_level T \<le> n" 
+  proof (cases)
+    case one
+    have "new_lines n = {Join (Upair S T) 1 | S T . 
+    (S \<in> new_points 0) \<and> 
+    (T \<in> point_set 0) \<and> (S \<noteq> T) \<and>
+    \<not> (\<exists>k \<in> line_set 0 . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> 1))}" using new_lines.simps one by blast
+    then obtain S1 T1 where kfact3: "k = Join (Upair S1 T1) 1 \<and> (S1 \<in> new_points 0) \<and> (T1 \<in> point_set 0)"
+      using klev by auto
+    then have "Join (Upair S T) = Join (Upair S1 T1)" using kfact3 assms(3) by auto
+    then have q: "(Upair S T) = (Upair S1 T1)" by (metis fline.inject(2))
+    then have "S = S1 \<or> S = T1 " by auto
+    then have "S \<in> new_points 0 \<or> S \<in> point_set 0" using kfact3 by auto
+    then have h1: "p_level S = 0" using point_level point_set.simps(1) by blast
+    from q have "T = T1 \<or> T = S1" by auto 
+    then have "T \<in> new_points 0 \<or> T \<in> point_set 0" using kfact3 by auto
+    then have h2: "p_level T = 0" using point_level point_set.simps(1) by blast
+    then show ?thesis using h1 h2 by simp
+  next
+    case many
+    obtain s where sfact: "n = Suc (Suc s)" using many by blast 
+    have "new_lines n = (if (even n) then {} else {Join (Upair S T) (Suc (Suc s)) | S T . 
+      (S \<in> new_points (Suc s)) \<and> (T \<in> point_set (Suc s)) \<and>  (S \<noteq> T) \<and> 
+      \<not> (\<exists>k \<in> line_set (Suc s) . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> (Suc s)))})" 
+      using many new_points.simps klev by (simp add: sfact)
+    then obtain S1 T1 where kfact3: "k = Join (Upair S1 T1) (Suc (Suc s)) \<and> (S1 \<in> new_points (Suc s)) \<and> (T1 \<in> point_set (Suc s))"
+      using klev by (smt (verit, best) emptyE mem_Collect_eq)
+    then have aa: "k = Join (Upair S1 T1) n \<and> (S1 \<in> new_points (n-1)) \<and> (T1 \<in> point_set (n-1))" using sfact by auto
+    then have "Join (Upair S T) = Join (Upair S1 T1)" using kfact3 assms(3) by auto
+    then have q: "(Upair S T) = (Upair S1 T1)" by (metis fline.inject(2))
+    then have "S = S1 \<or> S = T1 " by auto
+    then have "S \<in> new_points (n-1) \<or> S \<in> point_set (n-1)" using kfact3 aa by blast
+    then have h1: "p_level S \<le> (n-1)" using point_level point_set.simps(1)  by (metis order_refl point_level2)
+    from q have "T = S1 \<or> T = T1 " by auto
+    then have "T \<in> new_points (n-1) \<or> T \<in> point_set (n-1)" using kfact3 aa by blast
+    then have h2: "p_level T \<le> (n-1)" using point_level point_set.simps(1)  by (metis order_refl point_level2)
+    then show ?thesis using h1 h2 by (simp add: sfact)
+  qed
+  show ?thesis
+  proof (cases "p_level S = 0")
+    case True
+    have "S \<in> new_points 0" using True p_level.simps using assms(1) pt2 by blast
+    obtain P where pfact: "S = Base_point P" using True assms(1) pt4 by blast
+    then have "fppincid S k \<equiv>  (\<exists> A1 B1 . ((Upair S T) = Upair A1 B1) 
+    \<and> (A1 = (Base_point P) \<or> (B1 = (Base_point P))))" using fppincid.simps using assms(3) by presburger
+    then have "fppincid S k \<equiv>  ( ((Upair S T) = Upair S T) 
+    \<and> (S = (Base_point P) \<or> (T = (Base_point P))))" using pfact  by (smt (verit, best))
+    then have "fppincid S k \<equiv>  (S = (Base_point P) \<or> (T = (Base_point P)))" by force
+    then have "fppincid S k \<equiv>  True \<or> (T = (Base_point P))" using pfact by auto 
+    then have "fppincid S k \<equiv>  True" by auto 
+    then show ?thesis by auto
+  next
+    case False
+    obtain h where hfact: "S \<in> new_points h \<and> h > 0" using False assms(1) pt2 by blast
+    then obtain l m  where "S = Crossing (Upair l m) h" by (metis assms(1) point_level pt5 uprod_exhaust) 
+    then show ?thesis using assms
+    by (metis (lifting) \<open>\<And>thesis. (\<And>p. k \<in> new_lines p \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> \<open>p_level S \<le> n \<and> p_level T \<le> n\<close> antisym_conv2 configuration.line_level
+        configuration.new_lines.simps(3) configuration.point_level configuration_axioms equals0D even_zero fppincid.simps(4) hfact l_level.simps(2)
+        new_points.elims)
+  qed
+qed
+
+
+lemma points_in_join2:
+  fixes S T k
+  fixes n::nat
+  assumes "S \<in> Pi_points"
+  assumes "T \<in> Pi_points"
+  assumes "k = Join (Upair S T) n"
+  assumes "k \<in> Pi_lines"
+  shows "fppincid T k" 
+  using points_in_join by (metis Upair_inject assms(1,2,3,4))
+(*
+ "new_lines (Suc 0) = {Join (Upair S T) 1 | S T . 
+    (S \<in> new_points 0) \<and> 
+    (T \<in> point_set 0) \<and> (S \<noteq> T) \<and>
+    \<not> (\<exists>k \<in> line_set 0 . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> 1))}" |
+
+  "new_lines (Suc (Suc n)) = 
+  (if (even n) then {} else 
+   {Join (Upair S T) (Suc (Suc n)) | S T . 
+    (S \<in> new_points (Suc n)) \<and> 
+    (T \<in> point_set (Suc n)) \<and>  (S \<noteq> T) \<and> 
+    \<not> (\<exists>k \<in> line_set (Suc n) . fppincid  S k \<and> fppincid T k \<and> (l_level k \<le> (Suc n)))})" 
+*)
+
+lemma point_level3: (* if a Point's level is k, it's in new_points k *)
+  fixes Pn
+  assumes a1: "P \<in> Pi_points"
+  assumes a2: "k = p_level P"
+  shows "P \<in> new_points k"
+proof -
+  obtain n where u1: "P \<in> new_points  n" 
+    using a1 Pi_points_def new_points.simps by auto
+  have u2: "k = n" using u1 a2 p_level.simps point_level by auto
+  show ?thesis using a2 u1 u2 by auto
+qed
+
+lemma points_even: (* if a Point's level is k, then k is even *)
+  fixes P 
+  assumes a1: "P \<in> Pi_points "
+  assumes a2: "n = p_level P"
+  shows "even n"
+proof -
+  have "P \<in> new_points n" using a1 a2 point_level3 by auto
+  then have "\<nexists>k. even k \<and> n = Suc k" using even_Suc [of n] even_Suc_Suc_iff
+    even_zero new_points.elims empty_iff by (metis (lifting))
+  then show ?thesis using even_Suc old.nat.exhaust dvd_0_right by metis
+qed
+
+(*   If a point has level k, then either 
+      (i) k = 0 or
+      (ii) k = 2 and it's the crossing of two lines, each of level 0 or 1
+      (iii) k = 2i for i > 1 and it's the crossing of two lines, one of which has level 2i-1.
+*)
+lemma level_lemma1: 
+  fixes P
+  assumes a1: "P \<in> Pi_points"
+  fixes k::nat
+  assumes a2: "p_level P = k"
+  shows "(k = 0) \<or> (k = Suc(Suc 0) \<and> (\<exists> m l . P = Crossing (Upair m l) k \<and> l_level m \<le> 1 \<and> l_level l \<le> 1)) \<or>
+          ((k >  Suc(Suc 0) \<and> even k) \<and> (\<exists> m l . P = Crossing (Upair m l) k \<and> (l_level m = (k-1)) \<or> (l_level l = (k-1))))"
+proof -
+  have ek: "even k" using points_even assms by blast
+  then consider (z) "k = 0" | (t) "k =  Suc(Suc 0)" | (m) "(k >  Suc(Suc 0)) \<and> even k" 
+    using nat_dvd_not_less nat_neq_iff by fastforce
+  then show ?thesis
+  proof (cases)
+    case z
+    then show ?thesis by auto
+  next
+    case t
+    have j0: "?thesis \<equiv> (\<exists> m l . P = Crossing (Upair m l) k \<and> l_level m \<le> 1 \<and> l_level l \<le> 1) " using ek t  by auto  
+    have "P \<in> new_points  (Suc (Suc 0))" using point_level3[of P] assms t by auto
+    thm "new_points.simps" 
+    then have "P \<in> {Crossing (Upair k l) (Suc (Suc 0)) |k l.
+     (k \<in> new_lines 0 \<or> k \<in> new_lines (Suc 0)) \<and> l \<in> line_set (Suc 0) \<and> k \<noteq> l \<and> \<not> (\<exists>Y\<in>point_set (Suc 0). fppincid Y k \<and> fppincid Y l)}" using new_points.simps(3) by blast
+    then have "P \<in> {Crossing (Upair k l) (Suc (Suc 0)) |k l.
+   (k \<in> new_lines 0 \<or> k \<in> new_lines (Suc 0)) \<and> l \<in> line_set (Suc 0)}" by blast
+    then obtain m l where mlfact: "(P = Crossing (Upair m l) k \<and> (m \<in> new_lines 0 \<or> m \<in> new_lines (Suc 0))) \<and> l \<in> line_set (Suc 0)" using t by blast
+    have s1: "s \<in> new_lines 0 \<longrightarrow> (l_level s = 0)" for s using l_level.simps(1)  new_lines.simps(1) by auto
+    have s2: "s \<in> new_lines (Suc 0) \<longrightarrow> (l_level s = (Suc 0))" for s using l_level.simps(1)  new_lines.simps(1) by auto
+    have s3: "s \<in> line_set (Suc 0) \<longrightarrow> (l_level s \<le> Suc 0)" for s using s1 s2 
+      by (metis Un_iff le_Suc_eq le_zero_eq line_set.simps(1,2))
+    have s3: "l_level m \<le> 1" using mlfact s1 by auto
+    have s4: "l_level l \<le> 1" using mlfact s3 by auto
+    have mlfact2: "(P = Crossing (Upair m l) k \<and> l_level m \<le> 1 \<and> l_level l \<le> 1)" using mlfact  s3 s4 by blast
+
+    then show ?thesis using  j0 mlfact2 by blast
+
+  next
+    case m
+    then show ?thesis  using l_level.simps(2) by blast
+  qed
+qed
+
+lemma crossing_lines_distinct: (* If P in Pi_points is the crossing of m and k, then m and k are unequal *)
+  fixes P  
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  assumes a1: "P \<in> Pi_points "
+  assumes a2: "P = Crossing (Upair m s) n"
+  shows "m \<noteq> s"
+proof -
+  obtain U n where Pcross: "P = Crossing U n" using a2 by auto
+  obtain v where vdef: "P \<in> new_points v" using a1 Pi_points_def new_points.simps by auto
+  consider (zo) "v = 0 \<or> v = Suc 0" | (two) "v = Suc (Suc 0)" 
+    | (many) "\<exists>p. v = Suc (Suc (Suc p))" using old.nat.exhaust by metis
+  then show ?thesis
+  proof (cases)
+    case zo
+    then show ?thesis using a2 vdef by auto
+  next
+    case two
+    then show ?thesis using a2 vdef by fastforce
+  next
+    case many 
+    show ?thesis 
+      by (smt (verit, best) a2 fpoint.inject(2) many mem_Collect_eq nat.inject new_points.simps(2,4) old.nat.distinct(1) point_level proper_uprod_simps vdef)
+  qed
+qed
+
+lemma point_containment: (* new_points n is in Pi_points *)
+  fixes P 
+  assumes "\<exists>n::nat. P \<in> new_points n"
+  shows "P \<in> Pi_points"
+  using assms Pi_points_def by auto
+
+lemma pi_points_contents: (* anything in new_points n is in Pi_points *)
+  fixes n
+  shows "new_points n \<subseteq> Pi_points "
+  using Pi_points_def by auto
+
+lemma point_set_contents: (* point_set n is the union of new_points i for i = 0 ... n *)
+  fixes n
+  shows "point_set n = \<Union> ((new_points) ` {i::nat. i \<le> n})"
+proof (induction n)
+  case 0
+  then show ?case by simp
+next
+  case (Suc k)
+  have "point_set k = \<Union> ((new_points) ` {i::nat. i \<le> k})" 
+    and "point_set (Suc k) = point_set k \<union> new_points (Suc k)"  
+    using Suc point_set.simps by blast+
+  then have "point_set (Suc k) = (\<Union> ((new_points) ` {i::nat. i \<le> k})) 
+    \<union> new_points (Suc k)" by blast
+  then have "point_set (Suc k) = (\<Union> ((new_points) ` ({i::nat. i \<le> k} \<union> {Suc k})))" 
+    using increase_initial_segment by blast
+  then have "point_set (Suc k) = (\<Union> ((new_points) ` ({i::nat. i \<le> (Suc k)})))" 
+    using increase_initial_segment by blast
+  then show ?case by auto
+qed
+
+lemma pi_points_contents2: (* point_set  n is a subset of Pi_points  *)
+  fixes n
+  shows "point_set n \<subseteq> Pi_points"
+  using Pi_points_def Sup_subset_mono image_mono point_set_contents top_greatest by metis
+
+lemma line_level3: (* if a line is in new_lines  n, its level is n *)
+  fixes k  
+  fixes n::nat
+  assumes a1: "k \<in> new_lines  n"
+  assumes a2: "s = l_level k"
+  shows "s = n"
+proof -
+  consider (zo) "n = 0 \<or> n = Suc 0" | (many) "\<exists>p. n = Suc (Suc p)" 
+    using old.nat.exhaust by metis
+  then show ?thesis
+  proof cases
+    case zo
+    then show ?thesis using a1 a2 by auto
+  next
+    case many
+    then show ?thesis using a1 a2 l_level.simps(2) new_lines.simps(3)
+      empty_iff mem_Collect_eq by (smt (verit, ccfv_threshold))
+  qed
+qed
+
+lemma line_level4: (* if a line's level is k, it's in new_lines  k *)
+  fixes k  n
+  assumes a1: "k \<in> Pi_lines"
+  assumes a2: "s = l_level k"
+  shows "k \<in> new_lines s"
+proof -
+  obtain n where u1: "k \<in> new_lines n" using a1 Pi_lines_def new_lines.simps by auto
+  have u2: "s = n" using u1 a2 l_level.simps line_level by auto
+  show ?thesis using u1 u2 by auto
+qed
+
+lemma lines_odd_or_zero: (* every line's level is either odd or zero *)
+  fixes k 
+  assumes a1: "k \<in> Pi_lines "
+  assumes a2: "n = l_level k"
+  shows "n = 0 \<or> odd n"
+  using a1 a2 line_level4 even_Suc even_zero new_lines.elims empty_iff by metis
+
+lemma pi_lines_contents: (* new_lines n is in Pi_lines *)
+  fixes n
+  shows "new_lines n \<subseteq> Pi_lines"
+  using Pi_lines_def by auto
+
+lemma line_set_contents: (* line_set  n is the union of all new_lines  k for k = 0:n *)
+  fixes  n
+  shows "line_set n = \<Union> ((new_lines) ` {i::nat. i \<le> n})"
+proof (induction n)
+  case 0
+  then show ?case by simp
+next
+  case (Suc n)
+  have "line_set n = \<Union> ((new_lines) ` {i::nat. i \<le> n})"
+    and "line_set (Suc n) = line_set n \<union> new_lines (Suc n)" 
+    using Suc line_set.simps by blast+
+  then have "line_set (Suc n) = (\<Union> ((new_lines) ` {i::nat. i \<le> n})) 
+    \<union> new_lines (Suc n)" by blast
+  then have "line_set (Suc n) = (\<Union> ((new_lines) ` ({i::nat. i \<le> n} \<union> {Suc n})))" 
+    using increase_initial_segment by blast
+  then have "line_set (Suc n) = (\<Union> ((new_lines) ` ({i::nat. i \<le> (Suc n)})))" 
+    using increase_initial_segment by blast
+  then show ?case by auto 
+qed
+
+lemma pi_lines_contents2: (* and Pi_lines  is the union of all line_set s *)
+  fixes  n
+  shows "line_set  n \<subseteq> Pi_lines "
+  using Pi_lines_def Union_mono line_set_contents subset_image_iff top_greatest by metis
+
+
+lemma level_lemma2: 
+  fixes l
+  assumes a1: "l \<in> Pi_lines"
+  fixes k::nat
+  assumes a2: "l_level l = k"
+  shows "(k = 0) \<or> (k = Suc 0 \<and> (\<exists> A B . l = Join (Upair A B) k \<and> p_level A = 0  \<and> p_level B = 0)) \<or>
+          ((k >  (Suc 0) \<and> odd k) \<and> (\<exists> A B . l = Join (Upair A B) k \<and> (p_level A = (k-1)) \<or> (p_level B = (k-1))))"
+proof -
+  have ok: "k = 0 \<or> odd k" using lines_odd_or_zero assms by meson
+  then consider (z) "k = 0" | (t) "k =  Suc 0" | (m) "(k >  Suc 0) \<and> odd k" 
+    using nat_dvd_not_less nat_neq_iff by fastforce
+  then show ?thesis
+  proof (cases)
+    case z
+    then show ?thesis by auto
+  next
+    case t 
+    show ?thesis using t assms 
+      by (smt (verit) One_nat_def line_level4 mem_Collect_eq new_lines.simps(2) new_points.simps(1) p_level.simps(1) point_set.simps(1))
+  next
+    case m
+    then show ?thesis  using p_level.simps(2) by blast
+  qed
+qed
+
+lemma joining_line: (* there's a line between any two distinct points of a free projective plane with the right order of levels *)
+  fixes P Q 
+  assumes "P \<in> Pi_points" and "Q \<in> Pi_points"
+  assumes "p_level P \<le> p_level Q"
+  assumes "P \<noteq> Q"
+  defines "n \<equiv> p_level Q"
+  shows "\<exists>k \<in> Pi_lines. fppincid P k \<and> fppincid Q k"
+proof -
+  consider (zero) "n = 0" | (one) "n = Suc 0" | (many) "\<exists>p .  n = Suc (Suc p)" 
+    using old.nat.exhaust by metis
+  then show ?thesis
+  proof cases
+    case zero
+    have 1: "p_level P = 0" using assms(3) n_def zero by auto
+    obtain A where 2:"P = Base_point A" using "1" assms(1) point_level3 by fastforce
+    obtain B where 3:"Q = Base_point B" using assms(2) n_def point_level3 zero by fastforce
+    then show ?thesis 
+    proof (cases "\<exists> m \<in> line_set  0 . fppincid  P m \<and> fppincid  Q m \<and> (l_level m \<le> 1)")
       case True
-      then show ?thesis using ample_lines_two_points kdef by blast 
+      then show ?thesis by (metis in_mono pi_lines_contents2)
     next
       case False
-      then show ?thesis by (metis crossing_point kdef linorder_linear ndef)
+      have "new_lines  1 = {Join (Upair S T) 1 | S T . 
+        (S \<in> new_points  0) \<and> 
+        (T \<in> point_set  0) \<and> (S \<noteq> T) \<and>
+          \<not> (\<exists>k \<in> line_set  0 . fppincid   S k \<and> fppincid  T k \<and> (l_level k \<le> 1))}" 
+        using new_lines.cases by simp
+      then have "Join (Upair P Q) 1 \<in> new_lines  1"
+        by (smt (verit) 1 False assms(1,2,4) mem_Collect_eq n_def point_level3 point_set.simps(1) zero)
+      then show ?thesis by (metis 2 3 fppincid.simps(2) in_mono pi_lines_contents)
     qed
-  qed
-
-lemma ample_free_planes3:
-  shows "\<exists>P Q R.
-       P \<in> Pi_points c \<and>
-       Q \<in> Pi_points c \<and> R \<in> Pi_points c \<and> P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
-      \<not> projective_plane_data.pcollinear \<lparr> Points = (Pi_points c), Lines = (Pi_lines c), incid = (fppincid c) \<rparr> P Q R"
-proof -
-  define cfpp where "cfpp = \<lparr> Points = (Pi_points c), Lines = (Pi_lines c), incid = (fppincid c) \<rparr>"
-  obtain P Q R S where pqrs: "U = {P,Q,R,S}" using  a2 by auto
-  have dd: "distinct [P,Q,R]" using pqrs 
-    by (smt (verit) a1 a2 card.empty card_insert_disjoint distinct.simps(2) empty_set finite_insert insert_absorb insert_commute
-        list.simps(15) nat.simps(1,3) u_finite)
-  have ee: "{P,Q, R} \<subseteq> U" using pqrs by simp
-  then have ef: "{P,Q,R} \<subseteq> CPoints" using a3 a4 by auto
-  have eg: "card {P,Q,R} = 3" using dd by fastforce
-  have e1: "((distinct [P,Q,R]) \<and> ({P, Q, R} \<subseteq> U))" using dd ee conjI by blast
-  have e2: " \<not> (projective_plane_data.pcollinear c P Q R)" using a4 e1 
-    by (smt (verit) a5 bot.extremum_unique insertI1 insert_commute insert_not_empty projective_plane_data.intro projective_plane_data.pcollinear_def
-      subsetD)
-    then have e21: " \<not> (if (P \<in> CPoints \<and> Q \<in> CPoints \<and> R \<in> CPoints)  
-      then (\<exists> l. l \<in> CLines \<and> incidx P l \<and> incidx Q l  \<and> incidx R l) else undefined)" 
-      using a3 a5 e1 ef by auto
-    have e3: " \<not> (\<exists>k \<in> CLines . incidx P k \<and> incidx Q k \<and> incidx R k)" using e2 ef e21 by auto
-    (* make P, Q, R into Base_points called S, T, V and ...*)
-    then have e4: "
-       (Base_point P) \<in> Pi_points c \<and>
-        (Base_point Q) \<in> Pi_points c \<and>
-        (Base_point R) \<in> Pi_points c"
-      by (metis (mono_tags, lifting) a4 ee insert_absorb insert_subset mem_Collect_eq new_points.simps(1) pi_points_contents)
-
-    have e5:
-        "(Base_point P) \<noteq> (Base_point Q) \<and>
-         (Base_point P) \<noteq> (Base_point R) \<and>
-         (Base_point Q) \<noteq> (Base_point R)" using dd by auto 
-    have "c = \<lparr>Points = CPoints, Lines = CLines, incid = incidx\<rparr> \<Longrightarrow>
-         card {P, Q, R} = 3 \<Longrightarrow>
-         {P, Q, R} \<subseteq> CPoints \<Longrightarrow>
-         \<not> (\<exists>k\<in>CLines. incidx P k \<and> incidx Q k \<and> incidx R k) \<Longrightarrow>
-         \<not> (\<exists>m\<in>Pi_lines c. fppincid c (Base_point P) m \<and> fppincid c (Base_point Q) m \<and> fppincid c (Base_point R) m)" using  non_collinear_persistence [of c CPoints CLines incidx P Q R] by blast
-    then have "
-         \<not> (\<exists>k\<in>CLines. incidx P k \<and> incidx Q k \<and> incidx R k) \<Longrightarrow>
-         \<not> (\<exists>m\<in>Pi_lines c. fppincid c (Base_point P) m \<and> fppincid c (Base_point Q) m \<and> fppincid c (Base_point R) m)" using a3 ef eg by blast
-    then have q0: "\<not> (\<exists>m\<in>Pi_lines c. fppincid c (Base_point P) m \<and> fppincid c (Base_point Q) m \<and> fppincid c (Base_point R) m)" using e3 by blast
-
-    thm "Chapter1-1R.projective_plane_data.pcollinear_def"  [of cfpp "(Base_point P)"  "(Base_point Q)"  "(Base_point R)"] 
-
-    have "(projective_plane_data.pcollinear cfpp  (Base_point P)  (Base_point Q)  (Base_point R)) = 
-      (if Base_point P \<in> Points cfpp \<and> Base_point Q \<in> Points cfpp \<and> Base_point R \<in> Points cfpp
-       then \<exists>l. l \<in> Lines cfpp \<and> Base_point P \<lhd>\<^bsub>cfpp\<^esub> l \<and> Base_point Q \<lhd>\<^bsub>cfpp\<^esub> l \<and> Base_point R \<lhd>\<^bsub>cfpp\<^esub> l else undefined)" 
-      using cfpp_def "Chapter1-1R.projective_plane_data.pcollinear_def" [of cfpp "(Base_point P)"  "(Base_point Q)"  "(Base_point R)"] 
-      e4 projective_plane_data_def by fastforce
-    then have "(projective_plane_data.pcollinear cfpp  (Base_point P)  (Base_point Q)  (Base_point R)) = 
-       (\<exists>l. l \<in> Lines cfpp \<and> Base_point P \<lhd>\<^bsub>cfpp\<^esub> l \<and> Base_point Q \<lhd>\<^bsub>cfpp\<^esub> l \<and> Base_point R \<lhd>\<^bsub>cfpp\<^esub> l)" using e4  cfpp_def by auto
-    then have "(projective_plane_data.pcollinear cfpp  (Base_point P)  (Base_point Q)  (Base_point R)) = 
-       (\<exists>l. l \<in> Lines cfpp \<and> fppincid c (Base_point P) l \<and> fppincid c (Base_point Q) l \<and> fppincid c (Base_point R)  l)" by (simp add: cfpp_def)
-
-    then have e6: " \<not> projective_plane_data.pcollinear cfpp  (Base_point P)  (Base_point Q)  (Base_point R)" 
-    using cfpp_def q0 by auto
-
-    show " \<exists>P Q R.
-      P \<in> Pi_points c \<and>  Q \<in> Pi_points c \<and> R \<in> Pi_points c \<and> 
-      P \<noteq> Q \<and> P \<noteq> R \<and> Q \<noteq> R \<and> 
-      \<not> projective_plane_data.pcollinear cfpp  P Q R" 
-      by (meson e4 e5 e6) 
-  qed
-
-
-lemma ample_free_planes4:  (* Shows axiom P4 of a projective plane holds for free projective plane *)
-(*  assumes imp: "\<And> P Q R . ((distinct [P,Q,R]) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (projective_plane_data.pcollinear c P Q R)" *)
-  shows "k \<in> Pi_lines c \<Longrightarrow> W = {P \<in> Pi_points c. fppincid c P k} \<Longrightarrow> \<exists>Q R S. Q \<in> W \<and> R \<in> W \<and> S \<in> W \<and> distinct [Q, R, S]"
-proof -
-  assume "k \<in> Pi_lines c"
-  assume aw: "W = {P \<in> Pi_points c. fppincid c P k} "
-  show "\<exists>Q R S. Q \<in> W \<and> R \<in> W \<and> S \<in> W \<and> distinct [Q, R, S]"
-  proof -
-    let ?f = "(\<lambda> x .  Base_point x)"
-    have finj: "inj ?f" using inj_def by auto
-
-    let ?H = " {P \<in> CPoints. fppincid c (Base_point P) k}"
-    let ?K = "?f ` ?H"
-    let ?V = "?f ` U"
-    have "?V \<subseteq> Pi_points c" 
-      using image_subset_iff mem_Collect_eq new_points.simps pi_points_contents
-        select_convs subset_eq by (smt (verit) a4)
-    have "card ?V = card U" using card_image inj_on_subset subset_UNIV finj by metis
-    let ?count = "card(U \<inter> ?H)"
-    consider (lots) "?count \<ge> 3" | (few) "?count \<le> 2" by linarith
-    then show ?thesis 
-    proof cases
-      case lots
-      let ?f = "\<lambda> x . Base_point x"
-      have "inj ?f" using injI fpoint.inject finj by blast
-      have g1: "card (?f ` (U \<inter> ?H)) = card (U \<inter> ?H)"   by (simp add: card_image inj_on_def)
-      have g2: "(?f ` (U \<inter> ?H)) = ((?f ` U) \<inter> (?f `?H))" by blast
-      have g3: "card ((?f ` U) \<inter> (?f `?H)) \<ge> 3"  by (metis g1 g2 lots)
-      have g4: "card (?V \<inter> ?K) \<ge> 3" using g3 by blast
-      obtain A B C  where tt: "(A::('p, 'l) fpoint) \<in>(?V \<inter> ?K) \<and> B \<in> (?V \<inter> ?K)  \<and> C \<in> (?V \<inter> ?K) \<and> distinct [A, B, C]" using g4 three_elements 
-        by (metis (mono_tags, lifting) One_nat_def Suc_1 less_eq_Suc_le numeral_3_eq_3)
-      then show ?thesis using tt
-          by (smt (verit, del_insts) IntE \<open>(\<lambda>x. Base_point x) ` U \<subseteq> Pi_points c\<close> aw imageE mem_Collect_eq
-           subset_eq)
+  next
+    case one (* higher level point has level 1 -- can't happen *)
+    have False using  One_nat_def assms(2) bot_nat_def n_def odd_one one points_even by metis
+    then show ?thesis by blast
+  next
+    case many (*higher-level point has degree 2 or greater *)
+    obtain q where uu: "n = Suc q" using many by blast
+    have u0: "Q \<in> new_points  n" using assms(2) n_def point_level3 by auto
+    have u1: "Q \<in> point_set  n" using u0 point_set.simps by (metis UnCI point_set.elims)
+    have u2: "P \<in> new_points  (p_level P)" by (simp add: assms(1) point_level3)
+    have u3: "P \<in> point_set   (p_level P)" by (metis UnCI point_set.elims u2)
+    have u4: "P \<in> point_set   n" 
+      by (smt (verit, best) UnCI assms(3) in_mono lift_Suc_mono_le n_def point_set.elims point_set.simps(1,2) subsetI u2)
+    have u5: "even n" using assms(2) points_even n_def by blast
+    have u6: "new_lines  (Suc n) = new_lines  (Suc (Suc q))" using uu by blast 
+    have u7: "new_lines  (Suc n) = 
+  (if (even q) then {} else
+   {Join (Upair S T) (Suc (Suc q)) | S T . 
+    (S \<in> new_points  (Suc q)) \<and> 
+    (T \<in> point_set  (Suc q)) \<and> (S \<noteq> T) \<and>
+    \<not> (\<exists>k \<in> line_set  (Suc q) . fppincid   S k \<and> fppincid  T k \<and> (l_level k \<le> (Suc q)))})" using u6 by simp
+    then have u8: "new_lines  (Suc n) = 
+     {Join (Upair S T) (Suc (Suc q)) | S T . 
+      (S \<in> new_points  (Suc q)) \<and> 
+      (T \<in> point_set  (Suc q)) \<and> (S \<noteq> T) \<and>
+      \<not> (\<exists>k \<in> line_set  (Suc q) . fppincid   S k \<and> fppincid  T k \<and> (l_level k \<le> (Suc q)))}" using u5 uu by auto
+    let ?C = "\<exists>k \<in> line_set  n . fppincid   P k \<and> fppincid  Q k \<and> (l_level k \<le> n)"
+    show "\<exists>k\<in>Pi_lines . fppincid  P k \<and> fppincid  Q k "
+    proof (cases ?C)
+      case True
+      obtain k where u9: "k \<in> line_set  n \<and> fppincid  P k \<and> fppincid  Q k \<and> l_level k \<le> n" using True by blast
+      have "k \<in> Pi_lines  " using u9 pi_lines_contents2 by blast
+      then show ?thesis using u9 by blast
     next
-      case few
-      have twopts: "card (U - {P \<in> CPoints. fppincid c (Base_point P) k}) \<ge> 2" 
-        by (metis (lifting) Nat.add_diff_assoc U_size card_Diff_subset_Int few finite_Int nat_le_iff_add numeral_Bit0 u_finite)
-
-      obtain Ac Bc where uu: "Ac \<in> U - ?H \<and> Bc \<in> U - ?H \<and> Ac \<noteq> Bc" using twopts 
-        by (smt (verit) One_nat_def Suc_1 card_le_Suc_iff insertI1 insert_commute)     
-      define V where "V = U - {Ac, Bc}"
-      have "card V = 2" using U_size using V_def card.insert uu by auto
-      then obtain Cc Dc where vv: "V = {Cc, Dc} \<and> Cc \<noteq> Dc" by (meson card_2_iff)
-      define A::"('p, 'l) fpoint" where "A = Base_point Ac"
-      define B::"('p, 'l) fpoint" where "B = Base_point Bc"
-      define C::"('p, 'l) fpoint" where "C = Base_point Cc"
-      define D::"('p, 'l) fpoint" where "D = Base_point Dc"
-      have abdiff: "A \<noteq> B" by (simp add: A_def B_def uu)
-      have acddiff: "A \<noteq> C \<and> A \<noteq> D" using A_def C_def D_def vv V_def uu by blast
-      have "\<not> fppincid c A k \<and> \<not> fppincid c B k" using A_def B_def a3 a4 uu by auto
-      obtain AC where "fppincid c A AC \<and>  fppincid c C AC \<and> AC \<in> Pi_lines c" 
-        by (metis (no_types, lifting) A_def C_def Diff_iff V_def \<open>Base_point ` U \<subseteq> Pi_points c\<close> acddiff ample_free_planes1 image_subset_iff
-          insertI1 uu vv)
-      obtain AD where "fppincid c A AD \<and>  fppincid c D AD \<and> AD \<in> Pi_lines c"
-        by (metis (mono_tags, lifting) A_def D_def Diff_iff V_def \<open>Base_point ` U \<subseteq> Pi_points c\<close> acddiff ample_free_planes1 image_subset_iff
-          insert_iff uu vv)
-      obtain AB where "fppincid c A AB \<and>  fppincid c B AB \<and> AB \<in> Pi_lines c" 
-        by (metis (mono_tags, lifting) A_def B_def Diff_iff \<open>Base_point ` U \<subseteq> Pi_points c\<close> abdiff ample_free_planes1 image_subset_iff
-          uu)
-      obtain H where hdef: "fppincid c H AC \<and> fppincid c H k \<and> H \<in> Pi_points c"
-        by (metis \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> \<open>k \<in> Pi_lines c\<close>
-          crossing_point linorder_linear)
-      obtain Y where ydef: "fppincid c Y AD \<and> fppincid c Y k \<and> Y \<in> Pi_points c" 
-        by (metis \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> \<open>k \<in> Pi_lines c\<close>
-          crossing_point linorder_linear)
-      obtain Z where zdef: "fppincid c Z AB \<and> fppincid c Z k \<and> Z \<in> Pi_points c" 
-        by (metis \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close> \<open>k \<in> Pi_lines c\<close>
-          crossing_point linorder_linear)
-      have ACdiff: "AC \<noteq> k" 
-      using \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> by auto
-      have ADdiff: "AD \<noteq> k" 
-        using \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> by auto
-      have "Z \<noteq> Y" (* if so then AB and AD both contain Y, i.e. AY contains both B and D, so ABD collinear *)
-      proof (rule ccontr)
-        assume "\<not> (Z \<noteq> Y)"
-        then have "Z = Y" by blast
-        then have r0:"fppincid c Z AD \<and> fppincid c A AD" by (simp add: \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> ydef)  
-        have r1:"fppincid c Z AB \<and> fppincid c A AB" by (simp add: \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close> zdef)
-        have r2:"Z \<noteq> A" using \<open>\<not> Z \<noteq> Y\<close> \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> ydef by auto
-        have r3: "AB = AD" using  r0 r1 r2 
-          by (metis (no_types, lifting) A_def \<open>Base_point ` U \<subseteq> Pi_points c\<close> \<open>\<not> Z \<noteq> Y\<close> \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close>
-            \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> ample_free_planes1 image_subset_iff mem_Collect_eq set_diff_eq uu
-            ydef)
-        have r4: "fppincid c A AB \<and> fppincid c B AB \<and> fppincid c D AB" 
-          using \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close> \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> r3 by auto
-        have r5: "distinct [Ac, Bc, Dc]" using V_def uu vv by auto
-        have r6: "Ac \<in> U \<and> Bc \<in> U \<or> Dc \<in> U" using uu by blast
-        thm non_collinear_persistence [of c CPoints CLines incidx Ac Bc Dc]
-        have r7: "\<not>( \<exists>m\<in>Pi_lines c.
-           fppincid c (Base_point Ac) m \<and>
-           fppincid c (Base_point Bc) m \<and>
-           fppincid c (Base_point Dc) m)" using a5 r5 r6  non_collinear_persistence [of c CPoints CLines incidx Ac Bc Dc]
-          by (smt (verit, del_insts) Diff_subset V_def a3 a4 card.empty card.insert card_gt_0_iff distinct.simps(2) finite.intros(1)
-            insert_subset list.set(1,2) numeral_3_eq_3 select_convs(1,2,3) subset_iff uu vv zero_less_Suc)
-        show False using r4 r7 
-          using A_def B_def D_def \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close> by blast
-      qed
-
-      have "Z \<noteq> H" (* if so then AC and CD both contain Z, i.e. CZ contains both A and D, so ACD collinear *)
-      proof (rule ccontr)
-        assume "\<not> (Z \<noteq> H)"
-        then have "Z = H" by blast
-        then have r0:"fppincid c Z AC \<and> fppincid c A AC"
-        using \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> hdef by blast 
-        have r1:"fppincid c Z AB \<and> fppincid c A AB"
-        by (simp add: \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close> zdef)
-        have r2:"Z \<noteq> A" 
-        using \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> zdef by blast
-        have r3: "AC = AB" using  r0 r1 r2 
-        using A_def \<open>Base_point ` U \<subseteq> Pi_points c\<close> \<open>\<not> Z \<noteq> H\<close> \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close>
-          \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> ample_free_planes1 hdef uu by fastforce
-        have r4: "fppincid c A AC \<and> fppincid c C AC \<and> fppincid c B AC" 
-        using \<open>fppincid c A AB \<and> fppincid c B AB \<and> AB \<in> Pi_lines c\<close> \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> r3 by auto 
-        have r5: "distinct [Ac, Bc, Cc]" using V_def uu vv by auto
-        have r6: "Ac \<in> U \<and> Bc \<in> U \<or> Cc \<in> U" using uu by blast
-        thm non_collinear_persistence [of c CPoints CLines incidx Ac Bc Cc]
-        have r7: "\<not>( \<exists>m\<in>Pi_lines c.
-           fppincid c (Base_point Ac) m \<and>
-           fppincid c (Base_point Bc) m \<and>
-           fppincid c (Base_point Cc) m)" using a5 r5 r6  non_collinear_persistence [of c CPoints CLines incidx Ac Bc Cc]
-        by (smt (verit, del_insts) Diff_subset V_def a3 a4 card.empty card.insert card_gt_0_iff distinct.simps(2) finite.intros(1)
-            insert_subset list.set(1,2) numeral_3_eq_3 select_convs(1,2,3) subset_iff uu vv zero_less_Suc)
-        show False using r4 r7 
-          using A_def C_def B_def \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> by blast
-      qed
-
-      have "H \<noteq> Y" (* if so then AC and AD both contain H, i.e. AH contains both A and C, so ACD collinear *)
-      proof (rule ccontr)
-        assume "\<not> (H \<noteq> Y)"
-        then have "H = Y" by blast
-        then have r0:"fppincid c H AC \<and> fppincid c A AC"
-        using \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> hdef by blast
-        have r1:"fppincid c H AD \<and> fppincid c A AD"
-        using \<open>\<not> H \<noteq> Y\<close> \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> ydef by auto
-        have r2:"H \<noteq> A" using \<open>\<not> fppincid c A k \<and> \<not> fppincid c B k\<close> hdef by blast 
-        have r3: "AC = AD" using  r0 r1 r2 
-        using A_def \<open>Base_point ` U \<subseteq> Pi_points c\<close> \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close>
-          \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> ample_free_planes1 hdef uu by fastforce
-        then have r4: "fppincid c A AC \<and> fppincid c C AC \<and> fppincid c D AC"
-        using \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> \<open>fppincid c A AD \<and> fppincid c D AD \<and> AD \<in> Pi_lines c\<close> by blast 
-        have r5: "distinct [Ac, Cc, Dc]" using V_def uu vv by auto
-        have r6: "Ac \<in> U \<and> Cc \<in> U \<or> Dc \<in> U" using uu  using V_def vv by blast
-        thm non_collinear_persistence [of c CPoints CLines incidx Ac Cc Dc]
-        have r7: "\<not>( \<exists>m\<in>Pi_lines c.
-           fppincid c (Base_point Ac) m \<and>
-           fppincid c (Base_point Cc) m \<and>
-           fppincid c (Base_point Dc) m)" using a5 r5 r6  non_collinear_persistence [of c CPoints CLines incidx Ac Cc Dc] 
-        by (smt (verit, del_insts) Diff_subset V_def a3 a4 card.empty card.insert distinct.simps(2) finite.intros(1) finite_insert
-            insert_subset list.set(1,2) numeral_3_eq_3 select_convs(1,2,3) subset_iff uu vv)
-        show False using r4 r7 
-        using A_def C_def D_def \<open>fppincid c A AC \<and> fppincid c C AC \<and> AC \<in> Pi_lines c\<close> by blast
-      qed
-
-      have dd: "distinct [H, Y, Z]" using \<open>H \<noteq> Y\<close> \<open>Z \<noteq> H\<close> \<open>Z \<noteq> Y\<close> by auto
-      then show ?thesis using hdef ydef zdef dd aw by blast 
+      case False
+      have v1: "Join (Upair P Q) (Suc n) \<in> new_lines  (Suc n)" using u8 False using u0 u4 uu  assms(4) by force
+      let ?L = "Join (Upair P Q) (Suc n)"
+      have v2:  "?L \<in> Pi_lines " using v1 Pi_lines_def by blast
+      have v3:  "fppincid  P ?L \<and> fppincid  Q ?L" 
+        by (smt (verit) Zero_not_Suc assms(3) configuration.fppincid.elims(3) configuration_axioms fline.inject(2) l_level.simps(1,2) lessI less_Suc_eq_le n_def
+            p_level.simps(2))
+      then show ?thesis using v2 by blast
     qed
   qed
 qed
 
+theorem free_planes_join:  (* there's a line between any two distinct points of a free projective plane *)
+  assumes "card CPoints \<ge> 4"
+  fixes P Q
+  assumes "P \<in> Pi_points "
+  assumes "Q \<in> Pi_points "
+  assumes "P \<noteq> Q"
+  shows " \<exists>k. k \<in> Pi_lines  \<and> fppincid  P k \<and>  fppincid  Q k"
+  using assms joining_line nle_le by metis
 
-theorem ample_free_plane_is_projective_plane:
-  assumes "cfpp = \<lparr> Points = (Pi_points c), Lines = (Pi_lines c), incid = (fppincid c) \<rparr>"
-  shows "projective_plane cfpp"
-proof (unfold_locales)
-  show "Points cfpp \<noteq>  {}" using ample_free_planes3 assms by auto
+lemma line_point_levels: (* points of join P Q, a line at level n, are either P or Q or have level > n *)
+  assumes "card CPoints \<ge> 4"
+  assumes "X \<in> Pi_points"
+  assumes "Join (Upair P Q) n \<in> Pi_lines "
+  assumes "fppincid X (Join (Upair P Q) n)"
+  shows "X = P \<or> X = Q \<or> (p_level X > n)" 
+proof (cases X)
+  case (Base_point A)
+  show ?thesis using assms Base_point  by auto
 next
-  fix P Q
-  show  "\<lbrakk>P \<noteq> Q ;P \<in> Points cfpp; Q \<in> Points cfpp\<rbrakk> \<Longrightarrow>
-           \<exists>!k. k \<in> Lines cfpp \<and> P \<lhd>\<^bsub>cfpp\<^esub> k \<and> Q \<lhd>\<^bsub>cfpp\<^esub> k" using ample_free_planes1 by (simp add: assms)
-next
-  fix k n
-  show "\<lbrakk>k \<in> Lines cfpp; n \<in> Lines cfpp \<rbrakk> \<Longrightarrow>
-       \<exists>P. P \<in> Points cfpp \<and> P \<lhd>\<^bsub>cfpp\<^esub> k \<and> P \<lhd>\<^bsub>cfpp\<^esub> n"
-    by (simp add: ample_free_planes2 assms)
-next
-  show "\<exists>P Q R.
-       P \<in> Points cfpp \<and>
-       Q \<in> Points cfpp \<and>
-       R \<in> Points cfpp \<and>
-       P \<noteq> Q \<and>
-       P \<noteq> R \<and>
-       Q \<noteq> R \<and>
-       \<not> projective_plane_data.pcollinear
-           cfpp P Q R" using ample_free_planes3 by (simp add:assms)
-next
-  fix k X 
-  show  "\<lbrakk>k \<in> Lines cfpp; X = {P \<in> Points cfpp. P \<lhd>\<^bsub>cfpp\<^esub> k}\<rbrakk> \<Longrightarrow>
-           \<exists>Q R S. Q \<in> X \<and> R \<in> X \<and> S \<in> X \<and>
-              distinct [Q, R, S]" using ample_free_planes4 assms by simp
+  case (Crossing upr k)
+  show "\<And>upr m. X = Crossing upr m \<Longrightarrow> X = P \<or> X = Q \<or> n < p_level X"
+  proof (safe)
+    fix upr m 
+    assume a0: "(X = Crossing upr m)" and a02: "(Crossing upr m \<noteq> P)"
+    have a1: "(\<not> n < p_level (Crossing upr m) \<longrightarrow> Crossing upr m = Q) \<equiv> ((n < p_level (Crossing upr m))\<or> (Crossing upr m = Q))" by linarith
+    have a2: "((n < p_level (Crossing upr m)) \<or> (Crossing upr m = Q))" 
+    proof (cases "(Crossing upr m) = Q")
+      case True
+      then show ?thesis by auto
+    next
+      case False
+      have q0: "?thesis \<equiv> (n < p_level (Crossing upr m))" using False by auto
+      have q1: "(n < p_level (Crossing upr m))" using a0 a02  False using assms(4) by force
+      then show ?thesis using q0 q1 by auto
+    qed
+    show "\<And>upr m. X = Crossing upr m \<Longrightarrow> Crossing upr m \<noteq> P \<Longrightarrow> \<not> n < p_level (Crossing upr m) \<Longrightarrow> Crossing upr m = Q "
+      using a0 a2 by blast
+  qed
 qed
 
-end
-
-locale confined_configuration = 
-  configuration S for S::"('p, 'l) plane_r" (structure) + 
- 
-  assumes C2: "U \<in> Points S \<Longrightarrow> \<exists> k l m  . k \<in> Lines S \<and> l \<in> Lines S \<and> m \<in> Lines S \<and> 
-  incid S U k \<and> incid S U l \<and> incid S U m \<and> distinct [k, l,m]"
-  assumes C3: "k \<in> Lines S \<Longrightarrow> \<exists> P Q R  . P \<in>Points S \<and> Q \<in> Points S \<and> R \<in> Points S \<and> 
-  incid S P k \<and> incid S Q k \<and> incid S R k \<and> distinct [P, Q, R]"
-begin
-end
-
-lemma desargues_is_cconfig:
-  shows "confined_configuration \<lparr> Points=PointsD, Lines=LinesD, incid=incidD \<rparr>"
+lemma line_containment: (* anything in new_lines  n is in Pi_lines  *)
+  fixes k 
+  assumes "\<exists>n::nat. k \<in> new_lines n"
+  shows "k \<in> Pi_lines"
 proof -
-  have "?thesis \<equiv> (configuration     \<lparr>Points = PointsD, Lines = LinesD, incid = incidD\<rparr>) \<and>
-    confined_configuration_axioms
-     \<lparr>Points = PointsD, Lines = LinesD, incid = incidD\<rparr>" 
-    by (simp add: confined_configuration_def)
-  then have restate: "?thesis  \<equiv>  confined_configuration_axioms
-     \<lparr>Points = PointsD, Lines = LinesD, incid = incidD\<rparr>" using desargues_is_config by force
-  fix U k l m 
-  have three_lines_per_point: "U \<in> PointsD \<longrightarrow> (\<exists> k l m  . k \<in> LinesD \<and> l \<in> LinesD \<and> m \<in> LinesD \<and> 
-  incidD U k \<and> incidD U l \<and> incidD U m \<and> distinct [k, l,m])" for U using desargues_three_lines by blast
-  then have three_points_per_line: "k \<in> LinesD  \<longrightarrow> (\<exists> P Q R  . P \<in>PointsD  \<and> Q \<in> PointsD  \<and> R \<in> PointsD  \<and> 
-  incidD  P k \<and> incidD  Q k \<and> incidD  R k \<and> distinct [P, Q, R])" for k
-  by (metis PointsD_def UNIV_I desargues_three_points incidD_def lessI numeral_eq_Suc pred_numeral_simps(3)
-      three_elements)
-  have cc: "confined_configuration_axioms
-     \<lparr>Points = PointsD, Lines = LinesD, incid = incidD\<rparr>" using three_points_per_line three_lines_per_point
-  by (smt (verit, del_insts) One_nat_def PointsD_def Suc_1 UNIV_I confined_configuration_axioms_def desargues_three_lines
-      desargues_three_points incidD_def lessI numeral_3_eq_3 select_convs(1,2,3) three_elements)
-  show ?thesis using cc restate by auto
+  obtain n where 1: "k \<in> new_lines n" using assms by blast
+  have 2: "new_lines n \<subseteq> Pi_lines" using Pi_lines_def by blast
+  show ?thesis using 1 2 by auto
 qed
 
-theorem confined_config_in_base: 
-  fixes c PointsCC LinesCC 
-  assumes "cfpp = \<lparr> Points = (Pi_points c), Lines = (Pi_lines c), incid = (fppincid c) \<rparr>"
-  assumes "PointsCC \<subseteq> (Pi_points c)" and "LinesCC \<subseteq> (Pi_lines c)"
-  assumes "cc =\<lparr>Points = PointsCC, Lines = LinesCC, incid = (fppincid c) \<rparr>"
-  assumes "confined_configuration cc"
-  assumes "finite PointsCC" and "finite LinesCC"
-  defines "ptop \<equiv> Max {p_level p | p . p \<in> PointsCC}"
-  defines "ltop \<equiv> Max {l_level k | k . k \<in> LinesCC}"
-  shows "max ptop ltop  = 0"
-  sorry
+lemma crossing_point: (* any two distinct lines in Pi_lines meet at a point in Pi_points *)
+  fixes k m 
+  assumes "k \<in> Pi_lines" and "m \<in> Pi_lines"
+  assumes "l_level k \<le> l_level m"
+  assumes "k \<noteq> m"
+  defines "n \<equiv> l_level m"
+  shows "\<exists>P \<in> Pi_points. fppincid P k \<and> fppincid P m"
+proof -
+  consider (zero) "n = 0" | (one) "n = Suc 0" | (many) "\<exists>p. n = Suc (Suc p)" 
+    using old.nat.exhaust by metis
+  then show ?thesis
+  proof cases
+    case zero
+    have 1: "l_level k = 0" using assms(3) n_def zero by auto
+    obtain a where 2:"k = Base_line a" using "1" assms(1) line_level4 by fastforce
+    obtain b where 3:"m = Base_line b" using assms(2) n_def line_level4 zero by fastforce
+    then show ?thesis 
+    proof (cases "\<exists> P \<in> point_set  0 . fppincid  P k \<and> fppincid  P m \<and> (p_level P \<le> 1)")
+      case True
+      then show ?thesis  using pi_points_contents2 by blast
+    next
+      case False
+      have p0: "new_points  1 =  {}"  using new_points.cases by simp
+      have p1: "new_points  2 = {Crossing (Upair k l) (Suc (Suc 0)) | k l . 
+    ((k \<in> new_lines 0) \<or> (k \<in> new_lines (Suc 0))) \<and> 
+    (l \<in> line_set (Suc 0)) \<and> (k \<noteq> l) \<and>
+    \<not> (\<exists>Y \<in> point_set (Suc 0) . fppincid Y k \<and> fppincid Y l)}"  
+        by (metis new_points.simps(3) numeral_2_eq_2)
+      have k1: "k \<in> new_lines 0 " using "1" assms(1) line_level4 by fastforce
+      have m1: "m \<in> line_set 1"
+        by (metis One_nat_def Un_iff assms(2) line_level4 line_set.simps(1,2) n_def zero)
+      have "Crossing (Upair k m) 2 \<in> new_points  2" using p1 False assms 1 2 3 k1 m1 
+        by (smt (verit) One_nat_def lessI mem_Collect_eq nat_less_le new_points.simps(2) numeral_2_eq_2 point_level point_set.simps(1,2) sup_bot.right_neutral)
+      then show ?thesis by (metis 2 3 fppincid.simps(3) point_containment)
+    qed
+  next
+    case one (* higher level line has level 1 *)
+    show ?thesis
+    proof (cases "\<exists> P \<in> point_set  0 . fppincid  P k \<and> fppincid  P m \<and> (p_level P \<le> 1)")
+      case True
+      then show ?thesis  using pi_points_contents2 by blast
+    next
+      case False
+      have q0: "new_points  1 = {}" by simp
+      have q2: "point_set  1 = point_set  0" by auto
+      have q3: "\<not> (\<exists> P \<in> point_set  1 .  fppincid  P k \<and> fppincid  P m \<and> (p_level P \<le> 1))" using False q2 by blast
+      have q4: "new_points  2  = {Crossing (Upair k l) (Suc (Suc 0)) | k l . 
+        ((k \<in> new_lines  0) \<or> (k \<in> new_lines  (Suc 0))) \<and> 
+        (l \<in> line_set  (Suc 0)) \<and> (k \<noteq> l) \<and> 
+        \<not> (\<exists>Y \<in> point_set  (Suc 0) . fppincid  Y k \<and> fppincid  Y l \<and> (p_level Y \<le> (Suc 0)))}"
+      by (smt (verit, best) Collect_cong Suc_1 le0 new_points.simps(3) numeral_1_eq_Suc_0 numeral_One point_level point_set.simps(1) q2)
+      have q5: "Crossing (Upair k m) 2 \<in> new_points  2" 
+      by (smt (verit, del_insts) One_nat_def Un_iff assms(1,2,3,4) le_Suc_eq le_zero_eq line_level4 line_set.simps(2) mem_Collect_eq n_def numeral_2_eq_2 one q3
+          q4)
+ 
+      then show ?thesis
+      by (smt (verit, ccfv_threshold) One_nat_def Suc_1 assms(3) configuration.fppincid.simps(3) configuration_axioms fppincid.simps(4) l_level.elims lessI
+          less_Suc_eq_le n_def one point_containment)
+    qed
+  next
+    case many (*higher-level line has level 2 or greater *)
+    obtain q where uu: "n = Suc q" using many by blast
+    have u0: "m \<in> new_lines  n" by (simp add: assms(2) line_level4 n_def)
+    have u1: "m \<in> line_set  n" using u0 line_set.simps by (metis UnCI point_set.elims)
+    have u2: "k \<in> new_lines  (l_level k)" by (simp add: assms(1) line_level4)
+    have u3: "k \<in> line_set   (l_level k)" by (metis UnCI line_set.elims u2)
+    have u4: "k \<in> line_set   n" using assms(3) line_set_contents n_def u2 by fastforce 
+    have u5: "odd n" using assms(2) points_even n_def many u0 by fastforce
+    have u6: "new_points  (Suc n) = new_points  (Suc (Suc q))" using uu by blast 
+    then have u7: "new_points  (Suc n) = (if (odd q) then {} else 
+       (if (odd q) then {} else 
+  {Crossing (Upair k l) (Suc (Suc q)) | k l . 
+    (k \<in> new_lines (Suc q)) \<and> 
+    (l \<in> line_set (Suc q)) \<and> (k \<noteq> l) \<and>
+    \<not> (\<exists>Y \<in> point_set (Suc q) . fppincid Y k \<and> fppincid Y l) }))" 
+    using many uu by force
+    then have u8: "new_points  (Suc n) = 
+     {Crossing (Upair k l) (Suc (Suc q)) | k l . 
+       (k \<in> new_lines  (Suc q)) \<and> 
+       (l \<in> line_set  (Suc q)) \<and> (k \<noteq> l) \<and>
+       \<not> (\<exists>Y \<in> point_set  (Suc q) . fppincid  Y k \<and> fppincid  Y l)}" using u5 uu by auto
+    let ?C = "\<exists>Y \<in> point_set  n . fppincid  Y k \<and> fppincid  Y m"
+    show "\<exists>P \<in> Pi_points . fppincid  P k \<and> fppincid  P m"
+    proof (cases ?C)
+      case True
+      obtain P where u9: "P \<in> point_set n \<and> fppincid P k \<and> fppincid P m" using True by blast
+      have "P \<in> Pi_points" using u9 pi_points_contents2 by blast
+      then show ?thesis using u9 by blast
+    next
+      case False
+      have v1: "Crossing (Upair k m) (Suc n) \<in> new_points (Suc n)" 
+        using u8 False u0 u4 uu assms(4) by force
+      let ?P = "Crossing (Upair k m) (Suc n)"
+      have v2:  "?P \<in> Pi_points" using v1 Pi_points_def by blast
+      have v3:  "fppincid ?P k \<and> fppincid ?P m" 
+      by (metis (no_types, lifting) assms(3) fppincid.simps(3,4) l_level.elims le_Suc_eq less_Suc_eq_le n_def uu)
+      then show ?thesis using v2 by blast
+    qed
+  qed
+qed
+
+(* all crossings in CPoints have levels > 0 *)
+theorem crossing_level: (* of P is a crossing of level s in  Pi_points, then s > 0 *)
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  assumes "P \<in> Pi_points"
+  assumes "P = Crossing (Upair m k) s"
+  shows "s > 0"
+proof -
+  obtain n where oh: "P \<in> new_points n" using Pi_points_def assms by blast
+  show ?thesis
+  proof (cases)
+    assume "n > 0"
+    then show ?thesis using oh using assms point_level by fastforce
+  next
+    assume ah: "\<not> n > 0"
+    have "n = 0" using ah by simp
+    then have "new_points n =  {Base_point Q  | Q . Q \<in> Points}" using new_lines.cases by simp
+    then have a: False using assms oh by blast
+    show ?thesis using a FalseE [of ?thesis] by blast
+  qed
+qed
+                                                                     
+theorem base_in_join: (* if a Join line contains a basepoint, it's one of the two generators of the join *)
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  assumes "k \<in> Pi_lines"
+  assumes "P = Base_point A"
+  assumes "fppincid P k"
+  assumes "k = Join (Upair J H) s"
+  shows "P = J \<or> P = H"
+proof -
+  obtain n where "k \<in> new_lines n" using Pi_lines_def assms by blast
+  have 1: "n \<noteq> 0"
+  proof (rule ccontr)
+    assume "\<not> (n \<noteq> 0)"
+    then have "n = 0" by blast
+    then have "new_lines n =  {Base_line s | s . s \<in> Lines}" using new_lines.simps by blast
+    then have "k \<notin> new_lines n" using assms by blast
+    thus "False" using assms \<open>k \<in> new_lines n\<close> by blast
+  qed
+  obtain u where "n = Suc u" using 1 by (metis nat.collapse) 
+  (* OK, so now k is a line at level n > 0; what's incident on that?  *)
+  have 1: "(\<exists> A1 B1 . (Upair J H = Upair A1 B1)
+ \<and> (A1 = (Base_point A) \<or> (B1 = (Base_point A))))" using assms fppincid.simps by force
+  then have "(\<exists> A1 B1 . (Upair J H = Upair A1 B1)
+ \<and> (A1 = P \<or> (B1 = P)))" using assms by force
+  then show ?thesis by force
+qed
+
+theorem join_level: (* a join with level s has one of its two component points at level s-1 *)
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  fixes P Q
+  shows "Join (Upair P Q) s \<in> Pi_lines \<Longrightarrow> p_level P = s-1 \<or> p_level Q = s-1"
+proof - 
+  let ?k = "Join (Upair P Q) s"
+  assume ah: "?k \<in> Pi_lines"
+  have 0: "?k \<in> new_lines s" using ah line_level4 by fastforce
+  have 1: "s > 0"  using 0  gr_zeroI by fastforce
+  obtain n where 2: "s = Suc n" using 1  using gr0_conv_Suc by blast
+  show ?thesis
+  proof (cases n)
+    case 0
+    have "new_lines s =  {Join (Upair S T) 1 | S T . 
+    (S \<in> new_points 0) \<and> 
+    (T \<in> point_set 0) \<and> (S \<noteq> T) \<and>
+    \<not> (\<exists>k \<in> line_set 0 . fppincid S k \<and> fppincid T k \<and> (l_level k \<le> 1))}" 
+    using "0" "2" by auto
+    then show ?thesis 
+    by (smt (z3) One_nat_def Upair_inject ah diff_Suc_1 fline.inject(2) l_level.simps(2) line_level4 mem_Collect_eq point_level)
+  next
+    case (Suc p)
+(* new_lines (Suc (Suc n)) = *)
+    have nld: "new_lines n =  (if (even n) then {} else 
+      {Join (Upair S T) (Suc (Suc n)) | S T . 
+      (S \<in> new_points (Suc n)) \<and> 
+      (T \<in> point_set (Suc n)) \<and>  (S \<noteq> T) \<and>
+      \<not> (\<exists>k \<in> line_set (Suc n) . fppincid S k \<and> fppincid T k \<and> (l_level k \<le> (Suc n)))})"
+      by (metis "2" One_nat_def Suc ah even_Suc l_level.simps(2) lines_odd_or_zero nat.distinct(1) new_lines.elims odd_one)
+    then show ?thesis 
+    proof (cases "odd n")
+      case True
+      have s0: "new_lines s = {}" using nld True  by (simp add: "2" Suc)
+      then have False using 0 by blast
+      then show ?thesis by blast
+    next
+      case False
+      have r0: "even n" using False by blast
+      then have nld2: "new_lines (Suc (Suc p)) = 
+       (if (even p) then {} else 
+       {Join (Upair S T) (Suc (Suc p)) | S T . 
+       (S \<in> new_points (Suc p)) \<and> 
+       (T \<in> point_set (Suc p)) \<and>  (S \<noteq> T) \<and>
+       \<not> (\<exists>k \<in> line_set (Suc p) . fppincid S k \<and> fppincid T k \<and> (l_level k \<le> (Suc p)))})" by simp
+      then have nld3: "new_lines (Suc (Suc p)) = 
+       {Join (Upair S T) (Suc (Suc p)) | S T . 
+       (S \<in> new_points (Suc p)) \<and> 
+       (T \<in> point_set (Suc p)) \<and>  (S \<noteq> T) \<and>
+       \<not> (\<exists>k \<in> line_set (Suc p) . fppincid S k \<and> fppincid T k \<and> (l_level k \<le> (Suc p)))}" using r0 Suc by auto
+      then have nld4: "new_lines (Suc n) = 
+       {Join (Upair S T) (Suc n) | S T . 
+       (S \<in> new_points n) \<and> 
+       (T \<in> point_set n) \<and>  (S \<noteq> T) \<and>
+       \<not> (\<exists>k \<in> line_set n . fppincid S k \<and> fppincid T k \<and> (l_level k \<le> n))}" using r0 Suc by auto
+      then have nld5: "new_lines s = 
+       {Join (Upair S T) (Suc n) | S T . 
+       (S \<in> new_points n) \<and> 
+       (T \<in> point_set n) \<and>  (S \<noteq> T) \<and>
+       \<not> (\<exists>k \<in> line_set n . fppincid S k \<and> fppincid T k \<and> (l_level k \<le> n))}" using "2" by fastforce
+      then obtain S T where r1: "?k = Join (Upair S T) (Suc n) \<and> (S \<in> new_points n) \<and> 
+       (T \<in> point_set n)" using 0 by auto
+      then have "S \<in> new_points n" by blast
+      then have "p_level S = n" by (simp add:point_level)
+      then have "p_level S = s-1" by(simp add:2)
+      then show ?thesis  using r1 by auto
+    qed
+  qed
+qed
+
+theorem base_in_base: (* if a base-point (created from plane_r point A) is in a base-line (from plane_r line m), then A was in m already. *)
+  fixes  P k m A
+  assumes "k = Base_line m"
+  assumes "P = Base_point A"
+  assumes "fppincid P k"
+  shows "incid A m" 
+  using assms(1,2,3) by force
+
+theorem base_pair: (* if a line contains two distinct base points, it's a base line or the join of two base points at level 1 *) 
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  fixes s1 s2 t A B k
+  assumes "k \<in> Pi_lines"
+  assumes "k \<in> Pi_lines"
+  assumes "P = Base_point A"
+  assumes "Q = Base_point B"
+  assumes "P \<in> Pi_points"
+  assumes "Q \<in> Pi_points"
+  assumes "A \<noteq> B"
+  assumes "fppincid P k"
+  assumes "fppincid Q k"
+  shows "k \<in> new_lines 0 \<or> k = (Join (Upair P Q) 1)"
+proof (cases k)
+  case (Base_line x11)
+  then show ?thesis using assms line_level4 by force
+next
+  case (Join pts s)
+  obtain H K where "pts = Upair H K" using uprod_exhaust by auto
+  then show ?thesis using assms Join base_in_join join_level fpoint.inject(1) 
+    p_level.simps(1) l_level.simps(2) line_level4 Upair_inject Suc_leI One_nat_def
+    nle_le not_gr0 diff_is_0_eq by metis
+qed
+
+
+theorem free_planes_meet: (* two distinct lines have a point in common in fpp where base plane_r has at least 4 pts *)
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  assumes "card CPoints \<ge> 4"
+  fixes k m
+  assumes "k \<in> Pi_lines"
+  assumes "m \<in> Pi_lines"
+  assumes "k \<noteq> m"
+  shows " \<exists>P. P \<in> Pi_points \<and> fppincid P k \<and> fppincid P m"
+  using assms crossing_point linorder_linear by metis
+
+theorem non_collinear_persistence:(*if P Q R in the configuration are not collinear, then they are also not collinear in the free projective plane. *)
+  fixes P Q R
+  assumes "card {P, Q, R} = 3"
+  assumes "{P, Q, R} \<subseteq> Points"
+  shows "\<not> (\<exists>k \<in> Lines . incid P k \<and> incid Q k \<and> incid R k)
+    \<Longrightarrow> \<not> (\<exists>m \<in> Pi_lines . fppincid (Base_point P) m \<and> fppincid (Base_point Q) m \<and> fppincid (Base_point R) m)" 
+proof (erule contrapos_np)
+  assume " \<not> \<not> (\<exists>m\<in>Pi_lines. fppincid (Base_point P) m \<and> fppincid (Base_point Q) m \<and> fppincid (Base_point R) m) "
+  then obtain m where  ch: "m\<in>Pi_lines \<and> fppincid (Base_point P) m \<and> fppincid (Base_point Q) m \<and> fppincid (Base_point R) m" by blast
+    then show "\<exists>k\<in>Lines. incid P k \<and> incid Q k \<and> incid R k" 
+  proof (cases m)
+    case b: (Base_line L)
+    then show ?thesis using b  assms ch line_level2  
+    using line_level4 by fastforce
+  next
+    case (Join Pair n)
+    obtain S T where b: "Pair = (Upair S T)" using uprod_exhaust by auto
+    then have "n \<noteq> 0" (* do I need this? *)
+    by (smt (verit) Join ch fline.distinct(1) l_level.simps(2) line_level4 mem_Collect_eq new_lines.simps(1))
+    obtain X where belong: "fppincid (Base_point X) (Join (Upair S T) n) = (\<exists> A1 B1 . ((Upair S T) = Upair A1 B1) 
+ \<and> (A1 = (Base_point X) \<or> (B1 = (Base_point X))))" by simp 
+    then have "... = (S = (Base_point X)) \<or> (T = (Base_point X))" by auto 
+    then have u: "fppincid (Base_point X) (Join (Upair S T) n) = (S = (Base_point X)) \<or> (T = (Base_point X))" for X by auto 
+    have z1: "(Base_point P = S) \<or> (Base_point P = T)" using u [of P]  b ch Join by blast
+    have z2: "(Base_point Q = S) \<or> (Base_point Q = T)" using u [of Q]  b ch Join by blast
+    have z3: "(Base_point R = S) \<or> (Base_point R = T)" using u [of R]  b ch Join by blast
+    have dups: "(P = Q) \<or> (P = R) \<or> (Q = R)" using z1 z2 z3 by blast
+    have False using dups assms
+      by (smt (verit, best) One_nat_def Suc_1 card.empty card.insert finite.intros(1) finite_insert insert_absorb insert_absorb2 insert_commute insert_not_empty
+          numeral_eq_iff one_eq_numeral_iff semiring_norm(89) verit_eq_simplify(12))
+  then show ?thesis by fastforce
+  qed
+qed
+
+lemma three_elements: (* From a set with cardinality more than 2, we can obtain 3 distinct items *)
+  fixes U
+  assumes a: "card U > 2"
+  shows "\<exists>A B C. A \<in> U \<and> B \<in> U \<and> C \<in> U  \<and> distinct[A,B,C]"
+proof -
+  obtain A where aa: "A \<in> U" using a by force
+  have c1: "card (U - {A}) > 1" using aa using assms by force
+  obtain B where bb: "B \<in>  (U - {A})"
+    by (metis c1 all_not_in_conv bot_nat_0.extremum_strict card.empty)
+  have "B \<noteq> A" using bb by blast
+  have "card (U - {A,B}) > 0" using aa bb assms not_numeral_le_zero by fastforce
+  then obtain C where cc: "C \<in> (U - {A, B})" by (metis card_gt_0_iff equals0I)
+  have "C \<noteq> A \<and> C \<noteq> B" using cc by blast
+  show ?thesis using aa bb cc DiffE insert_iff by auto
+qed
+
+lemma fpp_two_points_zero: (* a level zero line contains at least two points: needs 4-elt set U! *)
+  assumes "k \<in> Pi_lines"
+  assumes "l_level k = 0"
+  assumes "U \<subseteq> Points"
+  assumes "card U = 4"
+  assumes imp: "\<And>P Q R. ((distinct[P,Q,R]) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (pcollinear P Q R)" 
+  shows "\<exists>P Q. P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
+proof (rule ccontr)
+  assume ch: "\<not> (\<exists> P Q . P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points)"
+  let ?kpts = "{X . fppincid X k \<and> X \<in> Pi_points}"
+  have kpchoice: "?kpts = {} \<or> (\<exists> R . ?kpts = {R})" using ch by blast
+  then have "card ?kpts < 2" by (metis (mono_tags, lifting) card.empty card.insert finite.intros(1) insert_absorb less_2_cases_iff)
+  let ?g = "\<lambda> x .  Base_point x"
+  let ?Upts = "?g ` U"
+  have Upts_pi: "?Upts \<subseteq> Pi_points" 
+    by (smt (verit, best) assms(3) imageE mem_Collect_eq new_points.simps(1) pi_points_contents subset_iff)
+  have "card ?Upts = 4" 
+    by (simp add: assms card_image inj_on_def)
+  have s: "card (?Upts - ?kpts) > 2"
+  by (metis (lifting) Diff_empty Diff_insert0 \<open>card (Base_point ` U) = 4\<close> add_2_eq_Suc add_diff_cancel_left' card_Diff_singleton
+      diff_is_0_eq kpchoice lessI linorder_not_le numeral_Bit0 plus_1_eq_Suc zero_neq_numeral)
+  then obtain P Q R where pqr_def: "P \<in> (?Upts - ?kpts) \<and> Q \<in> (?Upts - ?kpts) \<and> R \<in> (?Upts - ?kpts) \<and> 
+    distinct[P,Q,R]" using s three_elements[of "(?Upts - ?kpts)"] by auto
+  have "{P,Q,R} \<subseteq> ?Upts" using pqr_def by blast
+  then have "{P,Q,R} \<subseteq> Pi_points" using Upts_pi by order
+  then have not_k: "(\<not> (fppincid P k)) \<and> (\<not> (fppincid Q k)) \<and> (\<not> (fppincid R k))" using pqr_def by blast
+  obtain uP uQ uR where upqr_def: "P = Base_point uP \<and> Q = Base_point uQ \<and> R = Base_point uR \<and>  
+    distinct[uP,uQ,uR] \<and> uP \<in> U \<and> uQ \<in> U \<and> uR \<in> U" using pqr_def  
+    by (smt (verit, ccfv_SIG) DiffE distinct3_def imageE)
+  then have "\<not> (pcollinear uP uQ uR)" using assms by blast
+  then have jj: "\<not> (\<exists>s\<in> Lines. incid uP s \<and> incid uQ s \<and> incid uR s)" 
+    using assms(3,4) upqr_def in_mono pcollinear_def by fastforce
+  show False unfolding configuration_def 
+  proof -
+    show ?thesis using configuration.base_in_base configuration.fppincid.simps(1) configuration_def by sledgehammer
+  proof -
+    have "\<forall>p pa P. p (pa::pointD) P \<or> pa \<notin> P" by sledgehammer
+      by (metis (no_types) configuration.base_in_base configuration.fppincid.simps(1) desargues_is_config incidD_def)
+    then show ?thesis
+      by auto
+  qed
+  qed
+qed
+
+
+lemma fpp_two_points_one: (* a level-one line contains at least two points *)
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  assumes "k \<in> Pi_lines"
+  assumes "l_level k = 1"
+  shows "\<exists> P Q . P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
+proof -
+  have "k \<in> new_lines 1" using assms line_level4 [of k 1] by auto
+  then obtain S T where join_def: "k = Join (Upair S T) 1 \<and> S \<noteq> T" 
+    and contents: "S \<in> Pi_points \<and> T \<in> Pi_points" using new_lines.simps
+    by (smt (verit, ccfv_threshold) One_nat_def mem_Collect_eq point_containment point_set.simps(1))
+  then have "fppincid S k \<and> fppincid T k \<and> S \<in> Pi_points \<and> T \<in> Pi_points" 
+    using join_def fppincid.elims(3) 
+  by (smt (verit) One_nat_def Upair_inject assms(1) fline.inject(2) l_level.simps(1,2) less_Suc_eq_le level_lemma2 nat_less_le not_less_eq_eq
+      p_level.simps(2))
+  then show ?thesis  using join_def by blast
+qed
+
+lemma fpp_two_points_two: (* a level two or higher line contains at least two points *)
+  fixes CPoints::"'a set"
+  fixes CLines::"'b set"
+  fixes p
+  assumes "k \<in> Pi_lines"
+  assumes "l_level k \<ge> 2"
+  assumes "p = l_level k"
+  shows "\<exists>P Q. P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
+proof -
+  have kloc: "k \<in> new_lines p" using assms line_level4  by blast
+  have n2: "p \<ge> 2" using assms by blast
+  show ?thesis
+  proof (cases "even p")
+    case True
+    have False using True new_lines.simps assms(1,3) lines_odd_or_zero n2 by fastforce
+    then show ?thesis by auto
+  next
+    case False
+    obtain n where "p = Suc (Suc n)" using n2 
+      by (metis One_nat_def Suc_1 Suc_le_D Suc_le_mono)
+    then obtain S T where kdef: "k = Join (Upair S T) (Suc (Suc n))\<and> 
+    (S \<in> new_points (Suc n)) \<and> 
+    (T \<in> point_set (Suc n)) \<and>  (S \<noteq> T)" 
+      by (smt (verit, best) emptyE kloc mem_Collect_eq new_lines.simps(3))
+    then have "fppincid S k \<and> fppincid T k" 
+    using assms(1) pi_points_contents2 point_containment points_in_join points_in_join2 by blast
+    then have "S \<in> Pi_points \<and> T \<in> Pi_points" using kdef fppincid.elims(3) 
+    using pi_points_contents2 point_containment by blast
+    then show ?thesis  using kdef \<open>fppincid S k \<and> fppincid T k\<close> by blast
+  qed
+qed
+
+lemma fpp_two_points:
+  fixes  p
+  assumes "k \<in> Pi_lines"
+  assumes "p = l_level k"
+  assumes "U \<subseteq> Points"
+  assumes "card U = 4"
+  assumes "\<And>P Q R. ((distinct[P,Q,R]) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow> \<not> (pcollinear P Q R)" 
+  shows "\<exists>P Q. P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
+  using assms fpp_two_points_zero fpp_two_points_one fpp_two_points_two 
+    Suc_1 Suc_leI less_one nat_neq_iff by metis
 
 end
+
