@@ -554,6 +554,64 @@ proof -
     unfolding harmonic_quadruple_def
     by metis
 qed
+text\<open>\done\<close>
+
+text\<open>\oliver \jackson\<close>
+theorem (in projective_plane_7) harmonic_is_conjugate_prelim:
+  fixes A B C D
+  assumes "A \<in> Points" and "B \<in> Points" and "C \<in> Points" and "D \<in> Points"
+  assumes "harmonic_quadruple A B C D"
+  shows "\<exists> l m n. l \<noteq> join A B \<and> incid A l \<and>  incid A m \<and> m \<noteq> join A B \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and>
+   l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines"
+proof -
+  obtain h X Y Z W where harmon: "h \<in> Lines \<and> incid A h \<and> incid B h \<and> incid C h \<and> incid D h \<and>
+    X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
+    cquadrangle X Y Z W \<and>
+    A = meet (join X Y) (join Z W) \<and> B = meet (join X Z) (join Y W) \<and>
+    incid C (join X W) \<and> incid D (join Y Z) \<and> (distinct[A,B,C,D])" using assms harmonic_quadruple_def by auto
+  obtain l m n where lines: "l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines \<and> l = join A X \<and> m = join A Z \<and> n = join C X" 
+    using assms by (smt (z3) cquadrangle_def distinct_length_2_or_more harmon join_properties1
+        incid_join_collinear meet_properties2 unique_meet
+        projective_plane_axioms)
+  obtain R where r: "R \<in> Points \<and> R = meet (join X W) (join Y Z)" using quadrangle_points_distinct[of X Y Z W] assms harmon using cquadrangle_joins_distinct mjj_point by auto
+  have distinctness: "distinct[X, Y, Z, W, A, B, R, C, D]" using harmon harmonic_and_quadrangle_all_points_distinct[of X Y Z W R A B C D] r assms by auto
+  have incid: "incid A l \<and> incid A m \<and> incid C n" 
+    using harmon lines assms join_properties1 distinct_length_2_or_more distinctness by auto
+
+  have 0: "m \<noteq> l" 
+    by (smt (verit) assms(1) cquadrangle_def harmon lines p1 cquadrangle_joins_distinct
+        incid_join_collinear join_properties2 meet_implies_incid  quadrangle_order quadrangle_points_distinct)
+  have 1: "m \<noteq> join A B"
+    by (smt (z3) cquadrangle_def harmon join_properties1 lines cquadrangle_joins_distinct
+        incid_join_collinear meet_properties2 quadrangle_order unique_meet)
+  have 2: "n \<noteq> join A B"
+    by (smt (z3) assms(1,2,3) distinct_length_2_or_more distinctness harmon lines meet_implies_incid p1
+        join_properties1 quadrangle_points_distinct projective_plane_axioms quadrangle_order)
+  have 3: "l \<noteq> join A B"
+    by (smt (verit, del_insts) assms(1,2) distinct_length_2_or_more distinctness harmon join_properties2 lines
+        join_properties1 meet_implies_incid)
+
+  have conjugate_prelims: "l \<noteq> join A B \<and> incid A l \<and> incid A m \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n" 
+    using harmon lines assms incid 0 1 2 3 by auto
+
+  have d_fact_helper1: "W = meet m n" 
+    by (smt (z3) assms(3) conjugate_prelims harmon lines join_def cquadrangle_joins_distinct unique_meet
+        join_properties1 meet_implies_incid meet_properties2 quadrangle_order quadrangle_points_distinct projective_plane_axioms)
+  have d_fact_helper_2: "Y = (meet (join B (meet m n)) l)" using d_fact_helper1 
+    by (smt (verit, ccfv_threshold) distinct_length_2_or_more distinctness harmon lines join_properties1
+        meet_properties2 projective_plane_axioms unique_meet)
+  have d_fact_helper_3: "Z = (meet (join B (meet l n)) m)" 
+    by (smt (verit, del_insts) assms(3) distinct_length_2_or_more distinctness harmon lines join_properties1
+        meet_properties2 projective_plane_axioms unique_meet)
+
+  have d_fact: "D = meet (join A B) (join (meet (join B (meet l n)) m) (meet (join B (meet m n)) l))" 
+    using d_fact_helper_2 d_fact_helper_3 
+    by (smt (verit, ccfv_threshold) assms(1,2,4) conjugate_prelims distinct_length_2_or_more harmon join_properties2 lines
+        projective_plane.join_properties1 projective_plane.meet_properties2 projective_plane_axioms)
+
+  show ?thesis using conjugate_prelims d_fact lines unfolding harmonic_conjugate_def by metis
+qed
+text\<open>\done\<close>
 
 text\<open>\oliver \jackson\<close>
 theorem (in projective_plane_7) harmonic_is_conjugate:
@@ -561,6 +619,10 @@ theorem (in projective_plane_7) harmonic_is_conjugate:
   assumes "A \<in> Points" and "B \<in> Points" and "C \<in> Points" and "D \<in> Points"
   assumes "harmonic_quadruple A B C D"
   shows "\<exists> l m n. D = harmonic_conjugate A B C l m n"
+(*proof -
+  obtain l m n where lmn_fact: "l \<noteq> join A B \<and> incid A l \<and>  incid A m \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n \<and>
+   l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines" using harmonic_is_conjugate_prelim[of A B C D] assms by auto
+*)
 proof -
   obtain h X Y Z W where harmon: "h \<in> Lines \<and> incid A h \<and> incid B h \<and> incid C h \<and> incid D h \<and>
     X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
@@ -611,6 +673,70 @@ proof -
     by (metis assms(1,2,3) distinct_length_2_or_more harmon lines pcollinear_def)
 qed
 text\<open>\done\<close>
+
+
+text\<open>\oliver \jackson\<close>
+theorem (in projective_plane_7) harmonic_is_conjugate_2:
+  fixes A B C D
+  assumes "A \<in> Points" and "B \<in> Points" and "C \<in> Points" and "D \<in> Points"
+  assumes "harmonic_quadruple A B C D"
+  shows "\<exists> l m n. D = harmonic_conjugate A B C l m n 
+         \<and> l \<noteq> join A B \<and> incid A l \<and>  incid A m \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n 
+         \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines"
+proof -
+  obtain h X Y Z W where harmon: "h \<in> Lines \<and> incid A h \<and> incid B h \<and> incid C h \<and> incid D h \<and>
+    X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and>
+    cquadrangle X Y Z W \<and>
+    A = meet (join X Y) (join Z W) \<and> B = meet (join X Z) (join Y W) \<and>
+    incid C (join X W) \<and> incid D (join Y Z) \<and> (distinct[A,B,C,D])" using assms harmonic_quadruple_def by auto
+  obtain l m n where lines: "l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines \<and> l = join A X \<and> m = join A Z \<and> n = join C X" 
+    using assms by (smt (z3) cquadrangle_def distinct_length_2_or_more harmon join_properties1
+        incid_join_collinear meet_properties2 unique_meet
+        projective_plane_axioms)
+  obtain R where r: "R \<in> Points \<and> R = meet (join X W) (join Y Z)" using quadrangle_points_distinct[of X Y Z W] assms harmon using cquadrangle_joins_distinct mjj_point by auto
+  have distinctness: "distinct[X, Y, Z, W, A, B, R, C, D]" using harmon harmonic_and_quadrangle_all_points_distinct[of X Y Z W R A B C D] r assms by auto
+  have incid: "incid A l \<and> incid A m \<and> incid C n" 
+    using harmon lines assms join_properties1 distinct_length_2_or_more distinctness by auto
+
+  have 0: "m \<noteq> l" 
+    by (smt (verit) assms(1) cquadrangle_def harmon lines p1 cquadrangle_joins_distinct
+        incid_join_collinear join_properties2 meet_implies_incid  quadrangle_order quadrangle_points_distinct)
+  have 1: "m \<noteq> join A B"
+    by (smt (z3) cquadrangle_def harmon join_properties1 lines cquadrangle_joins_distinct
+        incid_join_collinear meet_properties2 quadrangle_order unique_meet)
+  have 2: "n \<noteq> join A B"
+    by (smt (z3) assms(1,2,3) distinct_length_2_or_more distinctness harmon lines meet_implies_incid p1
+        join_properties1 quadrangle_points_distinct projective_plane_axioms quadrangle_order)
+  have 3: "l \<noteq> join A B"
+    by (smt (verit, del_insts) assms(1,2) distinct_length_2_or_more distinctness harmon join_properties2 lines
+        join_properties1 meet_implies_incid)
+
+  have conjugate_prelims: "l \<noteq> join A B \<and> incid A l \<and> incid A m \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n" 
+    using harmon lines assms incid 0 1 2 3 by auto
+
+  have d_fact_helper1: "W = meet m n" 
+    by (smt (z3) assms(3) conjugate_prelims harmon lines join_def cquadrangle_joins_distinct unique_meet
+        join_properties1 meet_implies_incid meet_properties2 quadrangle_order quadrangle_points_distinct projective_plane_axioms)
+  have d_fact_helper_2: "Y = (meet (join B (meet m n)) l)" using d_fact_helper1 
+    by (smt (verit, ccfv_threshold) distinct_length_2_or_more distinctness harmon lines join_properties1
+        meet_properties2 projective_plane_axioms unique_meet)
+  have d_fact_helper_3: "Z = (meet (join B (meet l n)) m)" 
+    by (smt (verit, del_insts) assms(3) distinct_length_2_or_more distinctness harmon lines join_properties1
+        meet_properties2 projective_plane_axioms unique_meet)
+
+  have d_fact: "D = meet (join A B) (join (meet (join B (meet l n)) m) (meet (join B (meet m n)) l))" 
+    using d_fact_helper_2 d_fact_helper_3 
+    by (smt (verit, ccfv_threshold) assms(1,2,4) conjugate_prelims distinct_length_2_or_more harmon join_properties2 lines
+        projective_plane.join_properties1 projective_plane.meet_properties2 projective_plane_axioms)
+
+  have line_facts: " l \<noteq> join A B \<and> incid A l \<and>  incid A m \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n 
+         \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines" 
+    using 0 1 2 3  incid lines by auto
+  show ?thesis using conjugate_prelims d_fact line_facts unfolding harmonic_conjugate_def 
+    by (metis assms(1,2,3) distinct_length_2_or_more harmon lines pcollinear_def)
+qed
+text\<open>\done\<close>
+
 
 text\<open>\oliver \jackson\<close>
 lemma (in projective_plane_7) conjugate_swap_ml:
@@ -697,22 +823,60 @@ qed
 text\<open>\done\<close>
 
 
-
 text\<open>\jackson \oliver\<close>
 theorem (in projective_plane_5_7) p4_6_uniqueness:
   fixes A B C D D' l m n
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points \<and> D' \<in> Points"
-  assumes "harmonic_quadruple A B C D" (*harmonic_quadruple A B C D" *)
+  assumes "harmonic_quadruple A B C D"
   assumes "harmonic_quadruple A B C D'"
   shows "D = D'"
 proof -
-  obtain l m n where d_fact: "D = harmonic_conjugate A B C l m n" using assms harmonic_is_conjugate[of A B C D] by auto
-  obtain l' m' n' where dp_fact: "D' = harmonic_conjugate A B C l' m' n'" using assms harmonic_is_conjugate[of A B C D'] by auto
+  obtain l m n 
+    where d_fact: "D = harmonic_conjugate A B C l m n 
+                   \<and> l \<noteq> join A B \<and> incid A l \<and> incid A m \<and> m \<noteq> join A B  \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n 
+                   \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines" 
+    using assms harmonic_is_conjugate_2[of A B C D] by auto
+  obtain l' m' n' 
+    where dp_fact: "D' = harmonic_conjugate A B C l' m' n' 
+                   \<and> l' \<noteq> join A B \<and> incid A l' \<and> incid A m' \<and> m'\<noteq> join A B  \<and> m' \<noteq> l' \<and> n' \<noteq> join A B \<and> incid C n' 
+                   \<and> l' \<in> Lines \<and> m' \<in> Lines \<and> n' \<in> Lines" 
+      using assms harmonic_is_conjugate_2[of A B C D'] by auto
 
-  have a0: "D = harmonic_conjugate A B C l m n" using d_fact by auto
+    have a0: "D = harmonic_conjugate A B C l m n" using d_fact by auto
+    have a4: "D' = harmonic_conjugate A B C l' m' n'" using dp_fact by auto
 
-  then show ?thesis sorry
+
+  consider
+    (lm) "l' = m"
+    | (default) "l' \<noteq> m" by auto
+
+  then show ?thesis 
+  proof cases
+    case lm
+    have a1: "harmonic_conjugate A B C l m n = harmonic_conjugate A B C l' l n" 
+      using lm conjugate_swap_ml by auto
+    have a2: "harmonic_conjugate A B C l' l n = harmonic_conjugate A B C l' m' n"
+      using a1 conjugate_change_m d_fact dp_fact harmonic_conjugate_def
+      by metis
+     have a3: " harmonic_conjugate A B C l' m' n =  harmonic_conjugate A B C l' m' n'"
+      using conjugate_change_n[of A B C l' m' n n'] d_fact dp_fact harmonic_conjugate_def
+      by auto
+    then show ?thesis using a0 a1 a2 a3 a4 by auto
+  next
+    case default
+    have a1: "harmonic_conjugate A B C l m n = harmonic_conjugate A B C l' m n" 
+      using conjugate_change_l[of A B C l l' m n] d_fact dp_fact default harmonic_conjugate_def
+      by auto
+    have a2: "harmonic_conjugate A B C l' m n = harmonic_conjugate A B C l' m' n"
+      using conjugate_change_m[of A B C l' m m' n] d_fact dp_fact default harmonic_conjugate_def
+      by auto
+    have a3: " harmonic_conjugate A B C l' m' n =  harmonic_conjugate A B C l' m' n'"
+      using conjugate_change_n[of A B C l' m' n n'] d_fact dp_fact harmonic_conjugate_def
+      by auto
+    then show ?thesis using a0 a1 a2 a3 a4 by auto
+  qed
 qed
+text\<open>\done\<close>
 
 text\<open>Definition: fourth harmonic point of A,B,C is the D satisfying 4.6.\<close>
 
