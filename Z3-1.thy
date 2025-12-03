@@ -10,127 +10,15 @@ theory "Z3-1"
          "Chapter1-3"
 begin
 
-
-section "Isabelle groups and monoids"
-text\<open> In Isabelle, a group is defined as a monoid with inverses\<close>
-
-definition
+definition (* Units of a group *)
   Units :: "_ => 'a set"
   \<comment> \<open>The set of invertible elements\<close>
   where "Units G = {y. y \<in> carrier G \<and> (\<exists>x \<in> carrier G. x \<otimes>\<^bsub>G\<^esub> y = \<one>\<^bsub>G\<^esub> \<and> y \<otimes>\<^bsub>G\<^esub> x = \<one>\<^bsub>G\<^esub>)}"
-text\<open>
-The above says that Units is a function which, given some algebraic structure (presumably a group
-   or a monoid), returns the set of units (invertible elements) in that structure.
 
- Note that a subscript of "G" denotes that this is the operation in G. 
-
- locale monoid =
-  fixes G (structure)
-  assumes m_closed [intro, simp]:
-         "\<lbrakk>x \<in> carrier G; y \<in> carrier G\<rbrakk> \<Longrightarrow> x \<otimes> y \<in> carrier G"
-      and m_assoc:
-         "\<lbrakk>x \<in> carrier G; y \<in> carrier G; z \<in> carrier G\<rbrakk>
-          \<Longrightarrow> (x \<otimes> y) \<otimes> z = x \<otimes> (y \<otimes> z)"
-      and one_closed [intro, simp]: "\<one> \<in> carrier G"
-      and l_one [simp]: "x \<in> carrier G \<Longrightarrow> \<one> \<otimes> x = x"
-      and r_one [simp]: "x \<in> carrier G \<Longrightarrow> x \<otimes> \<one> = x"
-
-locale group = monoid +
-  assumes Units: "carrier G <= Units G" *)
-
- Here "<=" means subset 
-
- Subgroups are defined in a similar way to Hartshorne: 
-
-locale subgroup =
-  fixes H and G (structure)
-  assumes subset: "H \<subseteq> carrier G"
-    and m_closed [intro, simp]: "\<lbrakk>x \<in> H; y \<in> H\<rbrakk> \<Longrightarrow> x \<otimes> y \<in> H"
-    and one_closed [simp]: "\<one> \<in> H"
-    and m_inv_closed [intro,simp]: "x \<in> H \<Longrightarrow> inv x \<in> H" *)
-
-Note that the condition "1 \in H" is equivalent to the group being non-empty
-
-The bijections on a set form a group, with the operation being function composition and
-   the neutral element  being the identity function: 
-
-definition
-  Bij :: "'a set \<Rightarrow> ('a \<Rightarrow> 'a) set"
-    \<comment> \<open>Only extensional functions, since otherwise we get too many.\<close>
-  (* An extensional function on S is a function defined on S that is undefined outside of S.*) 
-  where "Bij S = extensional S \<inter> {f. bij_betw f S S}" 
-
-The set of automorphisms of a group is the set of homomorphisms from the group to itself
-   that are also bijections... 
-
-definition
-  auto :: "('a, 'b) monoid_scheme \<Rightarrow> ('a \<Rightarrow> 'a) set"
-  where "auto G = hom G G \<inter> Bij (carrier G)"
-
-(*... and the group structure on this set is the same as for a BijGroup. *)
-
-(*definition
-  AutoGroup :: "('a, 'c) monoid_scheme \<Rightarrow> ('a \<Rightarrow> 'a) monoid"
-  where "AutoGroup G = BijGroup (carrier G) \<lparr>carrier := auto G\<rparr>" *)
-
-
-
-(*In Isabelle, a homomorphism between G and H is an element of the set hom G H, defined below. *)
-
-(* definition
-  hom :: "_ => _ => ('a => 'b) set" where
-  "hom G H =
-    {h. h \<in> carrier G \<rightarrow> carrier H \<and>
-      (\<forall>x \<in> carrier G. \<forall>y \<in> carrier G. h (x \<otimes>_G y) = h x \<otimes>_H h y)}" *)
-
-(*An isomorphism between groups G and H is defined as a homomorphism that is a bijection. *)
-
-(* definition iso :: "_ => _ => ('a => 'b) set"
-  where "iso G H = {h. h \<in> hom G H \<and> bij_betw h (carrier G) (carrier H)}" *)
-\<close>
 (*== P 11-13: Introduce group theory and actions of a permutation group on its underlying set ==*)
 (*== P 14-16: Apply this to automorphisms of the 7-point projective plane and the 9-point affine
 plane in detail. ==*)
 
-text \<open>Harthshorne reviews RP2 as a quotient of R3 - (0,0,0); lines are sets of points 
-x satisfying b \cdot x = 0 for some fixed nonzero vector b. 
-
-Page 17-18(top) introduce matrices and determinants. Let's do those things here now, starting
-with the definition of rp2 and working from there. 
-
-Our version of vectors is the type v3 = real^3; a matrix is a list of three of these, i.e.,
-real^3^3. Indexing is 1-based, and uses the syntax v$2 or m$3$1. When constructing a vector 
-we use the 'vector' function, which takes a list and makes a vector, as in "vector[x,y,z]". 
-This is a very generic operator, and it's important to assign a type, either with vector[x,y,z]::v3,
-or vector[x::real, y, z] so that Isabelle knows you're working with a vector of 3 real components.
-For proofs involving coordinates, unfolding vector_def and using the proof-method "vector" can be a 
-big help. We'll start with just vectors, define and prove a few things about RP2, and then move on to matrices.
-
-Fortunately, for real vectors addition is predefined, and scalar multiplication is denoted by a * 
-with a subscript R. 
-\<close>
-
-subsection\<open>Automorphisms of the real projective plane\<close>
-text\<open>
-Now let $A = (a_{ij})$ be a $3 \times 3$ matrix of real numbers, and let $\pi$ be the real
-projective plane, with homogeneous coordinates $x_1, x_2, x_3$. We define a transformation $T_A$ of $\pi$ as follows: 
-The point $(x_1, x_2, x_3)$ goes into the point
-\[T_A(x_1, x_2, x_3) = (x_1', x_2', x_3')\]
-where
-\[x_1' = a_{11}x_1 + a_{12}x_2 + a_{13}x_3\]
-\[x_2' = a_{21}x_1 + a_{22}x_2 + a_{23}x_3\]
-\[x_3' = a_{31}x_1 + a_{32}x_2 + a_{33}x_3\]
-\end{hartshorne}
-
-
-We'll need 3x3 matrices (our type m33) and we'll define what Hartshorne calls T_A
-as a map from RP2 to RP2, and show that 
-(i) if A is invertible, then T_A is an automorphism of rp2 (3.7, bottom of p.18)
-(ii) if A = cA', then T_A and T_A' are the SAME automorphism  (3.8, top of p 20)
-The set of all such matrix xforms will be called PGL(2,R). It's a subgroup 
-of the group of all automorphisms (T_A \circ T_B = T_{AB} proves that). 
-
-\<close>
 type_synonym m33 = "real^3^3"
 
 definition not_all_zero :: "real \<Rightarrow> real \<Rightarrow> real \<Rightarrow> bool"
@@ -152,11 +40,9 @@ lemma not_all_zero_eqv2: "not_all_zero x y z \<longleftrightarrow> vector[x, y, 
   unfolding not_all_zero_def using vect_zero_eqv by (metis zvec_def) 
    (*Robert: could we simplify this definition by using rp2_coll? *)
 
-
 definition maps_lines_to_lines :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
   where "maps_lines_to_lines f \<longleftrightarrow> (\<forall>k P Q R . ((k \<in> rp2_Lines \<and> rp2_incid P k \<and> rp2_incid Q k \<and> rp2_incid R k) \<longrightarrow> 
                                    (\<exists>m . m \<in> rp2_Lines  \<and>  rp2_incid (f P) m \<and> rp2_incid (f Q) m \<and> rp2_incid (f R) m)))"
-
 
 (*Note that inclusion is sufficient. See also this MSE post:
 https://math.stackexchange.com/questions/3481844/is-isomorphic-between-projective-planes-actually-equivalence-relation *)
@@ -170,10 +56,11 @@ definition is_RP2_auto :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
    tom is short for "transformation of matrix." This transformation, when 
    considered as acting on RP2, is denoted T_A in Hartshorne.
 *)
+
 definition tom :: "m33 \<Rightarrow> (v3 \<Rightarrow> v3)"
   where "tom A = (if (invertible A) then (\<lambda>x. A *v x) else (\<lambda>x::v3. x))" 
 
-theorem "tom_inv" [simp]:
+theorem "tom_inv" [simp]: (* tom A = (\<lambda> x . A *v x) *)
   fixes A :: m33
   assumes "invertible A"
   shows "tom A = (\<lambda>x. A *v x)"
@@ -185,7 +72,6 @@ theorem "tom_nonz_det" [simp]:
   shows "tom A = (\<lambda>x. A *v x)"
   unfolding tom_def using assms
   by (simp add: invertible_det_nz)
-
 
 lift_definition rp2tom::"m33 \<Rightarrow> (rp2 \<Rightarrow> rp2)"
 is "tom"
@@ -245,22 +131,22 @@ definition adj_inv :: "m33 \<Rightarrow> m33"
   where "adj_inv A = transpose (matrix_inv A)"
 
 (* Note that "inner" here denotes the inner product on a vector space *)
-lemma transpose_is_adjoint:
+lemma transpose_is_adjoint: (* u dot (Aw) = (A^t u) dot w *)
   fixes A :: m33
   fixes u :: v3
   fixes w :: v3
   shows "inner u (A *v w) = inner ((transpose A) *v u) w"
   by (simp add: dot_lmul_matrix tom_def)
 
-lemma inverse_m_matrix_is_ident:
+lemma inverse_m_matrix_is_ident: (* A^{-1} A = I *)
   fixes A :: m33
   assumes "invertible A"
   shows "matrix_inv A ** A = mat 1"
   unfolding matrix_inv_def
   using assms invertible_def[of A] 
   by (simp add: verit_sko_ex')
-  
-lemma collapsing_adjoint:
+   
+lemma collapsing_adjoint: (* [(tom (A^{-1}^t) s] dot [ (tom A) x] = s dot x *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
   fixes s :: v3
@@ -281,27 +167,26 @@ proof -
   using adj_inv_def h0 h2a invertible_right_inverse transpose_invertible by auto
 qed 
 
-lemma explicit_inner_prod:
+lemma explicit_inner_prod: (* s dot x = s1*x1 + s2*x2 + s3*x3 *)
   fixes s :: v3
   fixes x :: v3
   shows "inner s x =  s$1 * x$1 + s$2 * x$2 +  s$3 * x$3"
   unfolding inner_vec_def
   using sum_3 by auto
 
-lemma va0: 
+lemma va0: (* (x+y)[i] = x[i] + y[i] *)
   fixes x y::v3
   fixes i
   shows "(x+y)$i = x$i + y$i" by (rule vector_component)
 
-
 (*A simple lemma to help work with vector constructors... *)
-lemma vector_add:
+lemma vector_add: (* same, but with vector[...] constructors *)
   fixes a x b y c z :: real 
   shows "(vector[a + x, b + y, c + z] :: (real, 3) vec) = vector[a, b, c] + vector[x, y, z]"
   unfolding vector_def by vector
 
 (*Another simple lemma to work with vector constructors...*)
-lemma matrix_rows:
+lemma matrix_rows: (* A::m33 \<Rightarrow> A$i = vector[A$i$1, A$i$2, A$i$3] *)
   fixes A :: m33
   shows "A$1 = vector[A$1$1, A$1$2, A$1$3]"
         "A$2 = vector[A$2$1, A$2$2, A$2$3]"
@@ -309,7 +194,7 @@ lemma matrix_rows:
  using vector_3 row_def vector_def exhaust_3
   by (smt (verit, best) vec_eq_iff)+
 
-lemma matrix_vect_mult_helper:
+lemma matrix_vect_mult_helper: (* (tom B) (vector [a,b,c] = vector [ inner vector[a,b,c] B$1, etc] *)
   fixes B :: m33
   fixes a b c :: real
   assumes "invertible B"
@@ -325,8 +210,9 @@ proof -
     by (smt (verit, ccfv_SIG) exhaust_3 vec_eq_iff)
 qed
 
+
 (*The lemma below is helpful for the proof of Theorem 3.9 *)
-lemma matrix_by_vect_mult:
+lemma matrix_by_vect_mult: (* A^t s = s$1 A$1 + s$2 A$2 + s$3 A$3 *)
   fixes s :: v3
   fixes A :: m33
   shows "transpose A *v s = s$1 *s A$1 + s$2 *s A$2 + s$3 *s A$3"
@@ -362,7 +248,7 @@ proof -
   then show ?thesis using matrix_rows by presburger
   qed
 
-lemma vect_vect_by_vect_mult:
+lemma vect_vect_by_vect_mult: (* for vectors x y z, (vec[x,y,z])^t s = s$1 x + s$2 y + s$3 z *)
   (* A useful variant of the above for dealing with vectors of vectors, i.e., matrices *)
   fixes s :: v3
   fixes x y z :: v3
@@ -370,7 +256,7 @@ lemma vect_vect_by_vect_mult:
   using matrix_by_vect_mult vector_3[of x y z]
   by (simp add: matrix_vector_mult_def)
 
-lemma maps_lines_to_lines_helper:
+lemma maps_lines_to_lines_helper: (* det A \<noteq> 0, abc \<noteq> 0 says \<exists> def .( abc dot xyz = 0 \<Rightarrow> def dot A(xyz) = 0) *)
   fixes A :: m33
   fixes a b c :: real
   assumes invertible: "det A \<noteq> 0"
@@ -416,7 +302,7 @@ qed
   show ?thesis using req1 req2 by auto
 qed 
 
-lemma maps_lines_to_lines_helper2:
+lemma maps_lines_to_lines_helper2: (* det A \<noteq> 0, yvec \<noteq> 0 says \<exists> kvec \<noteq> 0 .( yvec dot xvec = 0 \<Rightarrow> kvec dot Axvec = 0) *)
   fixes A :: m33
   fixes y :: v3
   assumes "det A \<noteq> 0"
@@ -443,7 +329,7 @@ definition is_RP2_auto2 ::  "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
   where "is_RP2_auto2 f \<longleftrightarrow> (bij_betw f UNIV UNIV) \<and> maps_lines_to_lines2 f"
 (*This is the definition of is_RP2_auto but using the new maps_lines_to_lines *)
 
-lemma t:
+lemma t: (* P Q R collinear in RP2, A invertible \<Rightarrow> AP AQ AR collinear as well. *)
   fixes A::m33
   fixes P Q R
   assumes "det A \<noteq> 0"
@@ -479,28 +365,25 @@ qed
   then show ?thesis  using kfacts rep_P_nz rp2_incid.rep_eq rp2coll.rep_eq v3coplanar_def by auto
 qed 
 
+(* Looks like this is equivalent to *\<^sub>R *)
 definition matrix_scalar_mult :: "real \<Rightarrow> m33 \<Rightarrow> m33"
 (infixl "*k" 70) where "k *k A \<equiv> (\<chi> i j. k * A $ i $ j)"
 
 (* Need to prove some associativity things for this, I suspect. *)
-lemma msmul_props: 
+lemma msmul_props: (* t * (s * A)) = (ts) * A *)
   fixes A::m33
   fixes s::real
   fixes t::real
   shows "(t *k (s *k A)) = (t * s) *k A" 
   unfolding matrix_scalar_mult_def by fastforce
 
-lemma matrix_scalar_mult_forall [intro]:
- "(A :: m33) = c *k B \<longleftrightarrow> (\<forall> x :: v3 . A *v x = c *\<^sub>R (B *v x))"
-  sorry
 
-
-(* lemma s0:
+lemma s0: (* rp2_incid P k \<longleftrightarrow>  ((Rep_rp2 P) \<bullet> (Rep_rp2 k)  = 0) *)
   assumes "k \<in> rp2_Lines"
   shows "rp2_incid P k \<longleftrightarrow>  ((Rep_rp2 P) \<bullet> (Rep_rp2 k)  = 0)"
-  by (simp add: rp2_incid.rep_eq) *)
+  by (simp add: rp2_incid.rep_eq) 
 
-lemma inv_matrices_img_nonzero:
+lemma inv_matrices_img_nonzero: (* A invertible, x in v3 and nonzero \<Rightarrow> Ax nonzero as well *) 
   fixes A :: m33
   and x :: v3
   assumes "det A \<noteq> 0"
@@ -525,7 +408,7 @@ proof (rule impI; rule ccontr)
 qed
 *)
 
-lemma inv_matrices_maps_lines_to_lines2:
+lemma inv_matrices_maps_lines_to_lines2: (* A invertible means rp2tom A maps lines to lines *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
   shows "maps_lines_to_lines2 (rp2tom A)"
@@ -556,13 +439,13 @@ proof (safe)
       rp2tom.abs_eq zvec_alt)
 qed
 
-lemma tom_representative:
+lemma tom_representative: (* A invertible \<Rightarrow> "(rp2tom A x) = Abs_rp2 ((tom A) (Rep_rp2 x))"  *)
   fixes A x
   assumes invertible: "det A \<noteq> 0"
   shows "(rp2tom A x) = Abs_rp2 ((tom A) (Rep_rp2 x))" 
   by (simp add: ar invertible invertible_det_nz rp2tom_explicit2)
 
-lemma tom_representative_rel:
+lemma tom_representative_rel: (* A invertible \<Rightarrow>rp2rel (Rep_rp2 (rp2tom A x)) ((tom A) (Rep_rp2 x)) *)
   fixes A x
   assumes invertible: "det A \<noteq> 0"
   shows "rp2rel (Rep_rp2 (rp2tom A x)) ((tom A) (Rep_rp2 x))" 
@@ -570,24 +453,24 @@ lemma tom_representative_rel:
   by (metis Quotient3_rp2 cross_nz cross_refl inv_matrices_img_nonzero
       rep_P_nz rep_abs_rsp_left zvec_alt)
 
-lemma tom_bij: 
+lemma tom_bij: (* A invertible \<Rightarrow> (tom A) is bijective *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
   shows "bij (tom A)"
   using tom_nonz_det[of A] invertible 
   using invertible_det_nz invertible_eq_bij by auto
 
-lemma tom_inj:
+lemma tom_inj:  (* A invertible \<Rightarrow> (tom A) is injective *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
   shows "inj (tom A)" using tom_bij[of A] invertible bij_def by auto
 
-lemma tom_surj:
+lemma tom_surj:  (* A invertible \<Rightarrow> (tom A) is surjective *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
   shows "surj (tom A)" using tom_bij[of A] invertible bij_def by metis
   
-theorem inv_matrices_are_auts: (* theorem 3.7 *)
+theorem inv_matrices_are_auts: (* theorem 3.7 *) (* A invertible \<Rightarrow> rp2tom A is an automorphism of RP2 *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
   shows "is_RP2_auto2 (rp2tom A)" 
@@ -632,13 +515,16 @@ qed
 qed
 
 
-definition RP2_auto :: "(rp2 \<Rightarrow> rp2) set" where 
-"RP2_auto = {A :: (rp2 \<Rightarrow> rp2) . is_RP2_auto2 A}"
+(* I think we don't need this? *)
+definition rp2_auto_to_transf :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (v3 \<Rightarrow> v3)" (* turn an RP2 automorphism into a map from R3 to R3 *)
+  where "rp2_auto_to_transf r = Rep_rp2 \<circ> r \<circ> Abs_rp2"
 
+definition RP2_auto :: "(rp2 \<Rightarrow> rp2) set" where  (* all automorphism of RP2 *)
+"RP2_auto = {A :: (rp2 \<Rightarrow> rp2) . is_RP2_auto2 A}"
 
 (*== Page 21 ==*)
 (*The above theorem justifies the following definition: *)
-definition PGL2R :: "(rp2 \<Rightarrow> rp2) set" where
+definition PGL2R :: "(rp2 \<Rightarrow> rp2) set" where (* The set of all matrix-defined automorphisms on RP2 *)
 "PGL2R = {rp2tom A | A . det ((A::m33)) \<noteq> 0}"
 
 (* What we have proved above is that 3x3 matrices give rise to a subset of
@@ -647,29 +533,6 @@ theorem inv_matrices_subset_auts: "PGL2R \<subseteq> RP2_auto"
   unfolding PGL2R_def RP2_auto_def using inv_matrices_are_auts by auto
 
 (*The next section deals with the proof of Proposition 3.8 *)
-(*
-definition equiv_maps :: "(v3 \<Rightarrow> v3) \<Rightarrow> (v3 \<Rightarrow> v3) \<Rightarrow> bool"
-  where "equiv_maps f g \<longleftrightarrow>
-  (well_defined f) \<and> (well_defined g) \<and> (\<forall>x :: v3 . \<exists>t :: real . t \<noteq> 0 \<and> f x = t *s (g x))"
-*)
-(*
-lift_definition RP2_equiv_maps :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (rp2 \<Rightarrow> rp2) \<Rightarrow> bool" is equiv_maps sorry
-*)
-(* proof (transfer, clarsimp)
-  show "\<And>f g h r . 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps f h = equiv_maps g r"
-  proof (safe)
-    fix f g h r 
-    assume "rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)" for x y 
-    assume "rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)" for x y
-    show "equiv_maps f h \<Longrightarrow> equiv_maps g r"by sorry
-    next
-      show "\<And>f g h r . 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps g r \<Longrightarrow> equiv_maps f h" sorry
-qed
-*)
 
 definition p1 :: v3 where "p1 = vector[1, 0, 0]"
 definition p2 :: v3 where "p2 = vector[0, 1, 0]"
@@ -774,7 +637,7 @@ lemma equiv_on_basis_imp_equiv:
   and "rp2rel (tom A p2) (tom B p2)"
   and "rp2rel (tom A p3) (tom B p3)"
   and "rp2rel (tom A q) (tom B q)"
-  shows "\<forall>x :: v3 . x \<noteq> 0 \<longrightarrow> rp2rel (tom A x) (tom B x)"
+  shows "\<exists> u . u \<noteq> 0 \<and> (\<forall> x . (tom A x) = u *\<^sub>R (tom B x))" 
 proof -
   obtain c1 :: real where hc1: "c1 \<noteq> 0 \<and> tom A p1 = c1  *\<^sub>R (tom B p1)" 
     using assms(3) p1_def unfolding rp2rel_def by blast
@@ -830,11 +693,8 @@ proof -
     using h1 h2 h3 matrices_equal_on_basis by blast
   have non_zero: "u \<noteq> 0" using hu by auto
   show ?thesis using exists non_zero assms(1) assms(2) inv_matrix_inj zvec_alt
-    unfolding rp2rel_def
-  by metis
+    by blast
 qed 
-
-
 
 lemma matrix_agreeing_with_I_on_basis_is_scalar_mult_of_I: 
   fixes A :: m33
@@ -858,22 +718,59 @@ lemma matrices_agreeing_on_basis_are_scalar_mults:
   shows "\<exists>c :: real .  A  = c *k B"
   sorry (* should follow instantly from previous lemma, applied to AB^{-1} *)
 
+lemma Rep_distributes:
+  fixes A x
+  assumes "det A \<noteq> 0"
+  and "x \<noteq> zvec"
+  shows "rp2rel (Rep_rp2 (rp2tom A (Abs_rp2 x))) (tom A x)"
+  using assms
+  by (metis Quotient3_rp2 inv_matrices_img_nonzero pth_1 rep_abs_rsp_left
+      rp2tom.abs_eq smult_rp2rel zero_neq_one)
+
+lemma rp2tom_tom_translation:
+  fixes A x
+  assumes "det A \<noteq> 0"
+  and "x \<noteq> zvec"
+  and "rp2tom A (Abs_rp2 x) = rp2tom B (Abs_rp2 x)"
+  shows "rp2rel (tom A x)  (tom B x)"
+proof -
+  have "Rep_rp2 (rp2tom A (Abs_rp2 x)) = Rep_rp2 (rp2tom B (Abs_rp2 x))"
+    using assms by auto
+  then show ?thesis using assms Rep_distributes part_equivp_def part_equivp_rp2rel
+  by (metis (lifting) Quotient3_rp2 cross_nz cross_refl invertible_det_nz rep_abs_rsp rp2tom.abs_eq
+      tom_def zvec_alt)
+qed
 
 theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *)
   fixes A B:: m33
   assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
   assumes equal_maps: "rp2tom A = rp2tom B"
-  shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *k B" 
-  
+  shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *\<^sub>R B" 
+proof - 
+  have nz: "p1 \<noteq> zvec \<and> p2 \<noteq> zvec \<and> p3 \<noteq> zvec \<and> q \<noteq> zvec"
+    using p1_def p2_def p3_def q_def zvec_def using zvec_def vector_3 zero_neq_one by metis
+  have "rp2tom A (Abs_rp2 p1) = rp2tom B (Abs_rp2 p1)" using equal_maps by auto
+  then have 1: "rp2rel (tom A p1) (tom B p1)" 
+    using rp2tom_tom_translation nz assms by blast
+  have "rp2tom A (Abs_rp2 p2) = rp2tom B (Abs_rp2 p2)" using equal_maps by auto
+  then have 2: "rp2rel (tom A p2) (tom B p2)" 
+    using rp2tom_tom_translation nz assms by blast
+  have "rp2tom A (Abs_rp2 p3) = rp2tom B (Abs_rp2 p3)" using equal_maps by auto
+  then have 3: "rp2rel (tom A p3) (tom B p3)" 
+    using rp2tom_tom_translation nz assms by blast
+  have "rp2tom A (Abs_rp2 q) = rp2tom B (Abs_rp2 q)" using equal_maps by auto
+  then have 4: "rp2rel (tom A q) (tom B q)" 
+    using rp2tom_tom_translation nz assms by blast
+  then show ?thesis using rp2rel_def equiv_on_basis_imp_equiv[of A B]
+    1 2 3 invertible matrix_eq scaleR_matrix_vector_assoc tom_nonz_det
+  by metis
+qed
  
-  sorry
-
-
 (* If the transformations for matrices A and B are equal up to a constant factor c,
   then they are "equiv_maps", i.e., they represent the same maps when considered as 
   rp2 \<Rightarrow> rp2 maps: *)
 (* This is proposition 3.8 *)
-lemma inv_matrices_equiv_iff:
+lemma inv_matrices_equiv_iff:  (* A = cB \<longleftrightarrow> rp2tom A = rp2tom B *)
   fixes A B :: m33
   assumes invertible_A: "det A \<noteq> 0"
   and invertible_B: "det B \<noteq> 0"
