@@ -2,6 +2,9 @@ theory "Chapter4-2"
   imports Complex_Main  "Chapter4-1" "Chapter1-2"
 
 begin
+
+
+
 text\<open> start at definition of complete quadrangle; stop just before "Harmonic points"\<close>
 
 definition (in projective_plane) cquadrangle :: "'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> 'p \<Rightarrow> bool"
@@ -61,7 +64,7 @@ locale projective_plane_5_7 = projective_plane_7 Points Lines incid
   assumes
   p5:"\<lbrakk>U \<in> Points; A \<in> Points; B \<in> Points; C \<in> Points; 
     A' \<in> Points; B' \<in> Points; C' \<in> Points;
-    distinct7 U A B C A' B' C';
+    distinct[U, A, B, C, A', B', C'];
     pcollinear A A' U; pcollinear B B' U; pcollinear C C' U;
     \<not>pcollinear A B C; \<not>pcollinear A' B' C'; 
     join A B \<noteq> join A' B'; join A C \<noteq> join A' C'; join B C \<noteq> join B' C';
@@ -116,7 +119,7 @@ theorem (in projective_plane) quadrangle_points_distinct:
   fixes A B C D
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points"
   assumes "cquadrangle A B C D"
-  shows "distinct4 A B C D"
+  shows "distinct[A, B, C, D]"
 proof - 
   show ?thesis using assms(2) cquadrangle_def distinct4_def p1 p3 pcollinear_def by metis
 qed
@@ -125,15 +128,26 @@ theorem (in projective_plane) quadrangle_lines_distinct:
   fixes A B C D
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points"
   assumes "cquadrangle A B C D"
-  shows "distinct6 (join A B) (join A C) (join A D) (join B C) (join B D) (join C D)"
+  shows "distinct[(join A B), (join A C), (join A D), (join B C), (join B D), (join C D)]"
 proof - 
-  have "(join A B) \<noteq> (join A C) \<and> (join A B) \<noteq> (join A D) \<and> (join A B) \<noteq> (join B C) \<and> (join A B) \<noteq> (join B D)  \<and> (join A B) \<noteq> (join C D)"
+  have 0: "(join A B) \<noteq> (join A C) \<and> (join A B) \<noteq> (join A D) \<and> (join A B) \<noteq> (join B C) \<and> (join A B) \<noteq> (join B D)  \<and> (join A B) \<noteq> (join C D)"
     using assms(2) cquadrangle_def distinct4_def join_properties1 pcollinear_def
         quadrangle_points_distinct
     by (smt (verit))
-  then show ?thesis
-    by (smt (verit) assms(2)
-        cquadrangle_def distinct6_def join_properties1 pcollinear_def)
+  have 1: "(join A C) \<noteq> (join A D) \<and> (join A C) \<noteq> (join B C) \<and> (join A C) \<noteq> (join B D) \<and> (join A C) \<noteq> (join C D)"
+    using assms(2) cquadrangle_def distinct4_def join_properties1 pcollinear_def
+        quadrangle_points_distinct
+    by (smt (verit))
+  have 2: "(join A D) \<noteq> (join B C) \<and>  (join A D) \<noteq> (join B D) \<and> (join A D) \<noteq> (join C D)"
+    using assms(2) cquadrangle_def distinct4_def join_properties1 pcollinear_def
+        quadrangle_points_distinct
+    by (smt (verit))
+  have 3: "(join B C) \<noteq> (join B D) \<and>  (join B C) \<noteq> (join C D) \<and> (join B D) \<noteq> (join C D)"
+    using assms(2) cquadrangle_def distinct4_def join_properties1 pcollinear_def
+        quadrangle_points_distinct
+    by (smt (verit))
+  then show ?thesis unfolding distinct6_def using cquadrangle_def distinct6_def join_properties1 1 2 3 0
+    by argo
 qed
 
 theorem (in projective_plane) quadrangle_diag_are_points:
@@ -164,25 +178,6 @@ proof -
   show ?thesis using 3 4 5 by auto
 qed
 
-theorem (in projective_plane) pcollinear_if_two_points_equal:
-  fixes A B C
-  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points"
-  assumes "A = B"
-  shows "pcollinear A B C"
-proof - 
-  show ?thesis by (metis assms(1,2) p1 p3 pcollinear_def)
-qed
-
-theorem (in projective_plane_data) collinear_comm:
-  fixes A B C
-  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points"
-  assumes "pcollinear A B C"
-  shows "pcollinear A C B \<and> pcollinear B A C \<and> pcollinear B C A \<and>
-        pcollinear C A B \<and> pcollinear C B A"
-proof - 
-  show ?thesis using assms pcollinear_def[of A B C] pcollinear_def by auto
-qed
-
 theorem quadrangle_diagonal_points_distinct:
   fixes Points :: "'p set"
   fixes Lines :: "'l set"
@@ -191,13 +186,13 @@ theorem quadrangle_diagonal_points_distinct:
   assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> D \<in> Points"
   assumes "projective_plane.cquadrangle Points Lines incid A B C D"
   assumes "P7 Points Lines incid"
-  shows "distinct3 (projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D) 
-                   (projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D) 
-                   (projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D)"
+  shows "distinct[(projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D), 
+                   (projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D), 
+                   (projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D)]"
 proof (rule ccontr)
-  assume ch: "\<not>distinct3 (projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D) 
-                   (projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D) 
-                   (projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D)"
+  assume ch: "\<not>distinct[(projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D),
+                   (projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D),
+                   (projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D)]"
   let ?E = "projective_plane.cquadrangle_points_diag_1 Points Lines incid A B C D"
   let ?F = "projective_plane.cquadrangle_points_diag_2 Points Lines incid A B C D"
   let ?G = "projective_plane.cquadrangle_points_diag_3 Points Lines incid A B C D"
@@ -230,7 +225,7 @@ theorem (in projective_plane) quadrilateral_lines_distinct:
   fixes a b c d
   assumes "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines \<and> d \<in> Lines"
   assumes "cquadrilateral a b c d"
-  shows "distinct4 a b c d"
+  shows "distinct[a, b, c, d]"
 proof - 
   show ?thesis using  assms(2) coincident_def cquadrilateral_def distinct4_def p2 by metis
 qed
@@ -363,34 +358,6 @@ proof -
         unique_meet)
 qed
 
-lemma (in projective_plane) join_of_meet: 
-  fixes a b c
-  assumes "a \<in> Lines \<and> b \<in> Lines \<and> c \<in> Lines"
-  assumes "distinct3 a b c"
-  fixes A B
-  assumes "A \<noteq> B"
-  assumes "A \<in> Points \<and> A = meet a b"
-  assumes "B \<in> Points \<and> B = meet a c"
-  shows "join A B = a"
-proof - 
-  show ?thesis using assms distinct3_def join_properties2 meet_properties2 by metis
-qed
-
-lemma (in projective_plane) meet_comm:
-  fixes a b
-  assumes "a \<in> Lines \<and> b \<in> Lines \<and> a \<noteq> b"
-  shows "meet a b = meet b a"
-proof - 
-  show ?thesis using assms meet_def meet_properties2 unique_meet by force
-qed
-
-lemma (in projective_plane) join_comm:
-  fixes A B
-  assumes "A \<in> Points \<and> B \<in> Points \<and> A \<noteq> B"
-  shows "join A B = join B A"
-proof - 
-  show ?thesis using assms join_def join_properties1 join_properties2 by blast
-qed
 
 theorem dual_collinear_is_coincident:
   fixes Points :: "'p set"
@@ -492,7 +459,7 @@ proof -
     let ?q = "projective_plane_data.join Points Lines incid (projective_plane_data.meet Points Lines incid a c) (projective_plane_data.meet Points Lines incid b d)"
     let ?r = "projective_plane_data.join Points Lines incid (projective_plane_data.meet Points Lines incid b c) (projective_plane_data.meet Points Lines incid a d) "
 
-    have abcd_distinct: "distinct4 a b c d" 
+    have abcd_distinct: "distinct[a, b, c, d]" 
       using projective_plane.quadrangle_points_distinct[of dPoints dLines dincid a b c d] dassms1 projective_dual by auto 
 
     then have r_is_diag_1: "?r = projective_plane.cquadrangle_points_diag_1 dPoints dLines dincid a b c d" 
@@ -630,6 +597,6 @@ proof -
   show ?thesis unfolding P7_def
     using projective_dual distinct_cquadrilateral_lines assms projective_plane.quadrilateral_lines_distinct by meson
 qed
+
+
 end
-
-
