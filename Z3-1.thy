@@ -50,6 +50,7 @@ https://math.stackexchange.com/questions/3481844/is-isomorphic-between-projectiv
 definition is_RP2_auto :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
   where "is_RP2_auto f \<longleftrightarrow> (bij_betw f UNIV UNIV) \<and> maps_lines_to_lines f"
 
+
 (* The below definition helps make the types work out when working with
    definitions like "image_non_zero." In general, writing A *v x will also work.
    tom is short for "transformation of matrix." This transformation, when 
@@ -320,10 +321,13 @@ is "v3coplanar"
   by (smt (verit, best) Domainp_cr_proj Quotient3_rel Quotient3_rp2 cross_nz cross_refl rp2.domain rp2_incid.abs_eq v3coplanar_def
       zvec_alt)
 
-
 definition maps_lines_to_lines2 :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
   where "maps_lines_to_lines2 f \<longleftrightarrow> (\<forall>P Q R . ((rp2coll P Q R) \<longrightarrow> 
                                    (rp2coll (f P) (f Q) (f R))))"
+
+definition is_RP2_auto2 ::  "(rp2 \<Rightarrow> rp2) \<Rightarrow> bool"
+  where "is_RP2_auto2 f \<longleftrightarrow> (bij_betw f UNIV UNIV) \<and> maps_lines_to_lines2 f"
+(*This is the definition of is_RP2_auto but using the new maps_lines_to_lines *)
 
 lemma t: (* P Q R collinear in RP2, A invertible \<Rightarrow> AP AQ AR collinear as well. *)
   fixes A::m33
@@ -359,7 +363,7 @@ proof -
       tom_def)
 qed
   then show ?thesis  using kfacts rep_P_nz rp2_incid.rep_eq rp2coll.rep_eq v3coplanar_def by auto
-qed
+qed 
 
 definition matrix_scalar_mult :: "real \<Rightarrow> m33 \<Rightarrow> m33"
 (infixl "*k" 70) where "k *k A \<equiv> (\<chi> i j. k * A $ i $ j)"
@@ -376,7 +380,7 @@ lemma msmul_props: (* t * (s * A)) = (ts) * A *)
 lemma s0: (* rp2_incid P k \<longleftrightarrow>  ((Rep_rp2 P) \<bullet> (Rep_rp2 k)  = 0) *)
   assumes "k \<in> rp2_Lines"
   shows "rp2_incid P k \<longleftrightarrow>  ((Rep_rp2 P) \<bullet> (Rep_rp2 k)  = 0)"
-  by (simp add: rp2_incid.rep_eq)
+  by (simp add: rp2_incid.rep_eq) 
 
 lemma inv_matrices_img_nonzero: (* A invertible, x in v3 and nonzero \<Rightarrow> Ax nonzero as well *) 
   fixes A :: m33
@@ -387,6 +391,21 @@ lemma inv_matrices_img_nonzero: (* A invertible, x in v3 and nonzero \<Rightarro
   using assms tom_nonz_det[of A]
   by (metis collapsing_adjoint inner_eq_zero_iff inner_zero_right
       zvec_alt)
+
+(* We should probably get rid of the next lemma *)
+lemma inv_matrix_inj:
+  fixes A :: m33
+  fixes x :: v3
+  assumes "det A \<noteq> 0"
+  shows "tom A x = 0 \<longrightarrow> x = 0"
+  sorry
+(*
+proof (rule impI; rule ccontr)
+  assume x_in_ker: "tom A x = 0"
+  assume to_contr: "x \<noteq> 0"
+  show "False" using assms to_contr  image_non_zero_def x_in_ker sorry
+qed
+*)
 
 lemma inv_matrices_maps_lines_to_lines2: (* A invertible means rp2tom A maps lines to lines *)
   fixes A :: m33
@@ -453,8 +472,8 @@ lemma tom_surj:  (* A invertible \<Rightarrow> (tom A) is surjective *)
 theorem inv_matrices_are_auts: (* theorem 3.7 *) (* A invertible \<Rightarrow> rp2tom A is an automorphism of RP2 *)
   fixes A :: m33
   assumes invertible: "det A \<noteq> 0"
-  shows "is_RP2_auto (rp2tom A)" 
-  unfolding is_RP2_auto_def
+  shows "is_RP2_auto2 (rp2tom A)" 
+  unfolding is_RP2_auto2_def
 (*  unfolding well_defined_def *)
 proof (safe)
   have inj: "inj (rp2tom A)"
@@ -468,7 +487,9 @@ proof (safe)
     then obtain c :: real where c_def: "c \<noteq> 0 \<and> (tom A (Rep_rp2 x)) = c *\<^sub>R (tom A (Rep_rp2 y))"
       using rp2rel_def by auto
     then have "(Rep_rp2 x) = c *\<^sub>R (Rep_rp2 y)" using tom_nonz_det[of A] invertible 
-      sorry (*provable, just need to write it out *)
+      by (metis (mono_tags, lifting) inv_matrices_img_nonzero matrix_left_invertible_ker
+          matrix_vector_mul_assoc matrix_vector_mul_lid matrix_vector_mult_scaleR zvec_alt)
+          (*provable, just need to write it out *)
     then have "rp2rel (Rep_rp2 x) (Rep_rp2 y)" using c_def rp2rel_def
       using rep_P_nz by blast
     then have "Abs_rp2 (Rep_rp2 x) = Abs_rp2 (Rep_rp2 y)"
@@ -479,36 +500,26 @@ proof (safe)
   have surj: "surj (rp2tom A)"
     unfolding surj_def
   proof (safe)
-    fix y :: rp2
-    obtain xr where "tom A (xr) = Rep_rp2 y" 
-      by (metis invertible surj_def tom_surj)
-    let ?x = "Abs_rp2 xr"
-    have "y = rp2tom A ?x"  sorry
-  
-   (*  then have "rp2tom A (Abs_rp2 xr) = Abs_rp2 (Rep_rp2 y)" 
-      sorry *)
-  have "bij (rp2tom A)"
-    unfolding bij_def  sorry
-  show "\<And>y. \<exists>x. y = rp2tom A x" sorry
+   fix y :: rp2
+   obtain xr where xr_facts: "tom A (xr) = Rep_rp2 y" 
+     using invertible surj_def tom_surj by metis
+   then have h0: "Abs_rp2 (tom A (xr)) = y" using ar by auto
+   then show "\<exists> x . y = (rp2tom A) x"
+   by (metis cross_nz cross_refl invertible rep_P_nz rp2tom.abs_eq tom_nonz_det vec.zero xr_facts
+       zvec_alt)
 qed
-  show "maps_lines_to_lines (rp2tom A)"
-    using invertible inv_matrices_maps_lines_to_lines2 sorry
-  show " bij (rp2tom A)" sorry
+  then show "bij (rp2tom A)" using inj surj bij_def by auto
+ show "maps_lines_to_lines2 (rp2tom A)"
+    using invertible inv_matrices_maps_lines_to_lines2 by auto
 qed
 
 
-theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *) (A,B invertible; rp2tom A = rp2tom B \<Rightarrow> A is multiple of B *)
-  fixes A B:: m33
-  assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
-  assumes equal_maps: "rp2tom A = rp2tom B"
-  shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *k B" 
-  sorry
-
-definition RP2_auto :: "(rp2 \<Rightarrow> rp2) set" where  (* all automorphism of RP2 *)
-"RP2_auto = {A :: (rp2 \<Rightarrow> rp2) . is_RP2_auto A}"
 
 definition rp2_auto_to_transf :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (v3 \<Rightarrow> v3)" (* turn an RP2 automorphism into a map from R3 to R3 *)
   where "rp2_auto_to_transf r = Rep_rp2 \<circ> r \<circ> Abs_rp2"
+
+definition RP2_auto :: "(rp2 \<Rightarrow> rp2) set" where  (* all automorphism of RP2 *)
+"RP2_auto = {A :: (rp2 \<Rightarrow> rp2) . is_RP2_auto2 A}"
 
 (*== Page 21 ==*)
 (*The above theorem justifies the following definition: *)
@@ -518,17 +529,7 @@ definition PGL2R :: "(rp2 \<Rightarrow> rp2) set" where (* The set of all matrix
 (* What we have proved above is that 3x3 matrices give rise to a subset of
    the set of all automorphisms of rp2. The next theorem makes this explicit. *)
 theorem inv_matrices_subset_auts: "PGL2R \<subseteq> RP2_auto"
-  sorry
-(*
-proof 
-  fix A
-  assume A_assm: "A \<in> PGL2R"
-  then obtain f :: m33 where "rp2tom f = A" using PGL2R_def by auto
-  then have "make_RP2_auto (tom f) = A" 
-    using tom_def make_RP2_auto_def rp2tom_def by auto
-  then show "A \<in> RP2_auto" using RP2_auto_def by auto
-qed
-*)
+  unfolding PGL2R_def RP2_auto_def using inv_matrices_are_auts by auto
 
 (*The next section deals with the proof of Proposition 3.8 *)
 (*
@@ -560,6 +561,166 @@ definition p2 :: v3 where "p2 = vector[0, 1, 0]"
 definition p3 :: v3 where "p3 = vector[0, 0, 1]"
 definition q :: v3 where "q = vector[1, 1, 1]"
 
+(*Some matrix-vector multiplication lemmas, which might be helpful *)
+
+lemma mat_mult_by_p1: "(A :: m33) *v p1 = (transpose A) $ 1" 
+proof -
+  have "(A *v vector [1,0,0])$1=A$1$1\<and>(A *v vector[1,0,0])$2 =  A$2$1 \<and> (A *v vector [1,0,0])$3 = A $3$1"
+    using explicit_inner_prod
+    by (simp add: matrix_vector_mul_component)
+  then show ?thesis unfolding p1_def unfolding transpose_def
+    by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
+qed
+
+lemma mat_mult_by_p2: "(A :: m33) *v p2 = (transpose A) $ 2" 
+proof -
+   have "(A *v vector [0,1,0])$1=A$1$2 \<and>(A *v vector[0,1,0])$2 = A$2$2 \<and> (A *v vector [0,1,0])$3 = A $3$2"
+    using explicit_inner_prod
+    by (simp add: matrix_vector_mul_component)
+  then show ?thesis unfolding p2_def unfolding transpose_def
+    by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
+qed
+
+lemma mat_mult_by_p3: "(A :: m33) *v p3 = (transpose A) $ 3" 
+proof -
+  have "(A *v vector [0,0,1])$1=A$1$3 \<and>(A *v vector[0,0,1])$2 = A$2$3 \<and> (A *v vector [0,0,1])$3 = A $3$3"
+    using explicit_inner_prod
+    by (simp add: matrix_vector_mul_component)
+    then show ?thesis unfolding p3_def unfolding transpose_def
+    by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
+qed
+
+lemma lin_comb:
+  fixes a b c  :: real
+  shows "vector[a, b, c] = a *\<^sub>R p1 + b *\<^sub>R p2 + c *\<^sub>R p3"
+  unfolding p1_def p2_def p3_def vector_def
+  by vector
+
+lemma matrix_mult_unfold:
+  fixes x :: v3
+  fixes A :: m33
+  shows "tom A x = x$1 *\<^sub>R tom A p1 + x$2 *\<^sub>R tom A p2 + x$3 *\<^sub>R tom A p3"
+proof -
+  have "x = x$1 *\<^sub>R p1 + x$2 *\<^sub>R p2 + x$3 *\<^sub>R p3" using lin_comb
+    by (metis matrix_rows(1) vector_1)
+  then have "tom A x = tom A (x$1 *\<^sub>R p1 + x$2 *\<^sub>R p2 + x$3 *\<^sub>R p3)" by auto
+  then have "tom A x = tom A (x$1 *\<^sub>R p1) + tom A (x$2 *\<^sub>R p2) + tom A (x$3 *\<^sub>R p3)" 
+    unfolding tom_def by (simp add: vec.add)
+  then show ?thesis
+    unfolding tom_def 
+  by (simp add: matrix_vector_mult_scaleR)
+qed
+
+lemma comb: "q = p1 +  p2 + p3" 
+  unfolding q_def p1_def p2_def p3_def
+  using lin_comb by vector
+
+lemma matrices_equal_on_basis:
+  fixes A B :: m33
+  and u :: real
+  assumes "tom A p1 = u *\<^sub>R tom B p1"
+  and "tom A p2 = u *\<^sub>R tom B p2"
+  and "tom A p3 = u *\<^sub>R tom B p3"
+  shows "\<forall> x :: v3. tom A x = u *\<^sub>R tom B x"
+proof (rule allI)
+  fix x :: v3
+  let ?a = "x $ 1"
+  let ?b = "x $ 2" 
+  let ?c = "x $ 3"
+  have "x = vector[?a, ?b, ?c]" unfolding vector_def vec_eq_iff using exhaust_3 by auto
+  then have x_eq: "x = ?a *\<^sub>R p1 + ?b *\<^sub>R p2 + ?c *\<^sub>R p3" using lin_comb by auto
+  then have eq1: "u *\<^sub>R tom B x = u *\<^sub>R tom B (?a *\<^sub>R p1 + ?b *\<^sub>R p2 + ?c *\<^sub>R p3)" by auto
+  have eq2: "u *\<^sub>R tom B ((?a *\<^sub>R p1) + (?b *\<^sub>R p2) + (?c *\<^sub>R p3)) = 
+               u *\<^sub>R tom B (?a *\<^sub>R p1) + u *\<^sub>R tom B (?b *\<^sub>R p2) + u *\<^sub>R  tom B (?c *\<^sub>R p3)" 
+    using tom_def matrix_vector_right_distrib
+  by (metis (no_types, lifting) scaleR_right_distrib)
+  have eq3: "u *\<^sub>R tom B (?a *\<^sub>R p1) + u *\<^sub>R tom B (?b *\<^sub>R p2) + u *\<^sub>R  tom B (?c *\<^sub>R p3) =
+            ?a *\<^sub>R (u *\<^sub>R tom B p1) + ?b *\<^sub>R (u *\<^sub>R tom B p2) + ?c *\<^sub>R (u *\<^sub>R tom B p3)"
+    using tom_def
+  by (metis (no_types, lifting) eq2 matrix_mult_unfold scaleR_left_commute
+      scaleR_right_distrib x_eq)
+  have eq4: "?a *\<^sub>R (u *\<^sub>R tom B p1) + ?b *\<^sub>R (u *\<^sub>R tom B p2) + ?c *\<^sub>R (u *\<^sub>R tom B p3) =
+            ?a *\<^sub>R tom A p1 + ?b *\<^sub>R tom A p2 + ?c *\<^sub>R tom A p3" using assms by auto
+  have eq5: "?a *\<^sub>R tom A p1 + ?b *\<^sub>R tom A p2 + ?c *\<^sub>R tom A p3 = 
+             tom A (?a *\<^sub>R p1 + ?b *\<^sub>R p2 + ?c *\<^sub>R p3)" using tom_def 
+  by (metis matrix_mult_unfold x_eq) 
+  have eq6: "tom A (?a *\<^sub>R p1 + ?b *\<^sub>R p2 + ?c *\<^sub>R p3) = tom A x" using x_eq by auto
+  show "tom A x = u *\<^sub>R tom B x" using eq1 eq2 eq3 eq4 eq5 eq6 by auto
+qed
+
+lemma equiv_on_basis_imp_equiv:
+  (*The key part of the next theorem is separated out here, since we also need it for the uniqueness
+    part of Theorem 3.9 *)
+  fixes A :: m33
+  fixes B :: m33
+  assumes invertible_A: "det A \<noteq> 0"
+  and invertible_B: "det B \<noteq> 0"
+  and "rp2rel (tom A p1) (tom B p1)"
+  and "rp2rel (tom A p2) (tom B p2)"
+  and "rp2rel (tom A p3) (tom B p3)"
+  and "rp2rel (tom A q) (tom B q)"
+  shows "\<forall>x :: v3 . x \<noteq> 0 \<longrightarrow> rp2rel (tom A x) (tom B x)"
+proof -
+  obtain c1 :: real where hc1: "c1 \<noteq> 0 \<and> tom A p1 = c1  *\<^sub>R (tom B p1)" 
+    using assms(3) p1_def unfolding rp2rel_def by blast
+  obtain c2 :: real where hc2: "c2 \<noteq> 0 \<and> tom A p2 = c2 *\<^sub>R (tom B p2)" 
+    using assms(4) p2_def unfolding rp2rel_def by blast
+  obtain c3 :: real where hc3: "c3 \<noteq> 0 \<and> tom A p3 = c3 *\<^sub>R (tom B p3)" 
+    using assms(5) p3_def unfolding rp2rel_def by blast
+  obtain u:: real where hu: "u \<noteq> 0 \<and> tom A q  = u *\<^sub>R tom B q" 
+    using assms(6) q_def unfolding rp2rel_def by blast
+  let ?r = "vector[u - c1, u - c2, u - c3]"
+  have comb2: "(u - c1) *\<^sub>R p1 + (u - c2) *\<^sub>R  p2 + (u - c3) *\<^sub>R p3 = ?r" 
+    unfolding p1_def p2_def p3_def vector_def by vector
+  have eq1: "u *\<^sub>R tom B p1 + u *\<^sub>R tom B p2 + u *\<^sub>R tom B p3 =
+             u *\<^sub>R (tom B p1 + tom  B p2 + tom B p3)"
+  by (simp add: pth_6)
+  have eq2: "u *\<^sub>R (tom B p1 + tom  B p2 + tom B p3) = u *\<^sub>R (tom B (p1 + p2 + p3))"
+    by (simp add: tom_def vec.add)
+  have eq3: "u *\<^sub>R (tom B (p1 + p2 + p3)) = u *\<^sub>R (tom B q)"
+    using comb by auto
+  have eq4: "u *\<^sub>R (tom B q) = tom A q" using hu by auto
+  have eq5: "tom A q = tom A p1 + tom A p2 + tom A p3" using comb
+    by (metis matrix_vector_right_distrib
+        tom_def)
+  have eq6: "tom A p1 + tom A p2 + tom A p3 =
+             c1 *\<^sub>R tom B p1 + c2 *\<^sub>R tom B p2 + c3 *\<^sub>R tom B p3" using hc1 hc2 hc3 by auto
+  then have eq7: "u *\<^sub>R tom B p1 + u *\<^sub>R tom B p2 + u *\<^sub>R tom B p3 = 
+                 c1 *\<^sub>R tom B p1 + c2 *\<^sub>R tom B p2 + c3 *\<^sub>R tom B p3"
+    using eq1 eq2 eq3 eq4 eq5 eq6 by auto
+  then have rw1: "u *\<^sub>R tom B p1 - c1 *\<^sub>R tom B p1 + u *\<^sub>R tom B p2 - c2 *\<^sub>R tom B p2 + u *\<^sub>R tom B p3 
+             - c3 *\<^sub>R tom B p3 = 0" 
+  by (simp add: add.commute add_diff_eq)
+  then have "(u - c1) *\<^sub>R tom B p1 + (u - c2) *\<^sub>R tom B p2 + (u - c3) *\<^sub>R tom B p3 = 0"
+  by (metis (no_types, lifting)
+     eq7
+      add_diff_add eq_iff_diff_eq_0 scaleR_left.diff)
+  then have "tom B ((u - c1) *\<^sub>R p1) + tom B ((u - c2) *\<^sub>R p2) + tom B ((u - c3) *\<^sub>R p3) = 0"
+    using tom_def 
+   by (metis (no_types, lifting) matrix_vector_mult_scaleR)
+  then have "tom B ((u - c1) *\<^sub>R p1 + (u - c2)*\<^sub>R  p2 + (u - c3) *\<^sub>R p3) = 0"
+    using tom_def 
+  by (metis (no_types, lifting) matrix_vector_right_distrib)
+  then have "tom B ?r = 0"
+    using comb2 assms(2) by auto
+  then have "?r = (0 :: (real, 3) vec)"
+    using inv_matrix_inj[of B ?r] invertible_B by simp
+  then have "u - c1 = 0 \<and> u - c2 = 0 \<and> u - c3 = 0"
+  by (simp add: vect_zero_eqv)
+  then have all_equal: "u = c1 \<and> u = c2 \<and> u = c3" by auto
+  have h1: "tom A p1 = u *\<^sub>R tom B p1" using all_equal hc1 by auto
+  have h2: "tom A p2 = u *\<^sub>R tom B p2" using all_equal hc2 by auto
+  have h3: "tom A p3 = u *\<^sub>R tom B p3" using all_equal hc3 by auto
+  have exists: "\<forall>x. tom A x = u *\<^sub>R tom B x" 
+    using h1 h2 h3 matrices_equal_on_basis by blast
+  have non_zero: "u \<noteq> 0" using hu by auto
+  show ?thesis using exists non_zero assms(1) assms(2) inv_matrix_inj zvec_alt
+    unfolding rp2rel_def
+  by metis
+qed 
+
+
+
 lemma matrix_agreeing_with_I_on_basis_is_scalar_mult_of_I: 
   fixes A :: m33
   assumes invertible_A: "det A \<noteq> 0"
@@ -567,7 +728,6 @@ lemma matrix_agreeing_with_I_on_basis_is_scalar_mult_of_I:
   assumes "rp2rel (A *v p2) p2"
   assumes "rp2rel (A *v p3) p3"
   assumes "rp2rel (A *v q) q"
-
   shows "(\<exists>c :: real . 
         A  = c *k I33)"
   sorry
@@ -584,7 +744,13 @@ lemma matrices_agreeing_on_basis_are_scalar_mults:
   sorry (* should follow instantly from previous lemma, applied to AB^{-1} *)
 
 
-
+theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *)
+  fixes A B:: m33
+  assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
+  assumes equal_maps: "rp2tom A = rp2tom B"
+  shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *k B" 
+ 
+  sorry
 
 
 (* If the transformations for matrices A and B are equal up to a constant factor c,
@@ -638,7 +804,7 @@ qed
 
 (*Some matrix-vector multiplication lemmas, which might be helpful *)
 
-lemma mat_mult_by_p1: "(A :: m33) *v p1 = (transpose A) $ 1" 
+lemma mat_mult_by_p1_s: "(A :: m33) *v p1 = (transpose A) $ 1" 
 proof -
   have "(A *v vector [1,0,0])$1=A$1$1\<and>(A *v vector[1,0,0])$2 =  A$2$1 \<and> (A *v vector [1,0,0])$3 = A $3$1"
     using explicit_inner_prod
@@ -647,7 +813,7 @@ proof -
     by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
 qed
 
-lemma mat_mult_by_p2: "(A :: m33) *v p2 = (transpose A) $ 2" 
+lemma mat_mult_by_p2_s: "(A :: m33) *v p2 = (transpose A) $ 2" 
 proof -
    have "(A *v vector [0,1,0])$1=A$1$2 \<and>(A *v vector[0,1,0])$2 = A$2$2 \<and> (A *v vector [0,1,0])$3 = A $3$2"
     using explicit_inner_prod
@@ -656,7 +822,7 @@ proof -
     by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
 qed
 
-lemma mat_mult_by_p3: "(A :: m33) *v p3 = (transpose A) $ 3" 
+lemma mat_mult_by_p3_s: "(A :: m33) *v p3 = (transpose A) $ 3" 
 proof -
   have "(A *v vector [0,0,1])$1=A$1$3 \<and>(A *v vector[0,0,1])$2 = A$2$3 \<and> (A *v vector [0,0,1])$3 = A $3$3"
     using explicit_inner_prod
@@ -665,36 +831,23 @@ proof -
     by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
 qed
 
-lemma inv_matrix_inj:
-  fixes A :: m33
-  fixes x :: v3
-  assumes "det A \<noteq> 0"
-  shows "tom A x = 0 \<longrightarrow> x = 0"
-  sorry
-(*
-proof (rule impI; rule ccontr)
-  assume x_in_ker: "tom A x = 0"
-  assume to_contr: "x \<noteq> 0"
-  show "False" using assms to_contr  image_non_zero_def x_in_ker sorry
-qed
-*)
 
 (*A general note: when proving statements involving vector arithmetic,
   ALWAYS unfold every definition first; then often writing "by vector"
   completes the goal. *)
 
-lemma lin_comb:
+lemma lin_comb_s:
   fixes a b c  :: real
   shows "vector[a, b, c] = a *s p1 + b *s p2 + c *s p3"
   unfolding p1_def p2_def p3_def vector_def
   by vector
 
-lemma matrix_mult_unfold:
+lemma matrix_mult_unfold_s:
   fixes x :: v3
   fixes A :: m33
   shows "tom A x = x$1 *s tom A p1 + x$2 *s tom A p2 + x$3 *s tom A p3"
 proof -
-  have "x = x$1 *s p1 + x$2 *s p2 + x$3 *s p3" using lin_comb
+  have "x = x$1 *s p1 + x$2 *s p2 + x$3 *s p3" using lin_comb_s
     by (metis matrix_rows(1) vector_1)
   then have "tom A x = tom A (x$1 *s p1 + x$2 *s p2 + x$3 *s p3)" by auto
   then have "tom A x = tom A (x$1 *s p1) + tom A (x$2 *s p2) + tom A (x$3 *s p3)" 
@@ -703,100 +856,10 @@ proof -
     unfolding tom_def by (simp add: vec.scale)
 qed
 
-lemma comb: "q = p1 +  p2 + p3" 
+lemma comb_s: "q = p1 +  p2 + p3" 
   unfolding q_def p1_def p2_def p3_def
   using lin_comb by vector
 
-lemma matrices_equal_on_basis:
-  fixes A B :: m33
-  and u :: real
-  assumes "tom A p1 = u *s tom B p1"
-  and "tom A p2 = u *s tom B p2"
-  and "tom A p3 = u *s tom B p3"
-  shows "\<forall>x :: v3. tom A x = u *s tom B x"
-proof (rule allI)
-  fix x :: v3
-  let ?a = "x $ 1"
-  let ?b = "x $ 2" 
-  let ?c = "x $ 3"
-  have "x = vector[?a, ?b, ?c]" unfolding vector_def vec_eq_iff using exhaust_3 by auto
-  then have x_eq: "x = ?a *s p1 + ?b *s p2 + ?c *s p3" using lin_comb by auto
-  then have eq1: "u *s tom B x = u *s tom B (?a *s p1 + ?b *s p2 + ?c *s p3)" by auto
-  have eq2: "u *s tom B ((?a *s p1) + (?b *s p2) + (?c *s p3)) = 
-               u *s tom B (?a *s p1) + u *s tom B (?b *s p2) + u *s  tom B (?c *s p3)" 
-    using tom_def matrix_vector_right_distrib vector_add_ldistrib sorry (* by metis *)
-  have eq3: "u *s tom B (?a *s p1) + u *s tom B (?b *s p2) + u *s  tom B (?c *s p3) =
-            ?a *s (u *s tom B p1) + ?b *s (u *s tom B p2) + ?c *s (u *s tom B p3)"
-    using tom_def vec.scale_left_commute vector_scalar_commute sorry (* by (metis (no_types, lifting)) *)
-  have eq4: "?a *s (u *s tom B p1) + ?b *s (u *s tom B p2) + ?c *s (u *s tom B p3) =
-            ?a *s tom A p1 + ?b *s tom A p2 + ?c *s tom A p3" using assms by auto
-  have eq5: "?a *s tom A p1 + ?b *s tom A p2 + ?c *s tom A p3 = 
-             tom A (?a *s p1 + ?b *s p2 + ?c *s p3)" using tom_def 
-    by (simp add: matrix_vector_right_distrib vector_scalar_commute) 
-  have eq6: "tom A (?a *s p1 + ?b *s p2 + ?c *s p3) = tom A x" using x_eq by auto
-  show "tom A x = u *s tom B x" using eq1 eq2 eq3 eq4 eq5 eq6 by auto
-qed
-
-lemma equiv_on_basis_imp_equiv:
-  (*The key part of the next theorem is separated out here, since we also need it for the uniqueness
-    part of Theorem 3.9 *)
-  fixes A :: m33
-  fixes B :: m33
-  assumes invertible_A: "det A \<noteq> 0"
-  and invertible_B: "det B \<noteq> 0"
-  and "\<exists>c1  :: real . c1 \<noteq> 0 \<and> tom A p1 = c1 *s tom B p1"
-  and "\<exists>c2 :: real . c2 \<noteq> 0 \<and> tom A p2 = c2 *s tom B p2"
-  and "\<exists>c3 :: real . c3 \<noteq> 0 \<and> tom A p3 = c3 *s tom B p3"
-  and "\<exists> u :: real . u \<noteq> 0 \<and> tom A q = u *s tom B q"
-  shows "\<exists>c :: real . \<forall>x :: v3 . (tom A) x = c *s (tom B) x \<and> c \<noteq> 0"
-proof -
-  obtain c1 :: real where hc1: "c1 \<noteq> 0 \<and> tom A p1 = c1 *s tom B p1" using assms(3) by auto
-  obtain c2 :: real where hc2: "c2 \<noteq> 0 \<and> tom A p2 = c2 *s tom B p2" using assms(4) by auto
-  obtain c3 :: real where hc3: "c3 \<noteq> 0 \<and> tom A p3 = c3 *s tom B p3" using assms(5) by auto
-  obtain u:: real where hu: "u \<noteq> 0 \<and> tom A q  = u *s tom B q" using assms(6) by auto
-  let ?r = "vector[u - c1, u - c2, u - c3]"
-  have comb2: "(u - c1) *s p1 + (u - c2) *s  p2 + (u - c3) *s p3 = ?r" 
-    unfolding p1_def p2_def p3_def vector_def by vector
-  have eq1: "u *s tom B p1 + u *s tom B p2 + u *s tom B p3 =
-             u *s (tom B p1 + tom  B p2 + tom B p3)"
-    by (simp add: vec.scale_right_distrib)
-  have eq2: "u *s (tom B p1 + tom  B p2 + tom B p3) = u *s (tom B (p1 + p2 + p3))"
-    by (simp add: tom_def vec.add)
-  have eq3: "u *s (tom B (p1 + p2 + p3)) = u *s (tom B q)"
-    using comb by auto
-  have eq4: "u *s (tom B q) = tom A q" using hu by auto
-  have eq5: "tom A q = tom A p1 + tom A p2 + tom A p3" using comb
-    by (metis matrix_vector_right_distrib
-        tom_def)
-  have eq6: "tom A p1 + tom A p2 + tom A p3 =
-             c1 *s tom B p1 + c2 *s tom B p2 + c3 *s tom B p3" using hc1 hc2 hc3 by auto
-  then have "u *s tom B p1 + u *s tom B p2 + u *s tom B p3 = 
-                 c1 *s tom B p1 + c2 *s tom B p2 + c3 *s tom B p3"
-    using eq1 eq2 eq3 eq4 eq5 eq6 by auto
-  then have rw1: "u *s tom B p1 - c1 *s tom B p1 + u *s tom B p2 - c2 *s tom B p2 + u *s tom B p3 
-             - c3 *s tom B p3 = 0" 
-     by (simp add: diff_add_eq)
-  then have "(u - c1) *s tom B p1 + (u - c2) *s tom B p2 + (u - c3) *s tom B p3 = 0"
-    by (simp add: group_cancel.sub1 vec.scale_left_diff_distrib)
-  then have "tom B ((u - c1) *s p1) + tom B ((u - c2) *s p2) + tom B ((u - c3) *s p3) = 0"
-    using tom_def sorry (* by (simp add: vector_scalar_commute) *)
-  then have "tom B ((u - c1) *s p1 + (u - c2) *s  p2 + (u - c3) *s p3) = 0"
-    using tom_def sorry (* by (simp add: matrix_vector_right_distrib) *)
-  then have "tom B ?r = 0"
-    using comb2 by auto
-  then have "?r = (0 :: (real, 3) vec)"
-    using inv_matrix_inj[of B ?r] invertible_B by simp
-  then have "u - c1 = 0 \<and> u - c2 = 0 \<and> u - c3 = 0"
-  by (simp add: vect_zero_eqv)
-  then have all_equal: "u = c1 \<and> u = c2 \<and> u = c3" by auto
-  have h1: "tom A p1 = u *s tom B p1" using all_equal hc1 by auto
-  have h2: "tom A p2 = u *s tom B p2" using all_equal hc2 by auto
-  have h3: "tom A p3 = u *s tom B p3" using all_equal hc3 by auto
-  have exists: "\<forall>x. tom A x = u *s tom B x" 
-    using h1 h2 h3 matrices_equal_on_basis by blast
-  have non_zero: "u \<noteq> 0" using hu by auto
-  show "\<exists>c. \<forall>x. tom A x = c *s tom B x \<and> c \<noteq> 0" using exists non_zero by auto
-qed 
 
 lemma inv_matrices_equiv_bwd:
   fixes A :: m33
