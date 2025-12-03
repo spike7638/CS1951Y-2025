@@ -490,6 +490,10 @@ lemma msmul_props:
   shows "(t *k (s *k A)) = (t * s) *k A" 
   unfolding matrix_scalar_mult_def by fastforce
 
+lemma matrix_scalar_mult_forall [intro]:
+ "(A :: m33) = c *k B \<longleftrightarrow> (\<forall> x :: v3 . A *v x = c *\<^sub>R (B *v x))"
+  sorry
+
 
 (* lemma s0:
   assumes "k \<in> rp2_Lines"
@@ -860,6 +864,7 @@ theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *
   assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
   assumes equal_maps: "rp2tom A = rp2tom B"
   shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *k B" 
+  
  
   sorry
 
@@ -868,7 +873,7 @@ theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *
   then they are "equiv_maps", i.e., they represent the same maps when considered as 
   rp2 \<Rightarrow> rp2 maps: *)
 (* This is proposition 3.8 *)
-lemma inv_matrices_equiv_fwd:
+lemma inv_matrices_equiv_iff:
   fixes A B :: m33
   assumes invertible_A: "det A \<noteq> 0"
   and invertible_B: "det B \<noteq> 0"
