@@ -371,6 +371,132 @@ l \<noteq> join A B \<and> incid A l \<and>  incid A m \<and> m \<noteq> join A 
 A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines
 ) then meet (join A B) (join (meet (join B (meet l n)) m) (meet (join B (meet m n)) l)) else undefined)"
 
+
+
+text\<open>\oliver \jackson\<close>
+lemma (in projective_plane_7) quadrangle_from_conjugate:
+  fixes A B C l m n D
+    (* harmonic_conjugate assumptions *)
+  assumes "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> l \<in> Lines \<and> m \<in> Lines \<and> n \<in> Lines"
+  assumes "distinct[A,B,C]"
+  assumes "pcollinear A B C"
+  assumes "l \<noteq> join A B \<and> incid A l \<and> incid A m \<and> m \<noteq> join A B \<and> m \<noteq> l \<and> n \<noteq> join A B \<and> incid C n"
+  assumes "harmonic_conjugate A B C l m n = D"
+  shows "\<exists> X Y Z W. X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and> cquadrangle X Y Z W \<and> X = meet l n \<and> W = meet m n \<and> Z = meet m (join B X) \<and> Y = meet l (join B W)"
+proof -
+  obtain h where collin: "h \<in> Lines \<and> (incid A h)  \<and> (incid B h)  \<and> (incid C h)" 
+    using assms pcollinear_def harmonic_conjugate_def by auto
+
+  have harmonic_line: "h = (join A B)" using assms(1,2) collin join_properties2 by auto
+  have mn_fact: "l \<noteq> h \<and> m \<noteq> h \<and> n \<noteq> h \<and> m \<noteq> n" using assms(1,2,4) collin unique_meet harmonic_line by force
+
+  obtain r where r_fact: "r \<in> Lines \<and> r = (join B (meet l n))" 
+  by (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1 join_properties2 meet_properties2)
+
+  obtain s where s_fact: "s \<in> Lines \<and> s = (join B (meet m n))"
+    by (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2 unique_meet)
+  
+  obtain t where t_fact: "t \<in> Lines \<and> t = (join (meet r m) (meet s l))" using r_fact s_fact
+    by (smt (z3) assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2 r_fact s_fact
+        unique_meet)
+
+  have a0: "D = meet (join A B) (join (meet (join B (meet l n)) m) (meet (join B (meet m n)) l))" 
+    using assms unfolding harmonic_conjugate_def by auto
+
+  have d_fact: "D = meet t h" 
+    using a0 assms t_fact collin harmonic_line r_fact s_fact meet_properties2 unique_meet by metis
+
+  have d_fact2: "(incid D h)" using d_fact meet_implies_incid 
+    by (smt (z3) assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_def meet_properties2
+        r_fact s s_fact t_fact)
+
+  have 0: "h \<in> Lines \<and> (incid A h) \<and> (incid B h) \<and> (incid C h) \<and> (incid D h)" using collin d_fact d_fact2 by auto
+
+
+  have 1: "distinct[l, h, m, n, s, r, t]" 
+  proof (rule ccontr)
+    assume ch: "\<not>distinct[l, h, m, n, s, r, t]"
+    show False
+    proof -
+      have 0: "l = n \<or> l = s \<or> l = r \<or> l = t \<or>
+               h = n \<or> h = s \<or> h = r \<or> h = t \<or>
+               m = n \<or> m = s \<or> m = r \<or> m = t \<or>
+               n = s \<or> n = r \<or> n = t \<or> 
+               s = r \<or> s = t \<or> 
+               r = t" using ch mn_fact assms(4) by auto
+      consider 
+         (ln) "l = n" | (ls) "l = s" | (lr) "l = r" | (lt) "l = t" | (hn) "h = n"
+       | (hs) "h = s" | (hr) "h = r" | (ht) "h = t" | (mn) "m = n" | (ms) "m = s"
+       | (mr) "m = r" | (mt) "m = t" | (ns) "n = s" | (nr) "n = r" | (nt) "n = t"
+       | (sr) "s = r" | (st) "s = t" | (rt) "r = t"
+        using 0 by blast
+      then show ?thesis
+        apply (cases)
+        using assms(1,3,5) collin mn_fact unique_meet apply auto[1]
+        using assms(2,4) apply auto[1]
+        apply (metis assms(1,4) join_properties1 join_properties2 meet_properties2 mn_fact s_fact)
+        apply (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2 r_fact
+            unique_meet)
+        apply (smt (verit) assms(1,2,4) collin distinct_length_2_or_more join_properties1
+            join_properties2 meet_properties2 projective_plane_axioms r_fact
+            s_fact t_fact)
+        using mn_fact apply blast
+        apply (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1
+            meet_properties2 s_fact unique_meet)
+        apply (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2
+            r_fact unique_meet)
+        apply (smt (z3) assms(1,2,4) collin distinct_length_2_or_more join_properties1 join_properties2
+            meet_properties2 r_fact s_fact t_fact)
+        using mn_fact apply auto
+        apply (metis assms(1,2,4) distinct_length_2_or_more join_properties1 join_properties2 meet_properties2
+            s_fact)
+        apply (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2 r_fact
+            unique_meet)
+        apply (smt (z3) assms(1,2,4) collin distinct_length_2_or_more join_properties1 join_properties2
+            meet_properties2 r_fact s_fact t_fact)
+        apply (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2 s_fact
+            unique_meet)
+        apply (metis assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2 r_fact
+            unique_meet)
+        apply (smt (verit, best) assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2
+            r_fact s_fact t_fact unique_meet)
+        apply (smt (verit, best) assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2
+            r_fact s_fact unique_meet)
+        apply (smt (z3) assms(1,2,4) collin distinct_length_2_or_more join_properties1 join_properties2
+            meet_properties2 r_fact s_fact t_fact)
+        by (smt (z3) assms(1,2,4) collin distinct_length_2_or_more join_properties1 meet_properties2 r_fact
+            s_fact t_fact unique_meet)
+    qed
+  qed
+
+  
+  obtain W where x_fact: "W \<in> Points \<and> W = meet m s" using 1 mn_fact meet_properties2 s_fact assms by force
+  obtain Z where y_fact: "Z \<in> Points \<and> Z = meet m r" using 1 mn_fact meet_properties2 r_fact assms by force
+  obtain Y where z_fact: "Y \<in> Points \<and> Y = meet l s" using 1 mn_fact meet_properties2 s_fact assms by force
+  obtain X where w_fact: "X \<in> Points \<and> X = meet l r" using 1 mn_fact meet_properties2 r_fact assms by force
+
+  have cquad_helper1: "\<not>pcollinear W Z Y" using x_fact y_fact z_fact mn_fact  s_fact r_fact 1 
+    by (smt (verit) assms(1) distinct_length_2_or_more join_properties1 join_properties2 meet_properties2
+        pcollinear_def)
+  have cquad_helper2: "\<not>pcollinear W X Z" using x_fact y_fact w_fact mn_fact s_fact r_fact 1 
+    by (smt (verit, ccfv_threshold) assms(1) cquad_helper1 distinct_length_2_or_more join_properties2 meet_properties2
+        pcollinear_def t_fact z_fact)
+  have cquad_helper3: "\<not>pcollinear W Y X" using x_fact z_fact w_fact mn_fact s_fact r_fact 1 
+    by (smt (verit, ccfv_threshold) assms(1) distinct_length_2_or_more join_properties1 meet_properties2 pcollinear_def
+        join_properties2 projective_plane_axioms)
+  have cquad_helper4: "\<not>pcollinear Z Y X" using y_fact z_fact w_fact mn_fact s_fact r_fact 1 
+    by (smt (verit, del_insts) assms(1) distinct_length_2_or_more join_properties1 join_properties2 meet_properties2
+        pcollinear_def)
+
+  (* May be able to reformulate statement "2" as a contradiction, where the 4 helpers are cases and use apply to solve all at once *)
+  have 2: "cquadrangle X Y Z W" using cquad_helper1 cquad_helper2 cquad_helper3 cquad_helper4
+  by (metis (no_types, opaque_lifting) cquadrangle_def pcollinear_def w_fact x_fact y_fact z_fact)
+
+    then show ?thesis using 2 w_fact x_fact y_fact z_fact 
+      by (smt (verit, del_insts) assms(1,2,4) collin distinct_length_2_or_more join_properties1 join_properties2
+          meet_properties2 r_fact s_fact)
+qed
+
 text\<open>\oliver \jackson\<close>
 lemma (in projective_plane_7) conjugate_is_harmonic:
   fixes A B C l m n D
@@ -756,8 +882,127 @@ lemma (in projective_plane_5_7) conjugate_change_l:
   assumes "pcollinear A B C"
   assumes "l \<noteq> join A B \<and> incid A l \<and> l' \<noteq> join A B \<and> incid A l' 
            \<and> incid A m \<and> m \<noteq> join A B \<and> m \<noteq> l \<and> m \<noteq> l' \<and> n \<noteq> join A B \<and> incid C n"
+
   shows "harmonic_conjugate A B C l m n = harmonic_conjugate A B C l' m n"
-  sorry
+proof -
+  consider (equal) "l = l'" | (def) "l \<noteq> l'" by auto
+  then show ?thesis
+  proof cases
+    case equal
+    then show ?thesis using equal by auto
+  next
+    case def
+    then show ?thesis 
+  proof -
+  obtain D where d_fact: "D \<in> Points \<and> D = harmonic_conjugate A B C l m n" 
+    unfolding harmonic_conjugate_def using conjugate_is_harmonic assms
+    by (smt (verit) distinct_length_2_or_more join_properties1 meet_properties2 pcollinear_def
+        unique_meet)
+
+  have 0: "harmonic_quadruple A B C D" using d_fact assms conjugate_is_harmonic[of A B C l m n D] by auto
+
+  obtain X Y Z W where quad_fact: 
+      "X \<in> Points \<and> Y \<in> Points \<and> Z \<in> Points \<and> W \<in> Points \<and> cquadrangle X Y Z W 
+      \<and> X = meet l n \<and> W = meet m n \<and> Z = meet m (join B X) \<and> Y = meet l (join B W)"
+    using assms quadrangle_from_conjugate unfolding harmonic_quadruple_def by auto
+
+  obtain D' where dp_fact: "D' \<in> Points \<and> D' = harmonic_conjugate A B C l' m n" 
+    unfolding harmonic_conjugate_def using conjugate_is_harmonic assms
+    by (smt (verit) distinct_length_2_or_more join_properties1 meet_properties2 pcollinear_def
+        unique_meet)
+
+  have 1: "harmonic_quadruple A B C D'" using dp_fact assms conjugate_is_harmonic[of A B C l' m n D'] by auto
+
+  obtain X' Y' Z' W' where quadp_fact: 
+      "X' \<in> Points \<and> Y' \<in> Points \<and> Z' \<in> Points \<and> W' \<in> Points \<and> cquadrangle X' Y' Z' W' 
+      \<and> X' = meet l' n \<and> W' = meet m n \<and> Z' = meet m (join B X') \<and> Y' = meet l' (join B W')"
+    using assms quadrangle_from_conjugate unfolding harmonic_quadruple_def by auto
+
+  (* P5 application setup *)
+  have 2: "W = W'" using quad_fact quadp_fact by auto
+  have 3: "distinct7 W X Y Z X' Y' Z'" 
+  proof (rule ccontr)
+    assume ch: "\<not>(distinct7 W X Y Z X' Y' Z')"
+    show False
+    proof -
+      have 0: "X = X'" 
+      by (smt (z3) assms(1,4) ch cquadrangle_def distinct7_def join_properties2 pcollinear_degeneracy
+          join_properties1 meet_properties2 projective_plane_axioms quad_fact quadp_fact)
+      then show ?thesis 
+        by (smt (verit) assms(1,4) cquadrangle_def def pcollinear_def projective_plane.join_properties1
+            projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_axioms quad_fact
+            quadp_fact)
+    qed
+  qed
+  have 4: "pcollinear X X' W" using quadp_fact quad_fact 2 3
+    by (metis assms(1,4) distinct7_def meet_properties2 pcollinear_def unique_meet)
+  have 5: "pcollinear Y Y' W" using quadp_fact quad_fact 2 3 
+    by (smt (verit, del_insts) assms(1) distinct7_def join_properties1 meet_properties2 pcollinear_def unique_meet)
+  have 6: "pcollinear Z Z' W" using quadp_fact quad_fact 2 3 
+    by (smt (z3) assms(1) distinct7_def incid_join_collinear join_properties1 join_properties2 meet_properties2)
+  have 7: "\<not>pcollinear X Y Z \<and> \<not>pcollinear X' Y' Z'" using quad_fact quadp_fact cquadrangle_def by auto
+  have 8: "join X Y \<noteq> join X' Y'" using quadp_fact quad_fact 
+    by (smt (z3) assms(1) def cquadrangle_def meet_properties2 pcollinear_degeneracy projective_plane.join_properties1
+        projective_plane_axioms unique_meet)
+  have 9: "join X Z \<noteq> join X' Z'" using quadp_fact quad_fact
+    by (smt (verit, del_insts) 3 assms(1) distinct7_def join_properties1 join_properties2 meet_properties2) 
+  have 10: "join Y Z \<noteq> join Y' Z'" using quadp_fact quad_fact 
+    by (smt (verit, del_insts) 3 assms(1) distinct7_def join_properties1 join_properties2 meet_properties2)
+  have 11: "A = meet (join X Y) (join X' Y')" using quad_fact quadp_fact 
+    by (smt (verit) 3 assms(1,4) distinct7_def join_properties1 join_properties2 meet_properties2 projective_plane_axioms meet_def)
+  have 12: "B = meet (join X Z) (join X' Z')" using quad_fact quadp_fact 
+    by (smt (z3) 3 assms(1) distinct7_def projective_plane.join_properties1 projective_plane.meet_properties2
+        projective_plane_axioms unique_meet)
+
+  have apply_p5: "pcollinear A B (meet (join Y Z) (join Y' Z'))" 
+    using 3 4 5 6 7 8 9 10 11 12 p5 quad_fact quadp_fact by metis
+
+  have 13: "incid D (join Y Z)" using d_fact quad_fact unfolding harmonic_conjugate_def 
+    by (smt (verit) 3 assms(1,2,3,4) distinct7_def meet_def projective_plane.join_properties1
+        projective_plane.meet_properties2 projective_plane.unique_meet projective_plane_axioms)
+
+  obtain E where e_fact: "E \<in> Points \<and> E = (meet (join Y Z) (join Y' Z'))" 
+    using quad_fact quadp_fact 3 10 distinct7_def mjj_point by metis
+  have 14: "pcollinear A B E" using apply_p5 e_fact by auto
+  have 15: "incid E (join A B)" using 14 assms(1,2) e_fact join_properties2 pcollinear_def by auto
+  have 16: "incid E (join Y Z)" 
+    using e_fact 3 10 distinct7_def join_properties1 meet_properties2 quad_fact quadp_fact by metis
+  have 17: "E = meet (join A B) (join Y Z)" using 15 16 
+  by (smt (z3) assms(1,4) distinct_length_2_or_more e_fact join_properties1 meet_properties2 projective_plane_data.meet_def
+      quad_fact quadrangle_points_distinct s)
+  have 18: "incid D (join A B)" 
+    using 0  assms(1) d_fact distinct_length_2_or_more join_properties2
+    unfolding harmonic_quadruple_def 
+    by auto
+  have 19: "D = meet (join A B) (join Y Z)" using 13 18 
+    by (smt (z3) 3 11 12 assms(4) d_fact distinct7_def join_properties2 meet_def projective_plane.join_properties1
+        projective_plane.meet_properties2 projective_plane_axioms quad_fact quadp_fact)
+  have 20: "D = E" using 17 19 by auto
+  have 21: "incid E (join Y' Z')" 
+    using e_fact 3 10 distinct7_def join_properties1 meet_properties2 quad_fact quadp_fact by metis
+  have 22: "D = meet (join A B) (join Y' Z')" using 3 18 20 21 
+    by (smt (z3) assms(1,2) cquadrangle_def distinct7_def distinct_length_2_or_more e_fact join_properties1
+        incid_join_collinear meet_properties2 projective_plane_axioms quad_fact quadp_fact unique_meet)
+
+  have 23: "Y' = meet (join B (meet m n)) l'" using meet_def meet_properties2 quadp_fact unique_meet by auto
+  have 24: "Z' = meet (join B (meet l' n)) m" using meet_def meet_properties2 quadp_fact unique_meet by auto
+
+  have 25: "join Y' Z' = join (meet (join B (meet l' n)) m)  (meet (join B (meet m n)) l')" 
+    using 23 24 join_properties1 quadp_fact unique_meet by metis
+  have 26: "D = meet (join A B) ( join (meet (join B (meet l' n)) m)  (meet (join B (meet m n)) l'))"
+    using 22 25 by auto
+  have final: "D = harmonic_conjugate A B C l' m n"
+    using assms 26
+    unfolding harmonic_conjugate_def 
+    by auto
+
+  show ?thesis using final d_fact by auto
+qed
+qed
+qed
+text\<open>\done\<close>
+  
+
 
 text\<open>\oliver \jackson\<close>
 lemma (in projective_plane_5_7) conjugate_change_m:
