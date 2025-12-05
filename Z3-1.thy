@@ -568,6 +568,10 @@ proof -
     by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
 qed
 
+(*A general note: when proving statements involving vector arithmetic,
+  ALWAYS unfold every definition first; then often writing "by vector"
+  completes the goal. *)
+
 lemma lin_comb:
   fixes a b c  :: real
   shows "vector[a, b, c] = a *\<^sub>R p1 + b *\<^sub>R p2 + c *\<^sub>R p3"
@@ -741,7 +745,17 @@ proof -
       tom_def zvec_alt)
 qed
 
-theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *)
+lemma tom_rp2tom_translation:
+  fixes A x
+  assumes "det A \<noteq> 0"
+  and "x \<noteq> zvec"
+  and "rp2rel (tom A x)  (tom B x)"
+  shows "rp2tom A (Abs_rp2 x) = rp2tom B (Abs_rp2 x)"
+  using assms
+  by (metis Quotient3_rel_abs Quotient3_rp2 alt_rp2rel cross_refl rp2tom.abs_eq zvec_alt)
+  
+
+lemma equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *)
   fixes A B:: m33
   assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
   assumes equal_maps: "rp2tom A = rp2tom B"
@@ -765,153 +779,47 @@ proof -
     1 2 3 invertible matrix_eq scaleR_matrix_vector_assoc tom_nonz_det
   by metis
 qed
- 
-(* If the transformations for matrices A and B are equal up to a constant factor c,
-  then they are "equiv_maps", i.e., they represent the same maps when considered as 
-  rp2 \<Rightarrow> rp2 maps: *)
+
+lemma matrix_scalar_multiple_implies_equal_matrix_transforms: (* theorem 3.8 *)
+  fixes A B:: m33
+  assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
+  assumes scalar_mult: "\<exists>c::real . c \<noteq> 0 \<and> A = c *\<^sub>R B" 
+  shows "rp2tom A = rp2tom B"
+proof -
+  obtain c :: real where c_defs: "c \<noteq> 0 \<and> A = c *\<^sub>R B" using scalar_mult by auto
+  have "\<forall> x :: rp2 . rp2tom A x = rp2tom B x"
+  proof (rule allI)
+    fix y
+    let ?y = "Rep_rp2 y"
+    have ry_nz: "?y \<noteq> zvec" using rep_P_nz by auto
+    have "A *v ?y = c *\<^sub>R B *v ?y" using c_defs by auto
+    then have "tom A ?y = c *\<^sub>R tom B ?y" using invertible
+      by (simp add: scaleR_matrix_vector_assoc)
+    then show "rp2tom A y = rp2tom B y"
+      using assms tom_rp2tom_translation[of A ?y B] ry_nz
+    by (metis ar inv_matrices_img_nonzero rp2rel_def scaleR_eq_0_iff zvec_alt)
+  qed
+  then show ?thesis by auto
+qed
+
+
+(* The transformations for matrices A and B are equal up to a constant factor c,
+ if and only if they represent the same map on rp2 *)
 (* This is proposition 3.8 *)
 lemma inv_matrices_equiv_iff:  (* A = cB \<longleftrightarrow> rp2tom A = rp2tom B *)
   fixes A B :: m33
   assumes invertible_A: "det A \<noteq> 0"
   and invertible_B: "det B \<noteq> 0"
-shows "(\<exists>c :: real .  A  = c *k B) \<longleftrightarrow> ((rp2tom A) = (rp2tom B))"
-  sorry
+shows "(\<exists>c :: real .  A  = c *\<^sub>R B) \<longleftrightarrow> ((rp2tom A) = (rp2tom B))"
+  using assms equal_matrix_transforms_implies_matrix_scalar_multiple 
+        matrix_scalar_multiple_implies_equal_matrix_transforms
+  by (metis det_0 mat_0 scaleR_zero_left)
 
 (* WHAT REMAINS 
 ** ## State that A B C are coplanar in v3 iff det([A,B,C]) = 0
 ** ## State that (rp2abs A) (rp2abs B) (rp2abs C) are collinear in rp3, iff det([A,B,C]) = 0 (i.e. them 3.10)
 *)
 
-
-(* =========prior stuff ===========*)
-(*
-proof (rule impI; safe)
-  fix c :: real
-  assume c_scales: "\<forall>x . (tom A) x = c *s (tom B) x"
-  have c_nonzero: "c \<noteq> 0"
-  proof 
-    assume "c = 0"
-    then have "c *s (tom B) x = 0" for x by simp
-    then have "tom A x = 0" for x using c_scales by auto
-    then have "A = 0" using tom_def by (simp add: matrix_eq)
-    then have "det A = 0" using det_0 by auto
-    then show "False" using invertible_A by auto
-  qed
-  show "equiv_maps (tom A) (tom B)"
-    unfolding equiv_maps_def
-  proof (safe)
-    show "well_defined (tom A)"
-      unfolding well_defined_def
-      using matrices_respect_scaling inv_matrices_image_non_zero invertible_A 
-      by auto
-    show "well_defined (tom B)"
-      unfolding well_defined_def
-      using matrices_respect_scaling inv_matrices_image_non_zero invertible_B 
-      by auto
-    fix x :: v3
-    show "\<exists>l. l \<noteq> 0 \<and> tom A x = l *s tom B x" 
-      using c_nonzero c_scales by auto
-  qed 
-qed
-*)
-
-(*Some matrix-vector multiplication lemmas, which might be helpful *)
-
-lemma mat_mult_by_p1_s: "(A :: m33) *v p1 = (transpose A) $ 1" 
-proof -
-  have "(A *v vector [1,0,0])$1=A$1$1\<and>(A *v vector[1,0,0])$2 =  A$2$1 \<and> (A *v vector [1,0,0])$3 = A $3$1"
-    using explicit_inner_prod
-    by (simp add: matrix_vector_mul_component)
-  then show ?thesis unfolding p1_def unfolding transpose_def
-    by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
-qed
-
-lemma mat_mult_by_p2_s: "(A :: m33) *v p2 = (transpose A) $ 2" 
-proof -
-   have "(A *v vector [0,1,0])$1=A$1$2 \<and>(A *v vector[0,1,0])$2 = A$2$2 \<and> (A *v vector [0,1,0])$3 = A $3$2"
-    using explicit_inner_prod
-    by (simp add: matrix_vector_mul_component)
-  then show ?thesis unfolding p2_def unfolding transpose_def
-    by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
-qed
-
-lemma mat_mult_by_p3_s: "(A :: m33) *v p3 = (transpose A) $ 3" 
-proof -
-  have "(A *v vector [0,0,1])$1=A$1$3 \<and>(A *v vector[0,0,1])$2 = A$2$3 \<and> (A *v vector [0,0,1])$3 = A $3$3"
-    using explicit_inner_prod
-    by (simp add: matrix_vector_mul_component)
-    then show ?thesis unfolding p3_def unfolding transpose_def
-    by (smt (verit, del_insts) exhaust_3 vec_lambda_unique)
-qed
-
-
-(*A general note: when proving statements involving vector arithmetic,
-  ALWAYS unfold every definition first; then often writing "by vector"
-  completes the goal. *)
-
-lemma lin_comb_s:
-  fixes a b c  :: real
-  shows "vector[a, b, c] = a *s p1 + b *s p2 + c *s p3"
-  unfolding p1_def p2_def p3_def vector_def
-  by vector
-
-lemma matrix_mult_unfold_s:
-  fixes x :: v3
-  fixes A :: m33
-  shows "tom A x = x$1 *s tom A p1 + x$2 *s tom A p2 + x$3 *s tom A p3"
-proof -
-  have "x = x$1 *s p1 + x$2 *s p2 + x$3 *s p3" using lin_comb_s
-    by (metis matrix_rows(1) vector_1)
-  then have "tom A x = tom A (x$1 *s p1 + x$2 *s p2 + x$3 *s p3)" by auto
-  then have "tom A x = tom A (x$1 *s p1) + tom A (x$2 *s p2) + tom A (x$3 *s p3)" 
-    unfolding tom_def by (simp add: vec.add)
-  then show ?thesis
-    unfolding tom_def by (simp add: vec.scale)
-qed
-
-lemma comb_s: "q = p1 +  p2 + p3" 
-  unfolding q_def p1_def p2_def p3_def
-  using lin_comb by vector
-
-
-lemma inv_matrices_equiv_bwd:
-  fixes A :: m33
-  fixes B :: m33
-  assumes invertible_A: "det A \<noteq> 0"
-  and invertible_B: "det B \<noteq> 0"
-  shows "equiv_maps (tom A) (tom B) \<longrightarrow> (\<exists>c :: real . \<forall>x :: v3 . 
-        (tom A) x = c *s (tom B) x \<and> c \<noteq> 0)"
-  sorry
-  (* unfolding equiv_maps_def *)
-(* proof (safe)
-  assume wd_A: "well_defined (tom A)"
-  assume wd_B: "well_defined (tom B)"
-  assume equivs: "\<forall>x. \<exists>l. l \<noteq> 0 \<and> tom A x = l *s tom B x"
-  obtain c1 :: real where hc1: "c1 \<noteq> 0 \<and> tom A p1 = c1 *s tom B p1" using equivs by auto
-  obtain c2 :: real where hc2: "c2 \<noteq> 0 \<and> tom A p2 = c2 *s tom B p2" using equivs by auto
-  obtain c3 :: real where hc3: "c3 \<noteq> 0 \<and> tom A p3 = c3 *s tom B p3" using equivs by auto
-  obtain u:: real where hu: "u \<noteq> 0 \<and> tom A q  = u *s tom B q" using equivs by auto
-  show "\<exists>c. \<forall>x. tom A x = c *s tom B x \<and> c \<noteq> 0" 
-    using hc1 hc2 hc3 hu equiv_on_basis_imp_equiv invertible_A invertible_B by auto
-qed 
-*)
-
-theorem inv_matrices_equiv_iff:
-  fixes A :: m33
-  fixes B :: m33
-  assumes invertible_A: "det A \<noteq> 0"
-  and invertible_B: "det B \<noteq> 0"
-  shows "equiv_maps (tom A) (tom B) \<longleftrightarrow> (\<exists>c :: real . \<forall>x :: v3 . 
-        (tom A) x = c *s (tom B) x \<and> c \<noteq> 0)"
-  sorry
-(*
-proof
-  show "\<exists>c. \<forall>x. tom A x = c *s tom B x \<and> c \<noteq> 0 \<Longrightarrow> equiv_maps (tom A) (tom B)"
-    using inv_matrices_equiv_fwd invertible_A invertible_B by auto
-  show " equiv_maps (tom A) (tom B) \<Longrightarrow> \<exists>c. \<forall>x. tom A x = c *s tom B x \<and> c \<noteq> 0"
-    using inv_matrices_equiv_bwd invertible_A invertible_B by auto
-qed 
-*)
 end       
 
 
