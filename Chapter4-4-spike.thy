@@ -20,7 +20,7 @@ that should make proving projectivity_not_nice a lot easier *)
                                  
 fun perspectivity :: "('p, 'l) persp_data \<Rightarrow> ('p \<Rightarrow> 'p)"
   where "perspectivity (Or, l1, l2) = (if is_persp_data (Or, l1, l2)
-  then (\<lambda> P . if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else 
+  then (\<lambda> P . if P = undefined then undefined else if P \<in> Points \<and> P \<lhd> l1 then (meet (join Or P) l2) else undefined) else 
   (\<lambda> P . undefined))"
 
 lemma  persp_data_sym [sym]: 
@@ -35,12 +35,12 @@ fun persp_range :: "('p, 'l) persp_data \<Rightarrow> 'l"
 
 lemma perspectivity_nice: 
   fixes Or P l1 l2
-  assumes "P \<in> Points \<and>  P \<lhd> persp_domain (Or, l1, l2)"
+  assumes "P \<in> Points \<and> P \<lhd> persp_domain (Or, l1, l2)"
   assumes "is_persp_data (Or, l1, l2)"
   shows "(perspectivity (Or, l1, l2) P) \<in> Points \<and> (perspectivity (Or, l1, l2) P) \<lhd> persp_range (Or, l1, l2)"
 proof -
-  have ss: "((perspectivity (Or, l1, l2) P) \<in> Points) \<equiv> ((Or \<bar> P \<sqdot> l2)  \<in> Points)" 
-    using assms assms by auto
+  have ss: "((perspectivity (Or, l1, l2) P) \<in> Points) \<equiv> ((Or \<bar> P \<sqdot> l2) \<in> Points)" 
+    using assms by auto
   have st: "(Or \<bar> P \<sqdot> l2)  \<in> Points" using assms persp_domain.simps meet_properties2 
     join_properties1 join_properties2 is_persp_data.simps by metis
   have su: "(Or \<bar> P \<sqdot> l2) \<lhd> l2" 
@@ -212,7 +212,10 @@ fun is_proj_data :: "(('p, 'l) persp_data) proj_data \<Rightarrow> bool" where
 
 fun projectivity :: "(('p, 'l) persp_data) proj_data \<Rightarrow> ('p \<Rightarrow> 'p)" where
   "projectivity (Cons d []) = (if is_proj_data (Cons d []) then (perspectivity d) else (\<lambda> Q . undefined))" |
-  "projectivity (Cons d ds) = (if is_proj_data (Cons d ds) then ((projectivity ds) \<circ> (perspectivity d)) else (\<lambda> Q . undefined))" |
+  "projectivity (Cons d ds) = (if is_proj_data (Cons d ds) then 
+    (\<lambda> Q . if Q = undefined then undefined else if Q \<in> Points \<and> Q \<lhd> persp_domain d then 
+    ((projectivity ds) \<circ> (perspectivity d)) Q else undefined) 
+    else (\<lambda> Q . undefined))" |
   "projectivity [] = (\<lambda> Q . undefined)"
 
 fun proj_domain :: "(('p, 'l) persp_data) proj_data \<Rightarrow> 'l" where
@@ -326,7 +329,7 @@ next
       show "projectivity (a # qs) P \<in> Points \<and> projectivity (a # qs) P \<lhd> proj_range qs"
       proof - 
       have "is_proj_data (a # qs) \<Longrightarrow> (projectivity (a # qs) P = ((projectivity qs) \<circ> (perspectivity a)) P)"
-      by (metis ah list.exhaust projectivity.simps(2))
+        using ah list.exhaust projectivity.simps(2) h2 proj_domain.simps(2) sorry
       also have "... = (projectivity qs) ((perspectivity a) P)" by auto
       finally have p3a: "projectivity (a # qs) P = (projectivity qs) ((perspectivity a) P)"
         using h1 by fastforce
@@ -370,16 +373,18 @@ next
     by fastforce
   next
     case False
-    then have h0: "projectivity (d # ds) P = (projectivity ds \<circ> perspectivity d) P"
-      using neq_Nil_conv projectivity.simps(2) by (metis Cons.prems(1))
+    show ?thesis 
+      by (smt (verit, ccfv_threshold) Cons.prems(2) False neq_Nil_conv proj_domain.simps(2) projectivity.simps(2))
+    (*then have h0: "projectivity (d # ds) P = (projectivity ds \<circ> perspectivity d) P"
+      using neq_Nil_conv projectivity.simps(2) Cons.prems(1) sorry
     then have "... = (projectivity ds (perspectivity d P))"
       by auto
     moreover have "\<not>(P \<in> Points) \<or> \<not>(P \<lhd> persp_domain d)"
       using Cons.prems(2) proj_domain.simps(2) by (metis False neq_Nil_conv) 
     moreover have "perspectivity d P = undefined" using Cons.prems(1) calculation(2) is_proj_made_up_of_persp
       by fastforce
-    moreover have "projectivity ds undefined = undefined" using projectivity.simps sorry
-    ultimately show ?thesis using h0 by presburger
+    moreover have "projectivity ds undefined = undefined" using projectivity.simps 
+    ultimately show ?thesis using h0 by presburger*)
   qed
 qed
 
@@ -444,15 +449,46 @@ next
     list.sel(1) hd_append sorry
 qed
 
+
 lemma persp_proj_composition_is_proj:
   fixes d d'
   assumes "persp_range d = proj_domain d'"
   assumes "is_persp_data d"
   assumes "is_proj_data d'"
   shows "projectivity (d # d') = (projectivity d') \<circ> (perspectivity d)"
-  using fun.map_ident_strong projectivity.cases
-          projectivity.simps(1,2,3) assms by (smt (verit, best) is_proj_data.elims(2) is_proj_data.simps(2)
-      proj_domain.simps(1,2))
+proof - 
+  have h1: "P \<in> Points \<and> P \<lhd> persp_domain d \<longrightarrow> projectivity (d # d') P  = ((projectivity d') \<circ> (perspectivity d)) P" for P
+    using assms is_proj_data.elims(1) is_proj_data.simps(2) proj_domain.simps(1,2)
+      projectivity.simps(2) sorry
+  have h2: "\<not> (P \<in> Points \<and> P \<lhd> persp_domain d) \<longrightarrow> projectivity (d # d') P  = undefined" for P
+    by (smt (verit, best) assms(3) is_proj_data.simps(3) list.exhaust projectivity.simps(2))
+  have h3: "\<not> (P \<in> Points \<and> P \<lhd> persp_domain d) \<longrightarrow> (perspectivity d) P = undefined" for P
+    by (metis assms(2) is_proj_data.simps(1) proj_domain.simps(1) projectivity.simps(1) projectivity_not_nice)
+  have h4: "perspectivity d undefined = undefined" 
+    by (smt (verit, best) assms(2) is_persp_data.elims(2) perspectivity.simps)
+  fix P
+  have "projectivity (d # d') P  = ((projectivity d') \<circ> (perspectivity d)) P"
+  proof - 
+    consider (valid) "P \<in> Points \<and> P \<lhd> persp_domain d" | (invalid) "\<not> (P \<in> Points \<and> P \<lhd> persp_domain d)" by auto
+    show ?thesis
+    proof cases
+      case valid
+      then show ?thesis sorry
+    next
+      case invalid
+      then show ?thesis sorry
+    qed
+  proof (cases P)
+
+lemma persp_proj_composition_is_proj:
+  fixes d d' P
+  assumes "persp_range d = proj_domain d'"
+  assumes "is_persp_data d"
+  assumes "is_proj_data d'"
+  assumes "P \<in> Points \<and> P \<lhd> persp_domain d"
+  shows "projectivity (d # d') P = ((projectivity d') \<circ> (perspectivity d)) P"
+  by (smt (z3) assms(1,2,3,4) is_proj_data.elims(1) is_proj_data.simps(2) proj_domain.simps(1,2)
+      projectivity.simps(2))
 
 (* God, this OUGHT to be a lot simpler! *)
 lemma proj_composition_is_proj:
@@ -467,27 +503,28 @@ proof (induction d)
   then show ?case by simp
 next
   case (Cons a ds)
+  have h: "is_proj_data ((a # ds) @ d')" 
+    using Cons.prems(1,2) assms(3) proj_data_append_is_data by blast
   have h0: "projectivity ((a # ds) @ d') = projectivity ((a # ds) @ d')"
     by auto
   also have h1: "... = projectivity (a # (ds @ d'))"
     by force
   also have h2: "... = (projectivity (ds @ d')) \<circ> (perspectivity a)"
-    using persp_proj_composition_is_proj by (metis fun.map_ident_strong neq_Nil_conv projectivity.simps(1,2,3))
+    using persp_proj_composition_is_proj using neq_Nil_conv projectivity.simps(1,2,3) 
+    by (metis (no_types, lifting) Cons.prems(1,2) Cons_eq_appendI append_is_Nil_conv assms(3) is_proj_data.simps(3)
+      proj_data_append_is_data)
   also have h3: "... = ((projectivity d') \<circ> (projectivity ds)) \<circ> (perspectivity a)"
-    by (metis (no_types, opaque_lifting)
-    Cons.IH Cons.prems(1,2)
+    using h Cons.IH Cons.prems(1,2)
     append_Nil assms(3)
     comp_apply
     is_proj_data.simps(2)
     list.exhaust
     proj_range.simps(2)
-    projectivity.simps(3))
+    projectivity.simps(3) sorry
   also have h4: "... = (projectivity d') \<circ> ((projectivity ds) \<circ> (perspectivity a))"
     by (simp add: comp_assoc)
   also have h5: "... = (projectivity d') \<circ> (projectivity (a # ds))"
-    by (metis fun.map_ident_strong
-    neq_Nil_conv
-    projectivity.simps(1,2,3))
+    using neq_Nil_conv projectivity.simps(1,2,3) by (metis Cons.prems(2) append_Nil[of d'] h3 h4)
   then show ?case using h1 h2 h3 h4
     by argo
 qed 
@@ -507,7 +544,7 @@ next
   then show ?case
   proof cases
     case empty
-    have h1: "f = perspectivity a" by (simp add: Cons.prems(2) empty)
+    have h1: "f = perspectivity a" using Cons.prems empty by auto
     have h2: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
     show ?thesis using h1 h2 ext bij_betw_def empty perspectivity_bij proj_domain.simps(1) 
       by (metis (lifting))
@@ -520,7 +557,7 @@ next
     let ?h = "projectivity ds"
     have "is_proj_data ds" using Cons.prems(1) nonempty proj_tail_is_data by auto
     then have h2: "inj_on ?h {P \<in> Points. P \<lhd> proj_domain ds}" using Cons.prems Cons.IH by auto
-    have h3: "f = ?h \<circ> ?g" by (metis Cons.prems(2) nonempty projectivity.cases projectivity.simps(2))
+    have h3: "f = ?h \<circ> ?g" by (metis Cons.prems nonempty projectivity.cases projectivity.simps(2))
     have "persp_range a = proj_domain ds" 
       by (metis Cons.prems(1) is_proj_data.simps(2) nonempty proj_domain.elims)
     then have h4: "\<forall>P \<in> {P \<in> Points. P \<lhd> persp_domain a}. ?g P \<in> {P \<in> Points. P \<lhd> proj_domain ds}"
@@ -546,7 +583,7 @@ next
   then show ?case
   proof cases
     case empty
-    have h1: "f = perspectivity a" by (simp add: Cons.prems(2) empty)
+    have h1: "f = perspectivity a" using Cons.prems empty by auto
     have h2: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
     show ?thesis using h1 h2 ext bij_betw_def empty perspectivity_bij proj_domain.simps(1) 
       by (metis (no_types, lifting) proj_range.simps(1))
@@ -560,7 +597,7 @@ next
     have "is_proj_data ds" using Cons.prems(1) nonempty proj_tail_is_data by auto
     then have h2: "?h ` {P \<in> Points. P \<lhd> proj_domain ds} = {Q \<in> Points. Q \<lhd> proj_range ds}" 
       using Cons.prems Cons.IH by auto
-    have h3: "f = ?h \<circ> ?g" by (metis Cons.prems(2) nonempty projectivity.cases projectivity.simps(2))
+    have h3: "f = ?h \<circ> ?g" by (metis Cons.prems nonempty projectivity.cases projectivity.simps(2))
     have h4a: "persp_range a = proj_domain ds" 
       by (metis Cons.prems(1) is_proj_data.simps(2) nonempty proj_domain.elims)
     then have h4: "\<forall>P \<in> {P \<in> Points. P \<lhd> persp_domain a}. ?g P \<in> {P \<in> Points. P \<lhd> proj_domain ds}"
@@ -605,15 +642,15 @@ next
   then show ?case
   proof cases
     case empty
-    have h1: "f = perspectivity a" by (simp add: Cons.prems(2) empty)
+    have h1: "f = perspectivity a" using Cons.prems empty by auto
     have h2: "is_persp_data a" using Cons.prems(1) proj_is_persp_data by auto
     obtain g where "B \<in> {Q \<in> Points. Q \<lhd> proj_range d} \<longrightarrow>
            g B = the_inv_into {P \<in> Points. P \<lhd> persp_domain a} f B" for B by blast
-    then show ?thesis by (smt (verit) One_nat_def RP2Q.proj_range.simps(3) h1 h2 
+    then show ?thesis using One_nat_def RP2Q.proj_range.simps(3) h1 h2 
           assms(2) empty local.Cons(4) normalize_nat_def persp_domain.simps
           proj_range.simps(3) projective_plane.inverse_persp projective_plane.is_persp_data.elims(2)
           projective_plane.proj_domain.simps(1) projective_plane_axioms projectivity.simps(1)
-          punctured_r_3_def rp2_Points_def)
+          punctured_r_3_def rp2_Points_def sorry
   next
     case nonempty
     have ha: "is_proj_data ds" using Cons.prems(1) nonempty proj_tail_is_data by blast
@@ -1005,13 +1042,13 @@ proof -
     using d1_persp d2_persp by simp
   
   have f_A: "?f A = A'"
-    using persp1_A persp2_A'' by simp
+    using persp1_A persp2_A'' using ds_valid by fastforce
   
   have f_B: "?f B = B'"
-    using persp1_B persp2_B'' by simp
+    using persp1_B persp2_B'' using ds_valid by fastforce
   
   have f_C: "?f C = C'"
-    using persp1_C persp2_C'' by simp
+    using persp1_C persp2_C'' using ds_valid by fastforce
   
   have ds_domain: "proj_domain ?ds = l" using d1_domain by auto
   have ds_range: "proj_range ?ds = l'" using d2_range by auto
@@ -1092,7 +1129,6 @@ proof -
     distinct_singleton
     inverse_persp)
   
-  
   let ?ds = "ds1 @ ds2"
   let ?f = "f2 \<circ> f1"
   
@@ -1151,7 +1187,7 @@ next
   proof (cases "ds = []")
     case True
     then have "projectivity (d # ds) = perspectivity d"
-      by simp
+      using Cons.prems(1) by auto
     then show ?thesis
       using Cons.prems perspectivity_hquad_to_hquad by (smt (verit) True is_persp_data.elims(2)
     persp_domain.simps proj_domain.simps(1)
