@@ -1095,7 +1095,7 @@ lemma perspectivity_hquad_to_hquad:
                    B' = perspectivity (Or, l1, l2) B \<and>
                    C' = perspectivity (Or, l1, l2) C \<and> 
                    D' = perspectivity (Or, l1, l2) D"
-  shows "harmonic_quadruple A' B' C' D'"
+  shows "harmonic_quadruple A' B' D' C'"
 proof -
   have ABCD_distinct: "distinct [A, B, C, D]"
     using ABCD_harmonic harmonic_quadruple_def using ABCD_on_l1 by force
@@ -1147,21 +1147,21 @@ proof -
   let ?OrC = "join Or C"
   let ?OrD = "join Or D"
   
-  have OrA_line: "?OrA \<in> Lines \<and> incid Or ?OrA \<and> incid A ?OrA"
+  have OrA_line: "?OrA \<in> Lines \<and> incid Or ?OrA \<and> incid A ?OrA \<and> incid A' ?OrA"
     using ABCD_on_l1 persp_data is_persp_data.simps 
-          join_properties1 join_properties2 by metis
+          join_properties1 join_properties2 A_eq_A' by metis
   
-  have OrB_line: "?OrB \<in> Lines \<and> incid Or ?OrB \<and> incid B ?OrB"
+  have OrB_line: "?OrB \<in> Lines \<and> incid Or ?OrB \<and> incid B ?OrB \<and> incid B' ?OrB"
     using ABCD_on_l1 persp_data is_persp_data.simps 
-          join_properties1 join_properties2 by metis
+          join_properties1 join_properties2 B'_construction meet_properties2 by metis
   
-  have OrC_line: "?OrC \<in> Lines \<and> incid Or ?OrC \<and> incid C ?OrC"
+  have OrC_line: "?OrC \<in> Lines \<and> incid Or ?OrC \<and> incid C ?OrC \<and> incid C' ?OrC"
     using ABCD_on_l1 persp_data is_persp_data.simps 
-          join_properties1 join_properties2 by metis
+          join_properties1 join_properties2 C'_construction meet_properties2 by metis
   
-  have OrD_line: "?OrD \<in> Lines \<and> incid Or ?OrD \<and> incid D ?OrD"
+  have OrD_line: "?OrD \<in> Lines \<and> incid Or ?OrD \<and> incid D ?OrD \<and> incid D' ?OrD"
     using ABCD_on_l1 persp_data is_persp_data.simps 
-          join_properties1 join_properties2 by metis
+          join_properties1 join_properties2 D'_construction meet_properties2 by metis
 
   have B_neq_C': "B \<noteq> C'"
     using ABCD_distinct images ABCD_on_l1 persp_data
@@ -1183,6 +1183,11 @@ proof -
   have X_props: "?X \<in> Points \<and> incid ?X ?BC' \<and> incid ?X ?OrA"
     using BC'_line OrA_line BC'_neq_OrA meet_properties2 by auto
 
+  let ?XB = "join X B"
+  have "?XB = ?BC'" sorry
+  let ?OrX = "join Or X"
+  have "?OrA = ?OrX" sorry
+
   have X_neq_B': "?X \<noteq> B'"
     using X_props B'_on_l2 OrA_line persp_data is_persp_data.simps
     by (metis A'B'C'D'_distinct A'_construction
@@ -1200,12 +1205,62 @@ proof -
           B'_construction C'_construction p4_6_uniqueness
     sorry
 
-  show "harmonic_quadruple A' B' C' D'"
+  have "incid A' (join B D)" using
+    ABCD_distinct
+    ABCD_on_l1
+    A_eq_A'
+    join_properties2
+    persp_data
+    by auto
+  have "incid B' (join X D)" sorry
+  
+  have "A' = meet (join Or X) (join B D)" by (smt (verit)
+    A'B'C'D'_distinct
+    A'_construction
+    ABCD_on_l1
+    A_meet_l1_l2
+    B'_construction
+    C'_construction
+    XB'_meets_l1_at_D
+    \<open>Or \<bar> A = Or \<bar> X\<close>
+    distinct4_def
+    is_persp_data.simps
+    join_properties1
+    meet_properties2
+    persp_data
+    unique_meet)
+  have "B' = meet (join Or B) (join X D)" by (smt (verit)
+    A'B'C'D'_distinct
+    A'_construction
+    ABCD_on_l1
+    B'_on_l2
+    BC'_neq_OrA
+    D'_construction
+    OrB_line
+    XB'_meets_l1_at_D
+    \<open>Or \<bar> A = Or \<bar> X\<close>
+    \<open>X \<bar> B = B \<bar> C'\<close>
+    distinct4_def
+    is_persp_data.simps
+    join_properties1
+    local.join_def
+    meet_properties2
+    persp_data
+    unique_meet)
+  have "incid D' (join Or D)" using OrD_line
+    by force
+  have "incid C' (join X B)" by (simp add:
+    BC'_line
+    \<open>X \<bar> B = B \<bar> C'\<close>)
+  
+  have "cquadrangle Or X B D" sorry
+
+  show "harmonic_quadruple A' B' D' C'"
     using A'_on_l2 B'_on_l2 C'_on_l2 D'_on_l2 A'B'C'D'_distinct
           ABCD_harmonic ABCD_on_l1
           A'_construction B'_construction C'_construction D'_construction
           OrA_line OrB_line OrC_line OrD_line 
-          X_props XB'_line XB'_meets_l1_at_D
+          X_props XB'_line XB_meets_l1_at_C'
     sorry
 qed
 
