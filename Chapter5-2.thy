@@ -92,12 +92,19 @@ lemma (in projective_plane) triplet_to_triplet_diff_lines_two:
   assumes Q_def: "Q \<in> Points \<and> Q = meet (join A C') (join A' C)"
   
   assumes ll'_diff: "l \<noteq>  l'"
-  (*shows "\<exists> ps . \<exists> ls . \<exists> f . (f = projectivity ps ls) 
-                        \<and> (hd ls = l) \<and> (last ls = l') 
-                        \<and> (f A = A') \<and> (f B = B') \<and> (f C = C')"*)
   shows "\<exists> f. f = projectivity (Cons (A', l, l'') (Cons (A, l'', l') [])) 
              \<and> (f A = A') \<and> (f B = B') \<and> (f C = C') \<and> is_persp_data (A', l, l'') \<and> is_persp_data (A, l'', l')"
   sorry
+
+lemma (in projective_plane) perspectivity_equiv:
+  fixes A' B l l''
+  assumes "A' \<in> Points \<and> B \<in> Points \<and> A' \<noteq> B \<and> incid B l"
+  assumes "l \<in> Lines \<and> l'' \<in> Lines \<and> l \<noteq> l''"
+  assumes "is_persp_data (A', l, l'')"
+  shows "perspectivity (A', l, l'') B = meet (join A' B) l''"
+proof - 
+  show ?thesis using assms by auto
+qed
 
 theorem FT_implies_P6: 
   fixes Points :: "'p set"
@@ -171,6 +178,10 @@ proof -
       using ac_distinct assms by (simp add: assmsimpl is_proj_plane projective_plane.join_properties1)
     obtain A'C where a'c_def: "A'C = projective_plane_data.join Points Lines incid A' C \<and> A'C \<in> Lines"
       using ac_distinct2 assms by (simp add: assmsimpl is_proj_plane projective_plane.join_properties1)
+    obtain B'C where b'c_def: "B'C = projective_plane_data.join Points Lines incid B' C \<and> B'C \<in> Lines"
+      by (simp add: assmsimpl bc_distinct2 is_proj_plane projective_plane.join_properties1)
+    obtain BC' where bc'_def: "BC' = projective_plane_data.join Points Lines incid B C' \<and> BC' \<in> Lines"
+      by (simp add: assmsimpl bc_distinct is_proj_plane projective_plane.join_properties1)
 
     have abab_neq: "AB'\<noteq> A'B" using assms projective_plane.two_joins_of_distinct4_distinct[of Points Lines incid l l' A B A' B' AB' A'B]
       ab'_def a'b_def ab_distinct ab_distinct2 assmsimpl is_proj_plane projective_plane.join_properties2 aa_distinct bb_distinct 
@@ -178,10 +189,8 @@ proof -
     have acac_neq: "AC'\<noteq> A'C" using assms projective_plane.two_joins_of_distinct4_distinct[of Points Lines incid l l' A C A' C' AC' A'C]
       ac'_def a'c_def ac_distinct ac_distinct2 assmsimpl is_proj_plane projective_plane.join_properties2 distinct4_def aa_distinct cc_distinct 
       by blast
-        
-    let ?P = "projective_plane_data.meet Points Lines incid AB' A'B"
-    let ?Q = "projective_plane_data.meet Points Lines incid AC' A'C"
-    let ?R = "projective_plane_data.meet Points Lines incid (projective_plane_data.join Points Lines incid B C') (projective_plane_data.join Points Lines incid B' C)"
+    have bcbc_neq: "BC' \<noteq> B'C" using assmsimpl b'c_def bc'_def d7 distinct7_def is_proj_plane projective_plane.join_properties1 projective_plane.nonintersection_distinct
+      by metis
 
     obtain P where pdef: "P = projective_plane_data.meet Points Lines incid AB' A'B \<and> P \<in> Points" 
       using ab_distinct ab_distinct2 ac_distinct ac_distinct2 abab_neq acac_neq
@@ -189,14 +198,17 @@ proof -
     obtain Q where qdef: "Q = projective_plane_data.meet Points Lines incid AC' A'C \<and> Q \<in> Points"
       using ab_distinct ab_distinct2 ac_distinct ac_distinct2 abab_neq acac_neq
       by (simp add: a'c_def ac'_def assmsimpl is_proj_plane projective_plane.mjj_point)
+    obtain R where rdef: "R = projective_plane_data.meet Points Lines incid BC' B'C \<and> R \<in> Points"
+      using bc_distinct bc_distinct2 bcbc_neq 
+      by (simp add: assmsimpl b'c_def bc'_def is_proj_plane projective_plane.mjj_point) 
 
-    have pq_neq: "?P \<noteq> ?Q" 
+    have pq_neq: "P \<noteq> Q" 
       using assms pdef qdef a'b_def a'c_def ab'_def abab_neq ac'_def ydef
       projective_plane.two_meets_of_distinct8_distinct[of Points Lines incid l l' AB' A'B AC' A'C A B C A' B' C' Y P Q]  acac_neq
       assmsimpl is_proj_plane projective_plane.meet_properties2 d7
       by metis
 
-    obtain l'' where l''_def: "l'' = projective_plane_data.join Points Lines incid P Q \<and> l'' \<in> Lines"
+    obtain l'' where l''_def: "l'' = projective_plane_data.join Points Lines incid P Q \<and> l'' \<in> Lines \<and> incid P l'' \<and> incid P l''"
       using is_proj_plane pdef pq_neq projective_plane.join_properties1 qdef by metis
 
     obtain f where f_def: "f = projective_plane.projectivity Points Lines incid (Cons (A', l, l'') (Cons (A, l'', l') [])) 
@@ -220,6 +232,8 @@ proof -
       using assms assmsimpl dual_join_is_meet dual_plane_is_projective is_proj_plane l''_def p_not_lp pdef pq_neq
           projective_plane.join_properties1 qdef
       by metis
+    have l_l''_diff: "l \<noteq> l''" by (metis assmsimpl is_proj_plane persp_a_def projective_plane.is_persp_data.simps)
+
     obtain A'' where a''def: "A'' = persp_ap A \<and> incid A'' l''" 
       using assmsimpl is_proj_plane persp_ap_def projective_plane.persp_domain.simps projective_plane.persp_range.simps
           projective_plane.perspectivity_nice
@@ -231,7 +245,96 @@ proof -
       by (simp add: is_proj_plane projective_plane.projectivity.simps(1))
 
     have 1: "persp_a A'' = A'" using a''def f2 f_def persp_a_def persp_ap_def by auto
-    have 2: "persp_ap B = P" sorry
+
+    have "P = projective_plane_data.meet Points Lines incid A'B l''"
+    proof - 
+      have l_pp_A'B_diff: "l'' \<noteq> A'B"
+        by (metis a'b_def assmsimpl is_proj_plane persp_ap_def projective_plane.is_persp_data.simps projective_plane.join_properties1)
+      have p_in_A'B: "incid P A'B"
+        by (metis a'b_def ab'_def abab_neq is_proj_plane pdef projective_plane.meet_properties2)
+      show ?thesis using p_in_A'B l_pp_A'B_diff projective_plane.unique_meet 
+         a'b_def is_proj_plane l''_def pdef projective_plane.meet_properties2 by fastforce
+    qed
+    then have 2: "persp_ap B = P" 
+      using  assmsimpl persp_ap_def l_l''_diff ab'_def projective_plane.perspectivity_equiv[of Points Lines incid A' B l l'']
+       a'b_def ab_distinct2 is_proj_plane l''_def by auto
+
+    have "Q = projective_plane_data.meet Points Lines incid A'C l''"
+    proof - 
+      have l_pp_A'C_diff: "l'' \<noteq> A'C"
+        by (metis a'c_def assmsimpl is_proj_plane persp_ap_def projective_plane.is_persp_data.simps projective_plane.join_properties1)
+      have q_in_A'C: "incid Q A'C"
+        by (metis a'c_def ac'_def acac_neq is_proj_plane projective_plane.meet_properties2 qdef)
+      show ?thesis using q_in_A'C l_pp_A'C_diff projective_plane.unique_meet 
+         a'c_def is_proj_plane l''_def qdef projective_plane.meet_properties2 pdef projective_plane.join_properties1
+        by (smt (verit))
+    qed
+    then have 3: "persp_ap C = Q" 
+      using a'c_def ac_distinct2 assmsimpl is_proj_plane l''_def l_l''_diff persp_ap_def projective_plane.perspectivity_equiv[of Points Lines incid A' C l l'']
+      by auto
+
+    have "persp_ap Y = Y'"
+      by (metis assmsimpl d7 distinct7_def is_proj_plane l''_def l_l''_diff persp_ap_def projective_plane.join_properties2 projective_plane.meet_properties2
+          projective_plane.perspectivity_equiv ydef yp_def)
+
+    have 4: "persp_a A'' = A'" using 1 by auto
+    have 5: "persp_a P = B'" using 2 f2 f_def persp_a_def persp_ap_def by auto
+    have 6: "persp_a Q = C'" using 3 f2 f_def persp_a_def persp_ap_def by auto
+    have 7: "persp_a Y' = Y'" using assmsimpl f_def is_proj_plane persp_a_def projective_plane.is_persp_data.simps projective_plane.meet_properties2 projective_plane.persp_domain.simps
+          projective_plane.persp_range.simps projective_plane.perspectivity_of_meet_is_itself yp_def
+      by metis
+
+    obtain R' where R'_def: "R' = projective_plane_data.meet Points Lines incid B'C l'' \<and> R' \<in> Points"
+      using  a'b_def ab'_def assmsimpl b'c_def bc_distinct2 f_def is_proj_plane l''_def p_not_lp pdef projective_plane.is_persp_data.simps
+          projective_plane.join_properties1 projective_plane.meet_properties2 projective_plane.nonintersection_distinct
+      by metis
+
+    have b_rp_neq: "B \<noteq> R'"
+      by (smt (verit) "2" "5" R'_def assmsimpl b'c_def distinct4_def is_proj_plane persp_a_def persp_ap_def projective_plane.is_persp_data.simps
+          projective_plane.join_properties1 projective_plane.meet_properties2 projective_plane.perspectivity_equiv projective_plane.unique_meet)
+    then obtain BR' where BR'_def: "BR' =  projective_plane_data.join Points Lines incid B R' \<and> BR' \<in> Lines" 
+      using R'_def assmsimpl is_proj_plane projective_plane.join_properties1 by metis
+
+    obtain C'' where C''_def: "C'' = projective_plane_data.meet Points Lines incid B'C l'' \<and> C'' \<in> Points \<and> incid C'' l''"
+      using R'_def a'b_def ab'_def assmsimpl b'c_def bc_distinct2 is_proj_plane l''_def p_not_lp pdef persp_a_def persp_ap_def projective_plane.is_persp_data.simps
+          projective_plane.join_properties1 projective_plane.meet_properties2 projective_plane.nonintersection_distinct
+      by metis
+    have cpp_not_ap: "A' \<noteq> C''"
+    proof (rule ccontr)
+      assume "\<not> A' \<noteq> C''"
+      then have ch_alt: "A' = C''" by auto
+
+      show False sorry
+    qed
+
+    obtain g where f_def: "g = projective_plane.projectivity Points Lines incid (Cons (B', l, l'') (Cons (B, l'', l') [])) 
+             \<and> (g A = A') \<and> (g B = B') \<and> (g C = C'') \<and> projective_plane.is_persp_data Points Lines incid (B', l, l'') \<and> projective_plane.is_persp_data Points Lines incid (B, l'', l')"  
+      using projective_plane.triplet_to_triplet_diff_lines_two[of Points Lines incid A B C A' B' C'' l l' l'' P Q] sorry
+
+    (*obtain persp_ap where persp_ap_def: "persp_ap = projective_plane.perspectivity Points Lines incid (A', l, l'') \<and>
+                    projective_plane.is_persp_data Points Lines incid (A', l, l'')" using f_def by auto
+    obtain persp_a where persp_a_def: "persp_a = projective_plane.perspectivity Points Lines incid (A, l'', l') \<and>
+                    projective_plane.is_persp_data Points Lines incid (A, l'', l')" using f_def by auto
+*)
+(*
+
+
+lemma (in projective_plane) triplet_to_triplet_diff_lines_two:
+  fixes A B C A' B' C' l l' l'' P Q
+  assumes ABC_def: "A \<in> Points \<and> B \<in> Points \<and> C \<in> Points \<and> distinct [A, B, C]"
+  assumes ABC'_def: "A' \<in> Points \<and> B' \<in> Points \<and> C' \<in> Points \<and> distinct [A', B', C']"
+  assumes l_def: "l \<in> Lines \<and> A \<lhd> l \<and> B \<lhd> l \<and> C \<lhd> l"
+  assumes l'_def: "l' \<in> Lines \<and> A' \<lhd> l' \<and> B' \<lhd> l' \<and> C' \<lhd> l'"
+  assumes l''_def: "l'' \<in> Lines  \<and> l'' = join P Q"
+  assumes P_def: "P \<in> Points \<and> P = meet (join A B') (join A' B)"
+  assumes Q_def: "Q \<in> Points \<and> Q = meet (join A C') (join A' C)"
+  
+  assumes ll'_diff: "l \<noteq>  l'"
+  shows "\<exists> f. f = projectivity (Cons (A', l, l'') (Cons (A, l'', l') [])) 
+             \<and> (f A = A') \<and> (f B = B') \<and> (f C = C') \<and> is_persp_data (A', l, l'') \<and> is_persp_data (A, l'', l')"
+  sorry
+
+*)
 
     show "(projective_plane_data.pcollinear Points Lines incid 
         (projective_plane_data.meet Points Lines incid 
@@ -247,7 +350,6 @@ proof -
   
   show ?thesis unfolding P6_def using is_proj_plane p6 by auto
 qed
-  
 
 lemma (in projective_plane) lemma_54:
   fixes l m n
