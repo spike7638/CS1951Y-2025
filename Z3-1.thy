@@ -365,6 +365,7 @@ qed
   then show ?thesis  using kfacts rep_P_nz rp2_incid.rep_eq rp2coll.rep_eq v3coplanar_def by auto
 qed 
 
+(* Looks like this is equivalent to *\<^sub>R *)
 definition matrix_scalar_mult :: "real \<Rightarrow> m33 \<Rightarrow> m33"
 (infixl "*k" 70) where "k *k A \<equiv> (\<chi> i j. k * A $ i $ j)"
 
@@ -514,7 +515,7 @@ qed
 qed
 
 
-
+(* I think we don't need this? *)
 definition rp2_auto_to_transf :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (v3 \<Rightarrow> v3)" (* turn an RP2 automorphism into a map from R3 to R3 *)
   where "rp2_auto_to_transf r = Rep_rp2 \<circ> r \<circ> Abs_rp2"
 
@@ -532,29 +533,6 @@ theorem inv_matrices_subset_auts: "PGL2R \<subseteq> RP2_auto"
   unfolding PGL2R_def RP2_auto_def using inv_matrices_are_auts by auto
 
 (*The next section deals with the proof of Proposition 3.8 *)
-(*
-definition equiv_maps :: "(v3 \<Rightarrow> v3) \<Rightarrow> (v3 \<Rightarrow> v3) \<Rightarrow> bool"
-  where "equiv_maps f g \<longleftrightarrow>
-  (well_defined f) \<and> (well_defined g) \<and> (\<forall>x :: v3 . \<exists>t :: real . t \<noteq> 0 \<and> f x = t *s (g x))"
-*)
-(*
-lift_definition RP2_equiv_maps :: "(rp2 \<Rightarrow> rp2) \<Rightarrow> (rp2 \<Rightarrow> rp2) \<Rightarrow> bool" is equiv_maps sorry
-*)
-(* proof (transfer, clarsimp)
-  show "\<And>f g h r . 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps f h = equiv_maps g r"
-  proof (safe)
-    fix f g h r 
-    assume "rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)" for x y 
-    assume "rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)" for x y
-    show "equiv_maps f h \<Longrightarrow> equiv_maps g r"by sorry
-    next
-      show "\<And>f g h r . 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (f x) (g y)) \<Longrightarrow> 
-         (\<And>x y . rp2rel x y \<Longrightarrow> rp2rel (h x) (r y)) \<Longrightarrow> equiv_maps g r \<Longrightarrow> equiv_maps f h" sorry
-qed
-*)
 
 definition p1 :: v3 where "p1 = vector[1, 0, 0]"
 definition p2 :: v3 where "p2 = vector[0, 1, 0]"
@@ -659,7 +637,7 @@ lemma equiv_on_basis_imp_equiv:
   and "rp2rel (tom A p2) (tom B p2)"
   and "rp2rel (tom A p3) (tom B p3)"
   and "rp2rel (tom A q) (tom B q)"
-  shows "\<forall>x :: v3 . x \<noteq> 0 \<longrightarrow> rp2rel (tom A x) (tom B x)"
+  shows "\<exists> u . u \<noteq> 0 \<and> (\<forall> x . (tom A x) = u *\<^sub>R (tom B x))" 
 proof -
   obtain c1 :: real where hc1: "c1 \<noteq> 0 \<and> tom A p1 = c1  *\<^sub>R (tom B p1)" 
     using assms(3) p1_def unfolding rp2rel_def by blast
@@ -715,11 +693,8 @@ proof -
     using h1 h2 h3 matrices_equal_on_basis by blast
   have non_zero: "u \<noteq> 0" using hu by auto
   show ?thesis using exists non_zero assms(1) assms(2) inv_matrix_inj zvec_alt
-    unfolding rp2rel_def
-  by metis
+    by blast
 qed 
-
-
 
 lemma matrix_agreeing_with_I_on_basis_is_scalar_mult_of_I: 
   fixes A :: m33
@@ -743,21 +718,59 @@ lemma matrices_agreeing_on_basis_are_scalar_mults:
   shows "\<exists>c :: real .  A  = c *k B"
   sorry (* should follow instantly from previous lemma, applied to AB^{-1} *)
 
+lemma Rep_distributes:
+  fixes A x
+  assumes "det A \<noteq> 0"
+  and "x \<noteq> zvec"
+  shows "rp2rel (Rep_rp2 (rp2tom A (Abs_rp2 x))) (tom A x)"
+  using assms
+  by (metis Quotient3_rp2 inv_matrices_img_nonzero pth_1 rep_abs_rsp_left
+      rp2tom.abs_eq smult_rp2rel zero_neq_one)
+
+lemma rp2tom_tom_translation:
+  fixes A x
+  assumes "det A \<noteq> 0"
+  and "x \<noteq> zvec"
+  and "rp2tom A (Abs_rp2 x) = rp2tom B (Abs_rp2 x)"
+  shows "rp2rel (tom A x)  (tom B x)"
+proof -
+  have "Rep_rp2 (rp2tom A (Abs_rp2 x)) = Rep_rp2 (rp2tom B (Abs_rp2 x))"
+    using assms by auto
+  then show ?thesis using assms Rep_distributes part_equivp_def part_equivp_rp2rel
+  by (metis (lifting) Quotient3_rp2 cross_nz cross_refl invertible_det_nz rep_abs_rsp rp2tom.abs_eq
+      tom_def zvec_alt)
+qed
 
 theorem equal_matrix_transforms_implies_matrix_scalar_multiple: (* theorem 3.8 *)
   fixes A B:: m33
   assumes invertible: "det A \<noteq> 0 \<and> det B \<noteq> 0"
   assumes equal_maps: "rp2tom A = rp2tom B"
-  shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *k B" 
+  shows "\<exists>c::real . c \<noteq> 0 \<and> A = c *\<^sub>R B" 
+proof - 
+  have nz: "p1 \<noteq> zvec \<and> p2 \<noteq> zvec \<and> p3 \<noteq> zvec \<and> q \<noteq> zvec"
+    using p1_def p2_def p3_def q_def zvec_def using zvec_def vector_3 zero_neq_one by metis
+  have "rp2tom A (Abs_rp2 p1) = rp2tom B (Abs_rp2 p1)" using equal_maps by auto
+  then have 1: "rp2rel (tom A p1) (tom B p1)" 
+    using rp2tom_tom_translation nz assms by blast
+  have "rp2tom A (Abs_rp2 p2) = rp2tom B (Abs_rp2 p2)" using equal_maps by auto
+  then have 2: "rp2rel (tom A p2) (tom B p2)" 
+    using rp2tom_tom_translation nz assms by blast
+  have "rp2tom A (Abs_rp2 p3) = rp2tom B (Abs_rp2 p3)" using equal_maps by auto
+  then have 3: "rp2rel (tom A p3) (tom B p3)" 
+    using rp2tom_tom_translation nz assms by blast
+  have "rp2tom A (Abs_rp2 q) = rp2tom B (Abs_rp2 q)" using equal_maps by auto
+  then have 4: "rp2rel (tom A q) (tom B q)" 
+    using rp2tom_tom_translation nz assms by blast
+  then show ?thesis using rp2rel_def equiv_on_basis_imp_equiv[of A B]
+    1 2 3 invertible matrix_eq scaleR_matrix_vector_assoc tom_nonz_det
+  by metis
+qed
  
-  sorry
-
-
 (* If the transformations for matrices A and B are equal up to a constant factor c,
   then they are "equiv_maps", i.e., they represent the same maps when considered as 
   rp2 \<Rightarrow> rp2 maps: *)
 (* This is proposition 3.8 *)
-lemma inv_matrices_equiv_fwd: (* A = cB \<Longrightarrow> rp2tom A = rp2tom B *)
+lemma inv_matrices_equiv_iff:  (* A = cB \<longleftrightarrow> rp2tom A = rp2tom B *)
   fixes A B :: m33
   assumes invertible_A: "det A \<noteq> 0"
   and invertible_B: "det B \<noteq> 0"
