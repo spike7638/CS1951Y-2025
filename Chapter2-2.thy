@@ -1180,6 +1180,16 @@ proof -
   show ?thesis using aa bb cc DiffE insert_iff by auto
 qed
 
+(*
+lemma shared_intersection1:
+  assumes "k \<in> Pi_lines"
+  assumes "P \<in> Pi_points \<and> Q \<in> Pi_points \<and>  R \<in> Pi_points"
+  assumes "P \<noteq> Q \<and> Q \<noteq> R \<and> R \<noteq> P"
+  assumes "\<not> (pcollinear P Q R)"
+  assumes "(\<not> (fppincid P k)) \<and> (\<not> (fppincid Q k)) \<and> (\<not> (fppincid R k))"
+  shows "\<exists> A B . A \<in> Pi_points \<and> B \<in> Pi_points \<and> A \<noteq> B \<and> fppincid A k \<and> fppincid B k"
+*)  
+
 lemma fpp_two_points_zero: (* a level zero line contains at least two points: needs 4-elt set U! *)
   assumes "k \<in> Pi_lines"
   assumes "l_level k = 0"
@@ -1187,43 +1197,24 @@ lemma fpp_two_points_zero: (* a level zero line contains at least two points: ne
   assumes "card U = 4"
   assumes imp: "\<And>P Q R. ((distinct[P,Q,R]) \<and> ({P, Q, R} \<subseteq> U)) \<Longrightarrow>  \<not> (pcollinear P Q R)" 
   shows "\<exists>P Q. P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points"
-proof (rule ccontr)
-  assume ch: "\<not> (\<exists> P Q . P \<noteq> Q \<and> fppincid P k \<and> fppincid Q k \<and> P \<in> Pi_points \<and> Q \<in> Pi_points)"
-  let ?kpts = "{X . fppincid X k \<and> X \<in> Pi_points}"
-  have kpchoice: "?kpts = {} \<or> (\<exists> R . ?kpts = {R})" using ch by blast
-  then have "card ?kpts < 2" by (metis (mono_tags, lifting) card.empty card.insert finite.intros(1) insert_absorb less_2_cases_iff)
-  let ?g = "\<lambda> x .  Base_point x"
-  let ?Upts = "?g ` U"
-  have Upts_pi: "?Upts \<subseteq> Pi_points" 
-    by (smt (verit, best) assms(3) imageE mem_Collect_eq new_points.simps(1) pi_points_contents subset_iff)
-  have "card ?Upts = 4" 
-    by (simp add: assms card_image inj_on_def)
-  have s: "card (?Upts - ?kpts) > 2"
-  by (metis (lifting) Diff_empty Diff_insert0 \<open>card (Base_point ` U) = 4\<close> add_2_eq_Suc add_diff_cancel_left' card_Diff_singleton
-      diff_is_0_eq kpchoice lessI linorder_not_le numeral_Bit0 plus_1_eq_Suc zero_neq_numeral)
-  then obtain P Q R where pqr_def: "P \<in> (?Upts - ?kpts) \<and> Q \<in> (?Upts - ?kpts) \<and> R \<in> (?Upts - ?kpts) \<and> 
-    distinct[P,Q,R]" using s three_elements[of "(?Upts - ?kpts)"] by auto
-  have "{P,Q,R} \<subseteq> ?Upts" using pqr_def by blast
-  then have "{P,Q,R} \<subseteq> Pi_points" using Upts_pi by order
-  then have not_k: "(\<not> (fppincid P k)) \<and> (\<not> (fppincid Q k)) \<and> (\<not> (fppincid R k))" using pqr_def by blast
-  obtain uP uQ uR where upqr_def: "P = Base_point uP \<and> Q = Base_point uQ \<and> R = Base_point uR \<and>  
-    distinct[uP,uQ,uR] \<and> uP \<in> U \<and> uQ \<in> U \<and> uR \<in> U" using pqr_def  
-    by (smt (verit, ccfv_SIG) DiffE distinct3_def imageE)
-  then have "\<not> (pcollinear uP uQ uR)" using assms by blast
-  then have jj: "\<not> (\<exists>s\<in> Lines. incid uP s \<and> incid uQ s \<and> incid uR s)" 
-    using assms(3,4) upqr_def in_mono pcollinear_def by fastforce
-  show False unfolding configuration_def 
-  proof -
-    show ?thesis using configuration.base_in_base configuration.fppincid.simps(1) configuration_def by sledgehammer
-  proof -
-    have "\<forall>p pa P. p (pa::pointD) P \<or> pa \<notin> P" by sledgehammer
-      by (metis (no_types) configuration.base_in_base configuration.fppincid.simps(1) desargues_is_config incidD_def)
-    then show ?thesis
-      by auto
-  qed
-  qed
-qed
+proof -
+  define g where "g = (\<lambda> (x::'a) .  ((Base_point x)::('a, 'b) fpoint))"
+  define Upts where "Upts = g ` U"
+  have Upts_pi: "Upts \<subseteq> Pi_points" using g_def Upts_def 
+  by (smt (verit, best) Set.basic_monos(7) assms(3) configuration.new_points.simps(1)
+      configuration_axioms image_subset_iff mem_Collect_eq pi_points_contents2 point_set.simps(1))
 
+  (* Have four distinct points in Upts
+  ** at least two of these, say P Q (with P \<noteq> Q) are not on k, because no three are collinear [needs lemma]
+  ** Pick two other points, R S, which might well be on k. 
+  ** PR and QR are distinct from each other and from k, so they have intersections A and B with k. 
+  ** cases (A \<noteq> B):
+  **   True: we've got two distinct points on k, so we're done 
+  **   False: then A=B. Since  A  and R are both on both lines, they must be equal
+  ** Same arguemnt fo PS and QS with intersections C and Dl either we're done,or C = D = S. 
+  ** Thus S and R are on both lines, and they're distinct, so we're done. 
+ *) 
+  sorry
 
 lemma fpp_two_points_one: (* a level-one line contains at least two points *)
   fixes CPoints::"'a set"
