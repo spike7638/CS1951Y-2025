@@ -329,7 +329,6 @@ next
   qed
 qed
 
-
 lemma projectivity_not_nice: 
   fixes ds P
   assumes "is_proj_data ds"
@@ -350,7 +349,7 @@ next
       using Cons.prems True by auto
     ultimately show ?thesis
       using Cons.prems(1) is_persp_data.simps is_proj_made_up_of_persp
-    by fastforce
+      by fastforce
   next
     case False
     then have h0: "projectivity (d # ds) P = (projectivity ds \<circ> perspectivity d) P"
@@ -359,10 +358,19 @@ next
       by auto
     moreover have "\<not>(P \<in> Points) \<or> \<not>(P \<lhd> persp_domain d)"
       using Cons.prems(2) proj_domain.simps(2) by (metis False neq_Nil_conv) 
-    moreover have "perspectivity d P = undefined" using Cons.prems(1) calculation(2) is_proj_made_up_of_persp
+    moreover have "perspectivity d P = undefined" 
+      using Cons.prems(1) calculation(2) is_proj_made_up_of_persp
       by fastforce
-    moreover have "projectivity ds undefined = undefined" using projectivity.simps sorry
-    ultimately show ?thesis using h0 by presburger
+    ultimately have "projectivity ds (perspectivity d P) = projectivity ds undefined"
+      by simp
+    moreover have "\<not>(undefined \<in> Points) \<or> \<not>(undefined \<lhd> proj_domain ds)" sorry
+    moreover have "is_proj_data ds"
+      using Cons.prems(1) False by (metis is_proj_data.simps(2)
+    projectivity.cases)
+    ultimately have "projectivity ds undefined = undefined"
+      using Cons.IH by blast
+    thus ?thesis using h0 \<open>perspectivity d P = undefined\<close>
+    by force
   qed
 qed
 
@@ -1078,8 +1086,9 @@ qed
 (* So suppose l O  [ l\<Zprime>, and H(AB, CD), where A, B, C, D \<in> l. Let A\<Zprime>, B\<Zprime>, C\<Zprime>, D\<Zprime>  be their images. Let l\<Zprime>\<Zprime> = AB\<Zprime>. Then  lO  [ l\<Zprime>\<Zprime> O  [ l\<Zprime>  is the same mapping, so it is sufficient to consider l O  [ l\<Zprime>\<Zprime> and l\<Zprime>\<Zprime> O  [ l\<Zprime> separately.  Here one has the advantage that the intersection of the two lines is one of the four points considered. By relabeling, we may assume it is A in each case. So we have the following problem: Let l O  [ l\<Zprime>, and let A = l \<sqdot> l\<Zprime>, B, C, D be four points on l such that H(AB, CD).  Prove that H(AB\<Zprime>, C\<Zprime>D\<Zprime>), where B\<Zprime>, C\<Zprime>, D\<Zprime> are the images of B, C, D. Draw BC\<Zprime>, and let it meet OA at X. Consider the complete quadrangle OXB\<Zprime>C\<Zprime>. Two of its diagonal points are A, B; C lies on the side OC\<Zprime>. Hence the intersection of XB\<Zprime> with l must be the fourth harmonic point of ABC, i.e. XB\<Zprime> \<sqdot> l = D. (Here we use the unicity of the fourth harmonic point.) Now consider the complete quadrangle OXBD. Two of its diagonal points are A and B\<Zprime>; the other two sides meet l\<Zprime> in C\<Zprime> and D\<Zprime>. Hence H(AB\<Zprime>, C\<Zprime>D\<Zprime>). *)
 lemma perspectivity_hquad_to_hquad:
   fixes A B C D A' B' C' D' l1 l2 Or
-  assumes ABCD_on_l1: "A \<in> Points \<and> A \<lhd> l1 \<and> B \<in> Points \<and> B \<lhd> l1 \<and> 
-                       C \<in> Points \<and> C \<lhd> l1 \<and> D \<in> Points \<and> D \<lhd> l1"
+  assumes ABCD_on_l1: "A \<in> Points \<and> incid A l1 \<and> B \<in> Points \<and> incid B l1 \<and> 
+                       C \<in> Points \<and> incid C l1 \<and> D \<in> Points \<and> incid D l1"
+  assumes A_meet_l1_l2: "A = meet l1 l2 \<and> incid A l1 \<and> incid A l2"
   assumes ABCD_harmonic: "harmonic_quadruple A B C D"
   assumes persp_data: "is_persp_data (Or, l1, l2)"
   assumes images: "A' = perspectivity (Or, l1, l2) A \<and> 
@@ -1087,8 +1096,118 @@ lemma perspectivity_hquad_to_hquad:
                    C' = perspectivity (Or, l1, l2) C \<and> 
                    D' = perspectivity (Or, l1, l2) D"
   shows "harmonic_quadruple A' B' C' D'"
-  sorry
+proof -
+  have ABCD_distinct: "distinct [A, B, C, D]"
+    using ABCD_harmonic harmonic_quadruple_def using ABCD_on_l1 by force
 
+  have A_eq_A': "A = A'" by (metis ABCD_on_l1 A_meet_l1_l2 images persp_data
+    persp_domain.simps persp_range.simps
+    projective_plane.perspectivity_of_meet_is_itself
+    projective_plane_axioms)
+  
+  have A'_on_l2: "A' \<in> Points \<and> incid A' l2"
+    using ABCD_on_l1 images persp_data perspectivity_nice 
+    by (metis persp_domain.simps persp_range.simps)
+  
+  have B'_on_l2: "B' \<in> Points \<and> incid B' l2"
+    using ABCD_on_l1 images persp_data perspectivity_nice 
+    by (metis persp_domain.simps persp_range.simps)
+  
+  have C'_on_l2: "C' \<in> Points \<and> incid C' l2"
+    using ABCD_on_l1 images persp_data perspectivity_nice 
+    by (metis persp_domain.simps persp_range.simps)
+  
+  have D'_on_l2: "D' \<in> Points \<and> incid D' l2"
+    using ABCD_on_l1 images persp_data perspectivity_nice 
+    by (metis persp_domain.simps persp_range.simps)
+
+  have A'B'C'D'_distinct: "distinct [A', B', C', D']"
+    using ABCD_distinct images ABCD_on_l1 persp_data
+          perspectivity_inj persp_domain.simps
+    by (metis distinct4_def)
+  
+  have A'_construction: "A' = meet (join Or A) l2"
+    using images ABCD_on_l1 persp_data 
+    by (simp add: is_persp_data.simps perspectivity.simps)
+  
+  have B'_construction: "B' = meet (join Or B) l2"
+    using images ABCD_on_l1 persp_data 
+    by (simp add: is_persp_data.simps perspectivity.simps)
+  
+  have C'_construction: "C' = meet (join Or C) l2"
+    using images ABCD_on_l1 persp_data 
+    by (simp add: is_persp_data.simps perspectivity.simps)
+  
+  have D'_construction: "D' = meet (join Or D) l2"
+    using images ABCD_on_l1 persp_data 
+    by (simp add: is_persp_data.simps perspectivity.simps)
+
+  let ?OrA = "join Or A"
+  let ?OrB = "join Or B"
+  let ?OrC = "join Or C"
+  let ?OrD = "join Or D"
+  
+  have OrA_line: "?OrA \<in> Lines \<and> incid Or ?OrA \<and> incid A ?OrA"
+    using ABCD_on_l1 persp_data is_persp_data.simps 
+          join_properties1 join_properties2 by metis
+  
+  have OrB_line: "?OrB \<in> Lines \<and> incid Or ?OrB \<and> incid B ?OrB"
+    using ABCD_on_l1 persp_data is_persp_data.simps 
+          join_properties1 join_properties2 by metis
+  
+  have OrC_line: "?OrC \<in> Lines \<and> incid Or ?OrC \<and> incid C ?OrC"
+    using ABCD_on_l1 persp_data is_persp_data.simps 
+          join_properties1 join_properties2 by metis
+  
+  have OrD_line: "?OrD \<in> Lines \<and> incid Or ?OrD \<and> incid D ?OrD"
+    using ABCD_on_l1 persp_data is_persp_data.simps 
+          join_properties1 join_properties2 by metis
+
+  have B_neq_C': "B \<noteq> C'"
+    using ABCD_distinct images ABCD_on_l1 persp_data
+          perspectivity_inj persp_domain.simps
+    by (metis distinct4_def perspectivity_nice
+    perspectivity_of_meet_is_itself)
+
+  let ?BC' = "join B C'"
+  have BC'_line: "?BC' \<in> Lines \<and> incid B ?BC' \<and> incid C' ?BC'"
+    using ABCD_on_l1 C'_on_l2 B_neq_C' join_properties1 join_properties2 
+    by blast
+
+  have BC'_neq_OrA: "?BC' \<noteq> ?OrA"
+    using BC'_line OrA_line ABCD_on_l1 C'_on_l2 persp_data
+          is_persp_data.simps unique_meet
+    by (metis B_neq_C' ABCD_distinct distinct_length_2_or_more)
+
+  let ?X = "meet ?BC' ?OrA"
+  have X_props: "?X \<in> Points \<and> incid ?X ?BC' \<and> incid ?X ?OrA"
+    using BC'_line OrA_line BC'_neq_OrA meet_properties2 by auto
+
+  have X_neq_B': "?X \<noteq> B'"
+    using X_props B'_on_l2 OrA_line persp_data is_persp_data.simps
+    by (metis A'B'C'D'_distinct A'_construction
+    distinct4_def meet_properties2
+    unique_meet)
+
+  let ?XB' = "join ?X B'"
+  have XB'_line: "?XB' \<in> Lines \<and> incid ?X ?XB' \<and> incid B' ?XB'"
+    using X_props B'_on_l2 X_neq_B' join_properties1 join_properties2 by blast
+  
+  have XB'_meets_l1_at_D: "meet ?XB' l1 = D"
+    using ABCD_harmonic ABCD_on_l1 ABCD_distinct
+          OrA_line OrB_line OrC_line OrD_line
+          BC'_line X_props XB'_line
+          B'_construction C'_construction p4_6_uniqueness
+    sorry
+
+  show "harmonic_quadruple A' B' C' D'"
+    using A'_on_l2 B'_on_l2 C'_on_l2 D'_on_l2 A'B'C'D'_distinct
+          ABCD_harmonic ABCD_on_l1
+          A'_construction B'_construction C'_construction D'_construction
+          OrA_line OrB_line OrC_line OrD_line 
+          X_props XB'_line XB'_meets_l1_at_D
+    sorry
+qed
 
 (* Proposition 4.10 A projectivity takes harmonic quadruples into harmonic quadruples. *)
 lemma projectivity_hquad_to_hquad:
