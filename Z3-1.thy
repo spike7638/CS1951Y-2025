@@ -119,6 +119,7 @@ lemma "rp2tom_explicit2":
   using rp2tom_explicit
   by (metis UNIV_I ar equal_implies_rp2rel rp2_Points_def rp2tom.abs_eq)
 
+
 (*== the following is more or less the set-up for Theorem 3.7 == *)
 
 (* This actually requires a proof: that make_RP2_auto (tom A) really IS an automorphism, 
@@ -819,6 +820,174 @@ shows "(\<exists>c :: real .  A  = c *\<^sub>R B) \<longleftrightarrow> ((rp2tom
 ** ## State that A B C are coplanar in v3 iff det([A,B,C]) = 0
 ** ## State that (rp2abs A) (rp2abs B) (rp2abs C) are collinear in rp3, iff det([A,B,C]) = 0 (i.e. them 3.10)
 *)
+
+definition mat_from_pts :: "v3 \<Rightarrow> v3 \<Rightarrow> v3 \<Rightarrow> m33"
+  where "mat_from_pts x y z = vector[x, y, z]"
+
+lemma mat_from_pts_rows:
+  "(mat_from_pts x y z) $ 1 = x"
+  "(mat_from_pts x y z) $ 2 = y"
+  "(mat_from_pts x y z) $ 3 = z"
+  unfolding mat_from_pts_def
+  using vector_3[of x y z]
+  by simp_all
+
+lemma mat_from_pts_rows_v2:
+  "row 1 (mat_from_pts x y z) = x"
+  "row 2 (mat_from_pts x y z) = y"
+  "row 3 (mat_from_pts x y z) = z"
+  using mat_from_pts_rows row_def
+  by (metis vec_nth_inverse)+
+
+lemma mat_from_pts_dep_imp_det_0:
+  fixes x y z :: v3
+  assumes "vec.dependent {x, y, z}"
+  shows "det (mat_from_pts x y z) = 0"
+proof -
+  have "{x, y, z} \<subseteq> rows (mat_from_pts x y z)"
+    using rows_def[of "mat_from_pts x y z"] mat_from_pts_rows_v2[of x y z]
+  by (metis (mono_tags, lifting) bot.extremum insert_subsetI iso_tuple_UNIV_I
+      mem_Collect_eq)
+  then show ?thesis using assms
+    using det_dependent_rows vec.dependent_mono by auto
+qed
+
+lemma lin_comb_dep:
+  fixes a b :: real
+  fixes x y z :: v3
+  assumes "a *s x + b *s y = z"
+  assumes "x \<noteq> y \<and> x \<noteq> z \<and> y \<noteq> z" 
+  shows "vec.dependent {x, y, z}"
+  using assms vec.independent_insert vec.span_add_eq2 vec.span_base vec.span_scale
+  by (smt (verit) insert_commute insert_iff singletonD)
+
+lemma lin_comb_det_0:
+  fixes a b :: real
+  fixes x y z :: v3
+  assumes "a *s x + b *s y = z"
+  assumes "x \<noteq> y \<and> x \<noteq> z \<and> y \<noteq> z" 
+  shows "det (mat_from_pts x y z) = 0"
+  using assms mat_from_pts_dep_imp_det_0 lin_comb_dep by blast
+
+lemma det_0_imp_v3_coplanar:
+  fixes a b c :: v3
+  assumes "a \<noteq> zvec \<and> b \<noteq> zvec \<and> c \<noteq> zvec"
+  assumes "det (mat_from_pts a b c) = 0"
+  shows "v3coplanar a b c"
+proof -
+  let ?A = "mat_from_pts a b c"
+  obtain h :: v3 where h_facts: "h \<noteq> 0 \<and> ?A *v h = 0" 
+  by (metis assms(2) invertible_det_nz invertible_left_inverse matrix_left_invertible_ker)
+  have "inner h a = (0 :: real) \<and> inner h b = (0 :: real) \<and> inner h c = (0 :: real)"
+    by (metis h_facts inner_commute mat_from_pts_rows matrix_vector_mul_component
+        zero_index)
+  then show ?thesis
+     unfolding v3coplanar_def using assms(1) h_facts zvec_alt by auto
+qed
+
+lemma det_0_imp_rp2coll:
+  fixes a b c :: rp2
+  assumes "det (mat_from_pts (Rep_rp2 a) (Rep_rp2 b) (Rep_rp2 c)) = 0"
+  shows "rp2coll a b c"
+proof -
+  have "Rep_rp2 a \<noteq> zvec \<and> Rep_rp2 b \<noteq> zvec \<and> Rep_rp2 c \<noteq> zvec" 
+    using rep_P_nz by auto
+  then show ?thesis
+    by (simp add: assms det_0_imp_v3_coplanar rp2coll.rep_eq)
+qed
+
+lemma v3_coplanar_imp_det_0:
+  fixes a b c :: v3
+  assumes "v3coplanar a b c"
+  shows "det (mat_from_pts a b c) = 0"
+proof -
+  let ?A = "mat_from_pts a b c"
+  obtain k :: v3 where k_facts: "k \<noteq> zvec \<and> inner k a = 0 \<and> inner k b = 0 \<and> inner k c = 0"
+    using v3coplanar_def[of a b c] assms by auto
+  then have "inner (?A $ 1) k = 0 \<and> inner (?A $ 2) k = 0 \<and> inner (?A $ 3) k = 0"
+    using mat_from_pts_def[of a b c]
+    by (simp add: inner_commute)
+  then have "?A *v k = zvec"
+    by (metis matrix_vector_mul_component vect_zero_eqv2 zvec_alt)
+  then show "det ?A = 0" using k_facts
+    using inv_matrices_img_nonzero by auto
+qed
+
+lemma rp2coll_imp_det_0:
+  fixes a b c :: rp2
+  assumes "rp2coll a b c"
+  shows "det (mat_from_pts (Rep_rp2 a) (Rep_rp2 b) (Rep_rp2 c)) = 0"
+proof -
+  let ?a = "Rep_rp2 a"
+  let ?b = "Rep_rp2 b"
+  let ?c = "Rep_rp2 c"
+  have "v3coplanar ?a ?b ?c" using assms rp2coll_def
+    by (simp add: rp2coll.rep_eq)
+  then show ?thesis using v3_coplanar_imp_det_0 by auto
+qed
+
+lemma rp2coll_det_0_iff: (*Lemma 3.10*)
+  fixes a b c :: rp2
+  shows "rp2coll a b c \<longleftrightarrow> det (mat_from_pts (Rep_rp2 a) (Rep_rp2 b) (Rep_rp2 c)) = 0"
+  using rp2coll_imp_det_0 det_0_imp_rp2coll by auto
+
+
+definition nv3coplanar :: "v3 \<Rightarrow> v3 \<Rightarrow> v3 \<Rightarrow> v3 \<Rightarrow> bool" where
+  "nv3coplanar a b c d \<longleftrightarrow> (\<not> v3coplanar a b c) \<and>
+                           (\<not> v3coplanar a b d) \<and>
+                           (\<not> v3coplanar a c d) \<and>
+                           (\<not> v3coplanar b c d)"
+                           
+
+definition nrp2coll_4 :: "rp2 \<Rightarrow> rp2 \<Rightarrow> rp2 \<Rightarrow> rp2 \<Rightarrow> bool" where
+  "nrp2coll_4 a b c d \<longleftrightarrow> (\<not> rp2coll a b c) \<and>
+                          (\<not> rp2coll a b d) \<and>
+                          (\<not> rp2coll a c d) \<and> 
+                          (\<not> rp2coll b c d)"
+
+lemma nv3coplanar_nrp2coll_4_iff:
+  "nv3coplanar a b c d \<longleftrightarrow> nrp2coll_4 (Abs_rp2 a) (Abs_rp2 b) (Abs_rp2 c) (Abs_rp2 d)"
+  unfolding nrp2coll_4_def nv3coplanar_def rp2coll_def by sorry
+  (* This should be a simple equivalence. However, sledgehammer isn't smart enough *)
+
+lemma ncoll_pts_are_distinct:
+  fixes a b c :: rp2
+  assumes "\<not> rp2coll a b c"
+  shows "distinct[a, b, c]"
+proof -
+  have "a \<noteq> b \<and> a \<noteq> c \<and> b \<noteq> c" using assms
+  by (metis RP2Q.p2 iso_tuple_UNIV_I rep_P_nz rp2_Lines_def rp2_incid.rep_eq rp2coll.rep_eq
+      v3coplanar_def) (*Ouch... *)
+  then show ?thesis by auto
+qed
+
+lemma p1p2p3q_nv3coplanar: "nv3coplanar p1 p2 p3 q"
+  using nv3coplanar_def by sorry
+
+lemma p1p2p3q_nrp2coll_4: "nrp2coll_4 (Abs_rp2 p1) (Abs_rp2 p2) (Abs_rp2 p3) (Abs_rp2 q)" by sorry
+
+lemma exists_auto_helper: (*Theorem 3.9 when a = p1, b = p2, c = p3, d = q*)
+  fixes a' b' c' d' :: rp2
+  assumes "rp2ncoll_4 a' b' c' d'"
+  shows "\<exists> T . T \<in> PGL2R \<and> T (Abs_rp2 p1) = a' \<and>
+         T (Abs_rp2 p2) = b' \<and> T (Abs_rp2 p3) = c' \<and> T (Abs_rp2 q) = d'"
+  
+
+
+lemma exists_auto: (* Existence part of Theorem 3.9 *)
+fixes a a' b b' c c' d d' :: rp2
+assumes "rp2ncoll_4 a b c d"
+and "rp2ncoll_4 a' b' c' d'"
+shows "\<exists> T . T \<in> PGL2R \<and> T a = a' \<and> T b = b' \<and> T c = c' \<and> T d = d'"
+
+
+theorem exists_unique_auto: (* Theorem 3.9 *)
+  fixes a a' b b' c c' d d' :: rp2
+  assumes "rp2ncoll_4 a b c d"
+  and "rp2ncoll_4 a' b' c' d'"
+  shows "\<exists>! T . T \<in> PGL2R \<and> T a = a' \<and> T b = b' \<and> T c = c' \<and> T d = d'"
+  sorry
+
 
 end       
 
