@@ -1,7 +1,6 @@
 theory "Chapter4-4-spike"
   imports Complex_Main  "Chapter4-3" "HOL-Algebra.Group"
 begin 
-declare [[smt_timeout = 4500]]
 
 context projective_plane
 begin
