@@ -1260,7 +1260,7 @@ proof -
           ABCD_harmonic ABCD_on_l1
           A'_construction B'_construction C'_construction D'_construction
           OrA_line OrB_line OrC_line OrD_line 
-          X_props XB'_line XB_meets_l1_at_C'
+          X_props XB'_line XB_meets_l1_at_D
     sorry
 qed
 
