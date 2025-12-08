@@ -1183,9 +1183,9 @@ proof -
   have X_props: "?X \<in> Points \<and> incid ?X ?BC' \<and> incid ?X ?OrA"
     using BC'_line OrA_line BC'_neq_OrA meet_properties2 by auto
 
-  let ?XB = "join X B"
+  let ?XB = "join ?X B"
   have "?XB = ?BC'" sorry
-  let ?OrX = "join Or X"
+  let ?OrX = "join Or ?X"
   have "?OrA = ?OrX" sorry
 
   have X_neq_B': "?X \<noteq> B'"
@@ -1212,9 +1212,25 @@ proof -
     join_properties2
     persp_data
     by auto
-  have "incid B' (join X D)" sorry
+  have "incid B' (join ?X D)" by (smt (verit)
+    A'_construction
+    ABCD_harmonic
+    ABCD_on_l1
+    D'_construction
+    XB'_line
+    XB'_meets_l1_at_D
+    X_props
+    \<open>Or \<bar> A = Or \<bar> (B \<bar> C' \<sqdot> Or \<bar> A)\<close>
+    distinct4_def
+    harmonic_quadruple_def
+    images
+    inverse_persp
+    is_persp_data.simps
+    join_properties2
+    meet_properties2
+    persp_data)
   
-  have "A' = meet (join Or X) (join B D)" by (smt (verit)
+  have A'_meet: "A' = meet (join Or ?X) (join B D)" by (smt (verit)
     A'B'C'D'_distinct
     A'_construction
     ABCD_on_l1
@@ -1222,14 +1238,14 @@ proof -
     B'_construction
     C'_construction
     XB'_meets_l1_at_D
-    \<open>Or \<bar> A = Or \<bar> X\<close>
+    \<open>Or \<bar> A = Or \<bar> ?X\<close>
     distinct4_def
     is_persp_data.simps
     join_properties1
     meet_properties2
     persp_data
     unique_meet)
-  have "B' = meet (join Or B) (join X D)" by (smt (verit)
+  have B'_meet: "B' = meet (join Or B) (join ?X D)" by (smt (verit)
     A'B'C'D'_distinct
     A'_construction
     ABCD_on_l1
@@ -1238,8 +1254,8 @@ proof -
     D'_construction
     OrB_line
     XB'_meets_l1_at_D
-    \<open>Or \<bar> A = Or \<bar> X\<close>
-    \<open>X \<bar> B = B \<bar> C'\<close>
+    \<open>Or \<bar> A = Or \<bar> ?X\<close>
+    \<open>?X \<bar> B = B \<bar> C'\<close>
     distinct4_def
     is_persp_data.simps
     join_properties1
@@ -1247,20 +1263,20 @@ proof -
     meet_properties2
     persp_data
     unique_meet)
-  have "incid D' (join Or D)" using OrD_line
+  have D'_incid: "incid D' (join Or D)" using OrD_line
     by force
-  have "incid C' (join X B)" by (simp add:
+  have C'_incid: "incid C' (join ?X B)" by (simp add:
     BC'_line
-    \<open>X \<bar> B = B \<bar> C'\<close>)
+    \<open>?X \<bar> B = B \<bar> C'\<close>)
   
-  have "cquadrangle Or X B D" sorry
+  have cquadrangle_OrXBD: "cquadrangle Or ?X B D" sorry
 
   show "harmonic_quadruple A' B' D' C'"
     using A'_on_l2 B'_on_l2 C'_on_l2 D'_on_l2 A'B'C'D'_distinct
           ABCD_harmonic ABCD_on_l1
           A'_construction B'_construction C'_construction D'_construction
           OrA_line OrB_line OrC_line OrD_line 
-          X_props XB'_line XB_meets_l1_at_D
+          X_props XB'_line XB_meets_l1_at_C'
     sorry
 qed
 
