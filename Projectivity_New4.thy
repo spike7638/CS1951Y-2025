@@ -32,14 +32,14 @@ fun is_pChain_param :: "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarr
      is_pChain_param Pts Lns inc (s2 # ss)
   )"
 
-fun chain_start :: "('p, 'l) pChain \<Rightarrow> 'l" where
-  "chain_start (s # _) = spec_domain s" |
-  "chain_start [] = undefined"
+fun chain_begin :: "('p, 'l) pChain \<Rightarrow> 'l" where
+  "chain_begin (s # _) = spec_domain s" |
+  "chain_begin [] = undefined"
 
-fun chain_finish :: "('p, 'l) pChain \<Rightarrow> 'l" where
-  "chain_finish [s] = spec_range s" |
-  "chain_finish (_ # ss) = chain_finish ss" |
-  "chain_finish [] = undefined"
+fun chain_end :: "('p, 'l) pChain \<Rightarrow> 'l" where
+  "chain_end [s] = spec_range s" |
+  "chain_end (_ # ss) = chain_end ss" |
+  "chain_end [] = undefined"
 
 section \<open>Perspectivities and Realizations (Parameterized)\<close>
 
@@ -55,7 +55,7 @@ definition perspectivity_from_spec_param ::
 fun realization_param :: 
   "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('p \<Rightarrow> 'p \<Rightarrow> 'l) \<Rightarrow> ('l \<Rightarrow> 'l \<Rightarrow> 'p) \<Rightarrow> 
    ('p, 'l) pChain \<Rightarrow> ('p \<Rightarrow> 'p)" where
-  "realization_param Pts Lns inc join_op meet_op [] = (\<lambda>Q. Q)" |
+  "realization_param Pts Lns inc join_op meet_op [] = (\<lambda>Q. Q)" |  (* potential problem here *)
   "realization_param Pts Lns inc join_op meet_op [s] = 
      perspectivity_from_spec_param Pts Lns inc join_op meet_op s" |
   "realization_param Pts Lns inc join_op meet_op (s # ss) = 
@@ -70,9 +70,9 @@ definition chains_equiv_param ::
   "chains_equiv_param Pts Lns inc join_op meet_op c1 c2 \<longleftrightarrow> (
      is_pChain_param Pts Lns inc c1 \<and> 
      is_pChain_param Pts Lns inc c2 \<and>
-     chain_start c1 = chain_start c2 \<and>
-     chain_finish c1 = chain_finish c2 \<and>
-     (\<forall>Q. Q \<in> Pts \<longrightarrow> inc Q (chain_start c1) \<longrightarrow> 
+     chain_begin c1 = chain_begin c2 \<and>
+     chain_end c1 = chain_end c2 \<and>
+     (\<forall>Q. Q \<in> Pts \<longrightarrow> inc Q (chain_begin c1) \<longrightarrow> 
           realization_param Pts Lns inc join_op meet_op c1 Q = 
           realization_param Pts Lns inc join_op meet_op c2 Q)
   )"
@@ -212,21 +212,48 @@ proof -
   show ?thesis using f0 [of Q1] f0 [of Q2] uu assms smap_def by metis
 qed
 
+lemma perspectivity_injective2:
+  assumes "is_pSpec s"
+  assumes "D = {Q \<in> Points. Q \<lhd> spec_domain s}"
+  shows "inj_on (perspectivity_from_spec s) D"
+  by (smt (verit) assms(1,2) inj_on_def mem_Collect_eq perspectivity_injective)  (* can surely be simplified with an 'of' *)
+
+
 lemma perspectivity_surjective:
   assumes "is_pSpec s"
   assumes "R \<in> Points" "R \<lhd> spec_range s"
   shows "\<exists>Q \<in> Points. Q \<lhd> spec_domain s \<and> perspectivity_from_spec s Q = R"
 proof -
-  obtain l0 Or l2 where s_def: "s = (l0, Or, l2)"  using prod_cases3 by blast
-  obtain t where t_def: "t =(l2, Or, l0)" by blast
+  obtain k P m where s_def: "s = (k, P, m)"  using prod_cases3 by blast
+  obtain t where t_def: "t =(m, P, k)" by blast
+  have t_good: "is_pSpec t" using assms t_def  by (simp add: s_def)
+  have tr: "spec_range t = k" using t_def spec_range_def [of "(m,P,k)"] by simp
+  have td: "spec_domain t = m" using t_def spec_domain_def [of "(m,P,k)"] by simp
+  have sr: "spec_range s = m" using s_def spec_range_def [of "(k,P,m)"] by simp
+  have sd: "spec_domain s = k" using s_def spec_domain_def [of "(k,P,m)"] by simp
   obtain smap where smap_def: "smap = perspectivity_from_spec s" by blast
   obtain tmap where tmap_def: "tmap = perspectivity_from_spec t" by blast
-  have f0: "R0 \<lhd> l2 \<and> R0 \<in> Points \<Longrightarrow>  smap (tmap R0) = R0" for R0 using inverse_persp assms smap_def tmap_def
+  have f0: "R0 \<lhd> m \<and> R0 \<in> Points \<Longrightarrow>  smap (tmap R0) = R0" for R0 using inverse_persp assms smap_def tmap_def
       s_def t_def by auto
   obtain Q0 where Q0_def: "Q0 = tmap R" by blast
-  have "R \<lhd> l2" using tmap_def t_def Q0_def assms spec_range_def s_def by sledgehammer
-  show ?thesis using Q0_def f0[of R] by sledgehammer
-  sorry
+  have Rm: "R \<lhd> spec_domain t" using td sr assms  by simp
+  have "Q0 \<lhd> k" using  perspectivity_maps_correctly [of t R] t_good assms(2) td Rm  tmap_def t_def Q0_def assms spec_range_def s_def sr td tr t_good by blast
+  then show ?thesis using Q0_def sd f0[of R]
+    using Rm assms(2) perspectivity_maps_correctly smap_def t_good td tmap_def by blast
+qed
+
+lemma perspectivity_surjective2:
+  assumes "is_pSpec s"
+  assumes "D = {Q \<in> Points. Q \<lhd> spec_domain s}"
+  assumes "R = {H \<in> Points. H \<lhd> spec_range s}"
+  assumes "f = perspectivity_from_spec s"
+  shows "f ` D = R"
+proof -
+  have a0: "f ` D = {y. \<exists>x\<in>D. y = f x}"  using Set.image_def[of f D] assms 
+  by (smt (verit, ccfv_SIG) Collect_cong mem_Collect_eq perspectivity_maps_correctly perspectivity_surjective)
+  have a1: "{y. \<exists>x\<in>D. y = f x} = {H \<in> Points. H \<lhd> spec_range s}" using perspectivity_surjective 
+    by (metis (mono_tags, lifting) assms(1,2,4) mem_Collect_eq perspectivity_maps_correctly)
+  show ?thesis using a0 a1 assms(3) by argo
 qed
 
 lemma perspectivity_bijective:
@@ -234,8 +261,12 @@ lemma perspectivity_bijective:
   shows "bij_betw (perspectivity_from_spec s)
                   {Q \<in> Points. Q \<lhd> spec_domain s}
                   {R \<in> Points. R \<lhd> spec_range s}"
-  using assms perspectivity_injective perspectivity_surjective by sledgehammer
-  sorry
+proof -
+  have "perspectivity_from_spec s ` {p \<in> Points. p \<lhd> spec_domain s} = {p \<in> Points. p \<lhd> spec_range s}"
+    using assms perspectivity_surjective2 by auto
+  then show ?thesis
+    by (simp add: assms bij_betw_def perspectivity_injective2)
+qed
 
 section \<open>Perspectivity Chains\<close>
 
@@ -269,13 +300,13 @@ lemma pChain_tail:
   shows "is_pChain ss"
   using assms by (cases ss) auto
 
-lemma chain_start_in_Lines:
-  "is_pChain c \<Longrightarrow> chain_start c \<in> Lines"
-  by (smt (verit) chain_start.elims is_pChain_param.elims(1) 
+lemma chain_begin_in_Lines:
+  "is_pChain c \<Longrightarrow> chain_begin c \<in> Lines"
+  by (smt (verit) chain_begin.elims is_pChain_param.elims(1) 
       is_pChain_param.simps(1) list.inject pSpec_components)
 
-lemma chain_finish_in_Lines:
-  "is_pChain c \<Longrightarrow> chain_finish c \<in> Lines"
+lemma chain_end_in_Lines:
+  "is_pChain c \<Longrightarrow> chain_end c \<in> Lines"
   sorry (* need to figure out induction on the chain *)
 
 section \<open>Realization of Chains\<close>
@@ -297,13 +328,13 @@ lemma realization_single:
 
 lemma realization_domain:
   assumes "is_pChain c"
-  assumes "Q \<in> Points" "Q \<lhd> chain_start c"
-  shows "realization c Q \<in> Points \<and> realization c Q \<lhd> chain_finish c"
+  assumes "Q \<in> Points" "Q \<lhd> chain_begin c"
+  shows "realization c Q \<in> Points \<and> realization c Q \<lhd> chain_end c"
   sorry (* need to figure out induction on the chain *)
 
 lemma realization_append:
   assumes "is_pChain c1" "is_pChain c2"
-  assumes "chain_finish c1 = chain_start c2"
+  assumes "chain_end c1 = chain_begin c2"
   shows "realization (c1 @ c2) = (realization c2) \<circ> (realization c1)"
   sorry (* need to figure out induction on the chain *)
 
@@ -316,9 +347,9 @@ abbreviation chains_equiv :: "('p, 'l) pChain \<Rightarrow> ('p, 'l) pChain \<Ri
 lemma chains_equiv_unfold:
   "c1 \<simeq> c2 \<longleftrightarrow> (
      is_pChain c1 \<and> is_pChain c2 \<and>
-     chain_start c1 = chain_start c2 \<and>
-     chain_finish c1 = chain_finish c2 \<and>
-     (\<forall>Q. Q \<in> Points \<longrightarrow> Q \<lhd> chain_start c1 \<longrightarrow> realization c1 Q = realization c2 Q)
+     chain_begin c1 = chain_begin c2 \<and>
+     chain_end c1 = chain_end c2 \<and>
+     (\<forall>Q. Q \<in> Points \<longrightarrow> Q \<lhd> chain_begin c1 \<longrightarrow> realization c1 Q = realization c2 Q)
   )"
   unfolding chains_equiv_param_def by auto
 
@@ -416,10 +447,10 @@ lemma proj_eq_equiv:
 text \<open>Define operations on projectivities\<close>
 
 definition proj_domain :: "('p, 'l) projectivity \<Rightarrow> 'l" where
-  "proj_domain c = chain_start c"
+  "proj_domain c = chain_begin c"
 
 definition proj_range :: "('p, 'l) projectivity \<Rightarrow> 'l" where
-  "proj_range c = chain_finish c"
+  "proj_range c = chain_end c"
 
 lemma proj_domain_respects_equiv:
   assumes "c1 \<sim> c2"
@@ -435,7 +466,7 @@ text \<open>Define composition of projectivities (when compatible)\<close>
 
 definition proj_compose :: "('p, 'l) projectivity \<Rightarrow> ('p, 'l) projectivity \<Rightarrow> ('p, 'l) projectivity option" where
   "proj_compose c1 c2 = 
-     (if is_pChain c1 \<and> is_pChain c2 \<and> chain_finish c1 = chain_start c2 
+     (if is_pChain c1 \<and> is_pChain c2 \<and> chain_end c1 = chain_begin c2 
       then Some (c1 @ c2) 
       else None)"
 
@@ -451,7 +482,7 @@ lemma proj_compose_respects_equiv:
 text \<open>Define the set of projectivities for a given line k (pLoops)\<close>
 
 definition PJ :: "'l \<Rightarrow> ('p, 'l) projectivity set" where
-  "PJ k = {c. is_pChain c \<and> chain_start c = k \<and> chain_finish c = k}"
+  "PJ k = {c. is_pChain c \<and> chain_begin c = k \<and> chain_end c = k}"
 
 lemma PJ_respects_equiv:
   assumes "c \<in> PJ k" "c \<sim> c'"
@@ -489,16 +520,16 @@ fun reverse_chain :: "('p, 'l) pChain \<Rightarrow> ('p, 'l) pChain" where
 definition proj_inverse :: "('p, 'l) projectivity \<Rightarrow> ('p, 'l) projectivity" where
   "proj_inverse c = reverse_chain c"
 
-lemma reverse_chain_start_finish:
+lemma reverse_chain_begin_finish:
   assumes "is_pChain c"
-  shows "chain_start (reverse_chain c) = chain_finish c \<and>
-         chain_finish (reverse_chain c) = chain_start c"
+  shows "chain_begin (reverse_chain c) = chain_end c \<and>
+         chain_end (reverse_chain c) = chain_begin c"
   sorry
 
 lemma proj_inverse_in_PJ:
   assumes "c \<in> PJ k"
   shows "proj_inverse c \<in> PJ k"
-  using assms reverse_chain_start_finish
+  using assms reverse_chain_begin_finish
   unfolding proj_inverse_def PJ_def
   sorry
 
