@@ -3,6 +3,13 @@ theory Projectivity_New4
 begin
 
 section \<open>Perspectivity Spec (Parameterized)\<close>
+text\<open>A perspectivity in a projective plane involves two lines and a point that's not on either one. 
+We can abstract this as a "pSpec" (a "proto" specification) -- a line-point-line triple. But only 
+certain pSpecs(ones where the point doesn't lie on either line) define perspectivities. To make 
+sense of this, we need the projective plane apparatus: the set of points; the set of lines; 
+the incidence function. Places where these are used get the suffix "param". But even without
+this, the notion of the domain, range, and center of the perspectivity make sense. I'll 
+also add the 'inverse' of a perspectivity specification, just to flesh things out. \<close>
 
 type_synonym ('p1, 'l1) pSpec = "('l1 \<times> 'p1 \<times> 'l1)"
 
@@ -19,8 +26,23 @@ definition spec_center :: "('p, 'l) pSpec \<Rightarrow> 'p" where
 definition spec_range :: "('p, 'l) pSpec \<Rightarrow> 'l" where
   "spec_range s = (case s of (_, _, m) \<Rightarrow> m)"
 
+definition spec_inverse :: "('p, 'l) pSpec \<Rightarrow> ('p, 'l) pSpec" where
+  "spec_inverse s = (case s of (k, P, m) \<Rightarrow> (m, P, k))"
+
+lemma [simp]: "spec_domain (spec_inverse s) = spec_range s"
+  by (simp add: case_prod_unfold spec_domain_def spec_inverse_def spec_range_def)
+
+lemma [simp]: "spec_range (spec_inverse s) = spec_domain s"
+  by (simp add: case_prod_unfold spec_domain_def spec_inverse_def spec_range_def)
+
+lemma  [simp]:"spec_center (spec_inverse s) = spec_center s"
+  by (simp add: case_prod_unfold spec_domain_def spec_center_def spec_inverse_def spec_range_def)
+
+text\<open>pChains, like pSpecs, are proto-projectivities: sequences of things that might represent
+perspectivities. Note that to be an actual projectivity, the sequence must not be empty. \<close>
+
+
 type_synonym ('p1, 'l1) pChain = "('p1, 'l1) pSpec list"
-(* this might be a problem; we really need chains to be non-empty pspec-lists *)
 
 fun is_pChain_param :: "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('p, 'l) pChain \<Rightarrow> bool" where
   "is_pChain_param Pts Lns inc [] = False" |
@@ -41,7 +63,14 @@ fun chain_end :: "('p, 'l) pChain \<Rightarrow> 'l" where
   "chain_end (_ # ss) = chain_end ss" |
   "chain_end [] = undefined"
 
+fun chain_inverse :: "('p, 'l) pChain \<Rightarrow> ('p, 'l) pChain" where
+  "chain_inverse [] = undefined" |
+  "chain_inverse (s) = map spec_inverse (rev s)" 
+
 section \<open>Perspectivities and Realizations (Parameterized)\<close>
+text\<open>Now we take these specifications of perspectivities and projectivities and 
+turn them into actual functions from the beginning line to the ending line; we call this
+"realization"\<close>
 
 definition perspectivity_from_spec_param :: 
   "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('p \<Rightarrow> 'p \<Rightarrow> 'l) \<Rightarrow> ('l \<Rightarrow> 'l \<Rightarrow> 'p) \<Rightarrow> 
@@ -52,15 +81,20 @@ definition perspectivity_from_spec_param ::
        then (\<lambda>Q. if Q \<in> Pts \<and> inc Q k then meet_op (join_op P Q) m else undefined)
        else undefined)"
 
+(* The following definition needs sanity-checking; I inserts the is_pChain_param condition *)
 fun realization_param :: 
   "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('p \<Rightarrow> 'p \<Rightarrow> 'l) \<Rightarrow> ('l \<Rightarrow> 'l \<Rightarrow> 'p) \<Rightarrow> 
    ('p, 'l) pChain \<Rightarrow> ('p \<Rightarrow> 'p)" where
-  "realization_param Pts Lns inc join_op meet_op [] = (\<lambda>Q. Q)" |  (* potential problem here *)
+  "realization_param Pts Lns inc join_op meet_op [] = undefined" |  
   "realization_param Pts Lns inc join_op meet_op [s] = 
      perspectivity_from_spec_param Pts Lns inc join_op meet_op s" |
-  "realization_param Pts Lns inc join_op meet_op (s # ss) = 
-     (realization_param Pts Lns inc join_op meet_op ss) \<circ> 
-     (perspectivity_from_spec_param Pts Lns inc join_op meet_op s)"
+  "realization_param Pts Lns inc join_op meet_op c = 
+      (case c of s # ss \<Rightarrow>
+        if  is_pChain_param Pts Lns inc c 
+        then (realization_param Pts Lns inc join_op meet_op ss) \<circ> 
+          (perspectivity_from_spec_param Pts Lns inc join_op meet_op s)
+        else undefined)"
+
 
 section \<open>Parameterized Chain Equivalence\<close>
 
@@ -305,9 +339,24 @@ lemma chain_begin_in_Lines:
   by (smt (verit) chain_begin.elims is_pChain_param.elims(1) 
       is_pChain_param.simps(1) list.inject pSpec_components)
 
+(* shows how to do induction on chains, which must be nonempty *)
+
 lemma chain_end_in_Lines:
   "is_pChain c \<Longrightarrow> chain_end c \<in> Lines"
-  sorry (* need to figure out induction on the chain *)
+proof -
+  assume ah: "is_pChain c"
+  then have "c \<noteq> []" using  ah pChain_nonempty by auto
+
+  have step1: "\<lbrakk> c \<noteq>[]; is_pChain c\<rbrakk> \<Longrightarrow> chain_end c \<in> Lines"
+  proof (induction c rule: list_nonempty_induct)
+    case (single c)
+    then show ?case by (simp add: pSpec_components)
+  next
+    case (cons s ss)
+    then show ?case  by (metis chain_end.simps(2) neq_Nil_conv pChain_tail)
+  qed
+  show "is_pChain c \<Longrightarrow> chain_end c \<in> Lines" using pChain_nonempty step1 by auto
+qed
 
 section \<open>Realization of Chains\<close>
 
