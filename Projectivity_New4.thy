@@ -116,12 +116,12 @@ begin
 
 section \<open>Perspectivity Spec\<close>
 
-abbreviation is_pSpec :: "('p, 'l) pSpec \<Rightarrow> bool" where
+definition is_pSpec :: "('p, 'l) pSpec \<Rightarrow> bool" where
   "is_pSpec s \<equiv> is_pSpec_param Points Lines (\<lhd>) s"
 
 lemma is_pSpec_unfold:
   "is_pSpec (k, P, m) = (k \<in> Lines \<and> P \<in> Points \<and> m \<in> Lines \<and> \<not>(P \<lhd> k) \<and> \<not>(P \<lhd> m))"
-  by auto
+  unfolding is_pSpec_param.cases is_pSpec_def by auto
 
 lemma pSpec_components:
   "is_pSpec s \<Longrightarrow> 
@@ -130,17 +130,32 @@ lemma pSpec_components:
    spec_range s \<in> Lines \<and>
    \<not>(spec_center s \<lhd> spec_domain s) \<and>
    \<not>(spec_center s \<lhd> spec_range s)"
-  by (cases s) (auto simp: spec_domain_def spec_center_def spec_range_def)
+proof -
+  assume ah: "is_pSpec s"
+  obtain k P m where s_def: "s = (k, P, m) \<and> k \<in> Lines \<and> m \<in> Lines \<and> P \<in> Points" 
+    using ah prod_cases3   by (metis is_pSpec_unfold)
+  then have "(spec_domain s = k) \<and> (spec_center s = P) \<and> (spec_range s = m)" 
+    using spec_domain_def spec_center_def spec_range_def by force
+  then show ?thesis using s_def is_pSpec_param.cases is_pSpec_def is_pSpec_unfold [of k P m]
+  using ah by auto
+qed 
 
-abbreviation perspectivity_from_spec :: "('p, 'l) pSpec \<Rightarrow> ('p \<Rightarrow> 'p)" where
-  "perspectivity_from_spec s \<equiv> perspectivity_from_spec_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) s"
+abbreviation perspectivity_from_spec2 :: "('p, 'l) pSpec \<Rightarrow> ('p \<Rightarrow> 'p)" where
+  "perspectivity_from_spec2 s \<equiv> perspectivity_from_spec_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) s"
+
+definition perspectivity_from_spec ::  "('p, 'l) pSpec \<Rightarrow> ('p \<Rightarrow> 'p)" where
+  "perspectivity_from_spec  s =
+     (case s of (k, P, m) \<Rightarrow>
+       if is_pSpec_param Points Lines  (\<lhd>) (k, P, m)
+       then (\<lambda>Q. if Q \<in> Points \<and>  Q \<lhd> k then ( P \<bar> Q) \<sqdot> m else undefined)
+       else undefined)"
 
 lemma perspectivity_from_spec_unfold:
   "perspectivity_from_spec (k, P, m) = 
      (if is_pSpec (k, P, m)
       then (\<lambda>Q. if Q \<in> Points \<and> Q \<lhd> k then meet (join P Q) m else undefined)
       else undefined)"
-  unfolding perspectivity_from_spec_param_def by auto
+  unfolding perspectivity_from_spec_def is_pSpec_param.cases  using is_pSpec_def by auto
 
 lemma perspectivity_from_spec_alt:
   "perspectivity_from_spec s = 
@@ -148,9 +163,13 @@ lemma perspectivity_from_spec_alt:
     then (\<lambda>Q. if Q \<in> Points \<and> Q \<lhd> spec_domain s 
               then meet (join (spec_center s) Q) (spec_range s) 
               else undefined)
-    else undefined)"
-  by (cases s) (auto simp: spec_domain_def spec_center_def spec_range_def 
-                            perspectivity_from_spec_param_def)
+    else undefined)" 
+proof -
+  obtain k P m where s_def: "s = (k, P, m)" using prod_cases3 by blast
+  then have f0: "perspectivity_from_spec s = perspectivity_from_spec (k, P, m)" by auto
+  show ?thesis using f0 perspectivity_from_spec_unfold[of k P m] s_def spec_domain_def [of "(k,P,m)"] spec_range_def [of "(k,P,m)"] 
+      spec_center_def [of "(k,P,m)"] by fastforce
+qed
 
 text \<open>Basic properties of perspectivities\<close>
 
@@ -162,8 +181,8 @@ lemma perspectivity_maps_correctly:
 proof -
   obtain k P m where s_def: "s = (k, P, m)" by (cases s) auto
   have "k \<in> Lines" "P \<in> Points" "m \<in> Lines" "\<not>(P \<lhd> k)" "\<not>(P \<lhd> m)"
-    using assms(1) s_def by auto
-  moreover have "Q \<lhd> k" 
+    using assms(1) s_def is_pSpec_def is_pSpec_param.cases by auto
+  moreover have qk: "Q \<lhd> k" 
     using assms(3) s_def spec_domain_def by (metis case_prod_conv)
   have st: "(P \<bar> Q \<sqdot> m)  \<in> Points" using assms meet_properties2 
     join_properties1 join_properties2 using \<open>Q \<lhd> k\<close> calculation(2,3,4,5)
@@ -173,7 +192,8 @@ proof -
     join_properties1 by auto
   ultimately show ?thesis
     using assms(2) join_properties1 meet_properties2 s_def 
-    by (simp add: \<open>Q \<lhd> k\<close> spec_range_def st perspectivity_from_spec_param_def)
+      qk spec_range_def st perspectivity_from_spec_param_def
+  by (smt (verit, ccfv_threshold) assms(1,3) pSpec_components perspectivity_from_spec_alt)
 qed
 
 lemma perspectivity_inverse:
@@ -216,8 +236,9 @@ proof -
   have f2: "(f Q) = (Or \<bar> Q) \<sqdot> l2" 
     unfolding f_def g_def perspectivity_from_spec_unfold using assms by auto
   then have fQnice: "(f Q) \<in> Points \<and> (f Q) \<lhd> l2" 
-    using Q_facts data_def join_properties1 meet_properties2 by auto
-  have gdata_def: "is_pSpec (l2, Or, l1)" using data_def by auto
+    using Q_facts data_def join_properties1 meet_properties2
+  using is_pSpec_unfold by auto
+  have gdata_def: "is_pSpec (l2, Or, l1)" using data_def  using is_pSpec_unfold by blast
   have g1: "g (f Q) = (Or \<bar> (f Q)) \<sqdot> l1"
     unfolding f_def g_def perspectivity_from_spec_unfold 
     using fQnice f2 Q_facts gdata_def assms by auto
@@ -260,7 +281,7 @@ lemma perspectivity_surjective:
 proof -
   obtain k P m where s_def: "s = (k, P, m)"  using prod_cases3 by blast
   obtain t where t_def: "t =(m, P, k)" by blast
-  have t_good: "is_pSpec t" using assms t_def  by (simp add: s_def)
+  have t_good: "is_pSpec t" using assms t_def s_def is_pSpec_unfold by auto
   have tr: "spec_range t = k" using t_def spec_range_def [of "(m,P,k)"] by simp
   have td: "spec_domain t = m" using t_def spec_domain_def [of "(m,P,k)"] by simp
   have sr: "spec_range s = m" using s_def spec_range_def [of "(k,P,m)"] by simp
@@ -268,7 +289,7 @@ proof -
   obtain smap where smap_def: "smap = perspectivity_from_spec s" by blast
   obtain tmap where tmap_def: "tmap = perspectivity_from_spec t" by blast
   have f0: "R0 \<lhd> m \<and> R0 \<in> Points \<Longrightarrow>  smap (tmap R0) = R0" for R0 using inverse_persp assms smap_def tmap_def
-      s_def t_def by auto
+      s_def t_def is_pSpec_unfold by auto
   obtain Q0 where Q0_def: "Q0 = tmap R" by blast
   have Rm: "R \<lhd> spec_domain t" using td sr assms  by simp
   have "Q0 \<lhd> k" using  perspectivity_maps_correctly [of t R] t_good assms(2) td Rm  tmap_def t_def Q0_def assms spec_range_def s_def sr td tr t_good by blast
@@ -318,7 +339,13 @@ lemma is_pChain_unfold:
      spec_range s1 = spec_domain s2 \<and> 
      is_pChain (s2 # ss)
   )"
-  by auto
+proof -
+  show "is_pChain [] = False" by auto
+  show "is_pChain [s] = is_pSpec s"  using is_pSpec_def by auto
+  show "is_pChain (s1 # s2 # ss) =
+    (is_pSpec s1 \<and> is_pSpec s2 \<and> spec_range s1 = spec_domain s2 \<and> is_pChain (s2 # ss))" 
+    by (simp add: is_pSpec_def)
+qed
 
 lemma pChain_nonempty:
   "is_pChain c \<Longrightarrow> c \<noteq> []"
@@ -326,7 +353,7 @@ lemma pChain_nonempty:
 
 lemma pChain_cons:
   "is_pChain (s # ss) \<Longrightarrow> is_pSpec s"
-  by (cases ss) auto
+  by (metis is_pChain_param.simps(2,3) is_pSpec_def list.exhaust)
 
 lemma pChain_tail:
   assumes "is_pChain (s # ss)"
@@ -335,9 +362,9 @@ lemma pChain_tail:
   using assms by (cases ss) auto
 
 lemma chain_begin_in_Lines:
-  "is_pChain c \<Longrightarrow> chain_begin c \<in> Lines"
-  by (smt (verit) chain_begin.elims is_pChain_param.elims(1) 
-      is_pChain_param.simps(1) list.inject pSpec_components)
+  "is_pChain c \<Longrightarrow> chain_begin c \<in> Lines" 
+  by (metis chain_begin.elims is_pChain_unfold(1) pChain_cons pSpec_components)
+  
 
 (* shows how to do induction on chains, which must be nonempty *)
 
@@ -350,7 +377,7 @@ proof -
   have step1: "\<lbrakk> c \<noteq>[]; is_pChain c\<rbrakk> \<Longrightarrow> chain_end c \<in> Lines"
   proof (induction c rule: list_nonempty_induct)
     case (single c)
-    then show ?case by (simp add: pSpec_components)
+    then show ?case using is_pChain_unfold(2) pSpec_components by auto
   next
     case (cons s ss)
     then show ?case  by (metis chain_end.simps(2) neq_Nil_conv pChain_tail)
@@ -366,10 +393,21 @@ abbreviation realization :: "('p, 'l) pChain \<Rightarrow> ('p \<Rightarrow> 'p)
   "realization c \<equiv> realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c"
 
 lemma realization_unfold:
-  "realization [] = (\<lambda>Q. Q)"
+  "realization [] = undefined"
   "realization [s] = perspectivity_from_spec s"
-  "realization (s # ss) = (realization ss) \<circ> (perspectivity_from_spec s)"
-  sorry (* need to figure out induction on the chain *)
+  "\<lbrakk>ss \<noteq> []\<rbrakk> \<Longrightarrow> realization (s # ss) = (realization ss) \<circ> (perspectivity_from_spec s)"
+proof -
+  show "realization [] = undefined" by auto
+  show "realization [s] = perspectivity_from_spec s" 
+      by (simp add: perspectivity_from_spec_def perspectivity_from_spec_param_def)   
+    show "\<lbrakk>ss \<noteq> []\<rbrakk> \<Longrightarrow> realization (s # ss) = (realization ss) \<circ> (perspectivity_from_spec s)"
+    proof -
+      have h0: "realization (s # ss)  =  realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (s # ss)" by auto
+      then have h1: "... = 
+        (if  is_pChain_param Points Lines (\<lhd>) (s # ss) 
+        then (realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) ss) \<circ> 
+          (perspectivity_from_spec_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) s)
+        else undefined)" using realization_param.cases by sledgehammer
 
 lemma realization_single:
   "realization [s] = perspectivity_from_spec s"
