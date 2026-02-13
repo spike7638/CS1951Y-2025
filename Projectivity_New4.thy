@@ -2,6 +2,10 @@ theory Projectivity_New4
   imports Complex_Main "Chapter4-3" "HOL-Algebra.Group"
 begin
 
+(*
+19 "sorry"s remaining
+*)
+
 section \<open>Perspectivity Spec (Parameterized)\<close>
 text\<open>A perspectivity in a projective plane involves two lines and a point that's not on either one. 
 We can abstract this as a "pSpec" (a proto perspectivity-specification) -- a line-point-line triple. But only 
@@ -460,6 +464,7 @@ proof -
     then show ?case using chain_cons perspectivity_maps_correctly realization_unfold(2) by auto
   next
     case (cons s ss)
+ 
     obtain t ts where tfacts:"ss = t # ts" using chain_begin.cases cons.hyps by blast
     have f0: "is_chain (t#ts) \<Longrightarrow> Q \<in> Points \<Longrightarrow> Q \<lhd> chain_begin (t#ts) \<Longrightarrow> realization (t#ts) Q \<in> Points" for Q
       using tfacts cons.IH by auto
@@ -467,16 +472,22 @@ proof -
     then have f2: "U \<in> Points \<Longrightarrow> U \<lhd> chain_begin (t#ts) \<Longrightarrow> realization (t#ts) U \<in> Points" for U  using f0 by auto
     have f4: "chain_begin (t # ts) = pSpec_domain t" by auto
     then have f5: "U \<in> Points \<and> U \<lhd> pSpec_domain t \<Longrightarrow> realization (t#ts) U \<in> Points" for U using f2 by auto
-    have "(realization (s # ss) Q) =  (realization_param  Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (s # ss) Q)" 
-    using realization_def by auto
+    have g0: "(realization (s # ss) Q) =  (realization_param  Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (s # t # ts) Q)" 
+      using realization_def tfacts by auto
+    then have g1: "... =   (case s # t # ts of
+       sa # ss \<Rightarrow>  if is_chain_param Points Lines (\<lhd>) (s # t # ts) 
+                   then realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (t # ts) \<circ> perspectivity_from_spec2 s
+                   else undefined) Q" using realization_param.simps(3)[of Points Lines "(\<lhd>)" "(\<bar>)" "(\<sqdot>)" s  t ts] by auto
+    then have g2: "... =  (realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (t # ts) \<circ> perspectivity_from_spec2 s) Q" 
+      using cons.prems(3) is_chain_def tfacts by force
+    then have g3: "(realization (s # ss) Q) = (realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (t # ts) \<circ> perspectivity_from_spec2 s) Q" using g0 g1 g2 by auto 
 
-    then show ?case using realization_def realization_param.simps chain_begin.simps(1) comp_apply cons.prems(1,2,3) f2 is_chain_def
-          is_chain_param.simps(3) chain_cons perspectivity_maps_correctly realization_param.simps realization_unfold(2)
-          tfacts by sledgehammer
+    thm realization_param.simps(3)[of Points Lines "(\<lhd>)" "(\<bar>)" "(\<sqdot>)" s  t ts]
+    thm cons.IH 
 
-(*      by (smt (verit, ccfv_SIG) realization_def chain_begin.simps(1) comp_apply cons.prems(1,2,3) f2 is_chain_def
-          is_chain_param.simps(3) chain_cons perspectivity_maps_correctly realization_param.simps realization_unfold(2)
-          tfacts) *)
+    then show ?case using g3 
+    by (metis chain_begin.simps(1) comp_apply cons.prems(1,2,3) f5 is_chain_unfold(3) perspectivity_maps_correctly realization_def
+        realization_param.simps(2) realization_unfold(2) tfacts)
   qed
 qed
 
@@ -499,20 +510,36 @@ proof -
     next
       case False
       then obtain y ys where ydef: "xs = y # ys" using chain_begin.cases by blast
-      show ?thesis 
-        by (smt (verit, del_insts) chain_begin.simps(1) chain_end.simps(2) comp_apply cons.IH cons.prems(1,2,3)
-            is_chain_def is_chain_param.simps(3) chain_cons perspectivity_maps_correctly realization.simps(2,3)
-            realization_unfold(2) ydef)
+      assume ah: "(\<And>R. R \<in> Points \<Longrightarrow> R \<lhd> chain_begin xs \<Longrightarrow> is_chain xs \<Longrightarrow> realization xs R \<lhd> chain_end xs)"
+      show "Q \<in> Points \<Longrightarrow>  Q \<lhd> chain_begin (x # xs) \<Longrightarrow> is_chain (x # xs)
+         \<Longrightarrow> is_chain c \<Longrightarrow> xs \<noteq> [] \<Longrightarrow> realization (x # xs) Q \<lhd> chain_end (x # xs)" for Q
+      proof -
+        assume a0: "Q \<in> Points" and a1: "Q \<lhd> chain_begin (x # xs)" and a2: " is_chain (x # xs)"
+        and a3: "is_chain c" and a4: "xs \<noteq> []"  
+
+        have a5: "(realization (x # xs) Q) = (realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (xs) \<circ> perspectivity_from_spec2 x) Q"
+          using realization_def[of "x # xs"] realization_param.simps(3)[of Points Lines " (\<lhd>)" "(\<bar>)" "(\<sqdot>)" x y ys]  a4 
+          using a2 is_chain_def ydef by auto
+        let ?R = "realization [x] Q"
+        thm realization_param.elims
+        have "?R \<lhd> pSpec_range x"
+          using a0 a1 a2 chain_cons perspectivity_maps_correctly realization_unfold(2) by auto
+        then have "?R \<lhd> chain_begin xs" using a2 is_chain_unfold(3) ydef by auto
+        then have "realization xs ?R \<lhd> chain_end xs"
+          by (metis a0 a1 a2 a4 ah chain_begin.simps(1) chain_cons chain_tail perspectivity_maps_correctly realization_unfold(2))
+        then have "realization xs ?R \<lhd> chain_end (x # xs)" by (simp add: ydef)
+        then have "realization (x#xs) Q \<lhd> chain_end (x # xs)" using a5 by (simp add: realization_def)
+        then show ?thesis by blast
+      qed
     qed
   qed
 qed
-
 
 lemma realization_move:
   assumes "c1 = [u]"
   assumes "is_chain c1" "is_chain c2"
   assumes "chain_end c1 = chain_begin c2"
-  shows "realization (c1 @ c2) = (realization c2) \<circ> (realization c1)"
+  shows "realization (c1 @ c2) = (realization c2) \<circ> (realization c1)" by sledgehammer
   sorry (* need to figure out induction on the chain *)
 
 
@@ -554,7 +581,8 @@ proof (safe)
   show f2: "c1 \<simeq> c2 \<Longrightarrow> is_chain c2" by (simp add: chains_equiv_param_def is_chain_def)
   show f3: "c1 \<simeq> c2 \<Longrightarrow> (chain_begin c1 = chain_begin c2)" by (simp add: chains_equiv_param_def is_chain_def)
   show f4: "c1 \<simeq> c2 \<Longrightarrow> (chain_end c1 = chain_end c2)" by (simp add: chains_equiv_param_def is_chain_def)
-  show f5: "\<And>Q. c1 \<simeq> c2 \<Longrightarrow> Q \<in> Points \<Longrightarrow> Q \<lhd> chain_begin c1 \<Longrightarrow> realization c1 Q = realization c2 Q" sorry
+  show f5: "\<And>Q. c1 \<simeq> c2 \<Longrightarrow> Q \<in> Points \<Longrightarrow> Q \<lhd> chain_begin c1 \<Longrightarrow> (realization c1 Q = realization c2 Q)"
+    by (simp add: chains_equiv_param_def realization_def)
 qed
 
 lemma chains_equiv_unfold2:
@@ -590,36 +618,29 @@ proof -
      chain_end c1 = chain_end c2 \<and>
      (\<forall>Q. Q \<in> Points \<and> (\<lhd>) Q (chain_begin c1) \<longrightarrow> 
           realization c1 Q = 
-          realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>)  c2 Q))" by sledgehammer
-
-  show r1: "is_chain c1 \<Longrightarrow>
-    is_chain c2 \<Longrightarrow>
-    chain_begin c1 = chain_begin c2 \<Longrightarrow>
-    chain_end c1 = chain_end c2 \<Longrightarrow>
-    \<forall>Q. Q \<in> Points \<longrightarrow> Q \<lhd> chain_begin c1 \<longrightarrow> realization c1 Q = realization c2 Q \<Longrightarrow> c1 \<simeq> c2"
-  proof (clarsimp)
-    have "?thesis \<equiv>  (is_chain c1 \<Longrightarrow>
-    is_chain c2 \<Longrightarrow>
-    chain_begin c1 = chain_begin c2 \<Longrightarrow>
-    chain_end c1 = chain_end c2 \<Longrightarrow>
-    \<forall>Q. Q \<in> Points \<longrightarrow> Q \<lhd> chain_begin c2 \<longrightarrow> realization c1 Q = realization c2 Q \<Longrightarrow> 
- chains_equiv_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c1 c2)"
+          realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>)  c2 Q))" 
+    using realization_def by auto
+  then show ?thesis by sledgehammer
+  using
+    \<open>(c1 \<simeq> c2) = (is_chain_param Points Lines (\<lhd>) c1 \<and> is_chain_param Points Lines (\<lhd>) c2 \<and> chain_begin c1 = chain_begin c2 \<and> chain_end c1 = chain_end c2 \<and> (\<forall>Q. Q \<in> Points \<and> Q \<lhd> chain_begin c1 \<longrightarrow> realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c1 Q = realization_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c2 Q))\<close>
+    ah is_chain_def realization_def by auto
+qed
 
 
 lemma chains_equiv_refl:
   assumes "is_chain c"
   shows "c \<simeq> c"
-  using assms chains_equiv_unfold by auto
+  using assms chains_equiv_unfold2 by auto
 
 lemma chains_equiv_sym:
   assumes "c1 \<simeq> c2"
   shows "c2 \<simeq> c1"
-  using assms chains_equiv_unfold by auto
+  using assms chains_equiv_unfold1 chains_equiv_unfold2 by metis
 
 lemma chains_equiv_trans:
   assumes "c1 \<simeq> c2" "c2 \<simeq> c3"
   shows "c1 \<simeq> c3"
-  using assms chains_equiv_unfold by auto
+  using assms by (simp add: chains_equiv_param_def)
 
 lemma chains_equiv_param_refl_in_locale:
   assumes "is_chain_param Points Lines (\<lhd>) c"
@@ -644,7 +665,7 @@ lemma chains_equiv_param_is_equiv_in_locale:
   using chains_equiv_param_refl_in_locale
         chains_equiv_param_sym_in_locale
         chains_equiv_param_trans_in_locale
-  sorry
+  using chains_equiv_param_def by blast
 
 lemma chains_equiv_is_equiv:
   "equiv {c. is_chain c} {(c1, c2). c1 \<simeq> c2}"
@@ -663,7 +684,7 @@ lemma chain_extend_with_identity:
   assumes "is_pSpec (k, P, m)"
   assumes "is_pSpec (m, P, m)"
   shows "[(k, P, m)] \<simeq> [(k, P, m), (m, P, m)]"
-  sorry
+  using identity_perspectivity by sledgehammer
 
 section \<open>"Quotient Type" for Projectivities\<close>
 
