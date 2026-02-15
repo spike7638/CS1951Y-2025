@@ -2,9 +2,6 @@ theory Projectivity_New4
   imports Complex_Main "Chapter4-3" "HOL-Algebra.Group"
 begin
 
-(*
-10 "sorry"s remaining
-*)
 
 section \<open>Perspectivity Spec\<close>
 text\<open>A perspectivity in a projective plane involves two lines and a point that's not on either one. 
@@ -65,7 +62,7 @@ fun chain_range :: "('p, 'l) chain \<Rightarrow> 'l" where
 definition chain_inverse :: "('p, 'l) chain \<Rightarrow> ('p, 'l) chain" where
   "chain_inverse (s) = map pSpec_inverse (rev s)" 
 
-lemma [simp]: "chain_domain (chain_inverse c) = chain_range c"
+lemma ci1 [simp]: "chain_domain (chain_inverse c) = chain_range c"
 proof (cases "c = []")
   case True
   have f0: "chain_range c = undefined" by (simp add: True)
@@ -83,7 +80,7 @@ next
   then show ?thesis using f0 f1 pspec_domain_inverse by auto
 qed
 
-lemma [simp]: "chain_range (chain_inverse c) = chain_domain c"
+lemma ci2 [simp]: "chain_range (chain_inverse c) = chain_domain c"
 proof (cases "c = []")
   case True
   have f1: "chain_inverse c = []" by (simp add: True chain_inverse_def)
@@ -106,15 +103,25 @@ fun is_pSpec_param :: "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarro
 fun is_chain_param :: "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('p, 'l) chain \<Rightarrow> bool" where
   "is_chain_param Pts Lns inc [] = False" |
   "is_chain_param Pts Lns inc [s] = is_pSpec_param Pts Lns inc s" |
-  "is_chain_param Pts Lns inc (s1 # s2 # ss) = (
-     is_pSpec_param Pts Lns inc s1 \<and> 
-     is_pSpec_param Pts Lns inc s2 \<and> 
-     pSpec_range s1 = pSpec_domain s2 \<and> 
-     is_chain_param Pts Lns inc (s2 # ss)
+  "is_chain_param Pts Lns inc (s1 # ss) = (
+     ss \<noteq> [] \<and>
+     is_chain_param Pts Lns inc [s1] \<and> 
+     pSpec_range s1 = pSpec_domain (hd ss) \<and> 
+     is_chain_param Pts Lns inc ( ss)
   )"
 
-lemma chain_rest_is_chain1:
+lemma chain_param_rest_is_chain:
   "is_chain_param Pts Lns inc (s1 # s2 # ss) \<Longrightarrow> is_chain_param Pts Lns inc (s2 # ss)" by simp
+
+lemma chain_param_last_is_chain:
+  "is_chain_param Pts Lns inc (s1 #  ss) \<Longrightarrow> is_chain_param Pts Lns inc [last (s1 # ss)]" 
+proof (induction ss arbitrary: s1)
+  case Nil
+  then show ?case by simp
+next
+  case (Cons a ss) 
+  then show ?case using is_chain_param.elims by simp
+qed
 
 lemma good_chain_domain [simp]:
   "is_chain_param Pts Lns inc c \<Longrightarrow> (chain_domain c) \<in> Lns"
@@ -130,7 +137,7 @@ proof -
     case nonempty
     obtain s ss where sfact: "c = s # ss" using nonempty by blast
     have f0: "chain_domain c = pSpec_domain s" using chain_domain.simps sfact by auto
-    have f1: "is_pSpec_param Pts Lns inc s" using ah sfact is_chain_param.elims(1) by blast
+    have f1: "is_pSpec_param Pts Lns inc s" using ah sfact is_chain_param.elims by fastforce
     then have f2: "pSpec_domain s \<in> Lns"  
       by (metis (no_types, lifting) case_prod_unfold fst_conv is_pSpec_param.elims(2) pSpec_domain_def)
 
@@ -140,9 +147,7 @@ qed
 
 lemma good_chain_range [simp]:
   "is_chain_param Pts Lns inc c \<Longrightarrow> (chain_range c) \<in> Lns"
-  sorry
-(*
- proof -
+proof -
   assume ah: "is_chain_param Pts Lns inc c"
   consider (empty) "c=[]" | (nonempty) "\<exists> s ss . c = ss @ [s]"  by (metis append_butlast_last_id)  
   then show ?thesis
@@ -153,17 +158,16 @@ lemma good_chain_range [simp]:
     case nonempty
     obtain s ss where sfact: "c = ss @ [s]" using nonempty by blast
     have f0: "chain_range c = pSpec_range s" by (metis sfact chain_range.elims snoc_eq_iff_butlast)
-    have f1: "is_chain_param Pts Lns inc [s]" using chain_rest_is_chain1 ah by sledgehammer
-    have f1: "is_pSpec_param Pts Lns inc s" using ah sfact f0 chain_rest_is_chain1 by sledgehammer
+    have f1a: "is_chain_param Pts Lns inc [s]" using chain_param_rest_is_chain ah
+    by (metis Nil_is_append_conv chain_param_last_is_chain last_snoc neq_Nil_conv sfact)
+    have f1: "is_pSpec_param Pts Lns inc s" using ah sfact f0 chain_param_rest_is_chain using f1a by auto
     then have f2: "pSpec_range s \<in> Lns" 
       by (metis is_pSpec_param.simps pSpec_range_def prod_cases3 split_conv)
-
     show ?thesis using ah nonempty sfact f2 f0 by argo
     thm is_chain_param.simps
-
   qed
 qed
-*)
+
 
 text\<open>Now we take these specifications of perspectivities and projectivities and 
 turn them into actual functions from the beginning line to the ending line; we call this
@@ -455,7 +459,7 @@ definition is_chain :: "('p, 'l) chain \<Rightarrow> bool" where
   "is_chain c \<equiv> is_chain_param Points Lines (\<lhd>) c"
 
 
-lemma chain_rest_is_chain2:
+lemma chain_param_rest_is_chain2:
   "is_chain (s1 # s2 # ss) \<Longrightarrow> is_chain (s2 # ss)"  by (simp add: is_chain_def)
 
 
@@ -473,7 +477,8 @@ proof -
   show "is_chain [s] = is_pSpec s"  using  is_chain_def  is_pSpec_def by auto
   show "is_chain (s1 # s2 # ss) =
     (is_pSpec s1 \<and> is_pSpec s2 \<and> pSpec_range s1 = pSpec_domain s2 \<and> is_chain (s2 # ss))" 
-    by (simp add: is_pSpec_def  is_chain_def )
+  by (metis chain_domain.cases is_chain_def is_chain_param.simps(2,3) is_pSpec_def list.sel(1))
+
 qed
 
 lemma chain_nonempty:
@@ -504,7 +509,21 @@ lemma chain_append:
   assumes "is_chain c1" "is_chain c2"
   assumes "chain_range c1 = chain_domain c2"
   shows "is_chain (c1 @ c2)"
-  sorry (* need induction here surely *)
+proof -
+  have f2: "c2 \<noteq> []" using is_chain_unfold assms by blast
+  have f1: "c1 \<noteq> []" using is_chain_unfold assms by blast
+  then show ?thesis
+  using f1 f2 assms proof (induction c1 arbitrary: c2 rule:list_nonempty_induct )
+    case (single x)
+    then show ?case 
+      by (metis (mono_tags, lifting) append_Cons chain_cons chain_domain.elims chain_range.elims is_chain_unfold(3) last.simps
+        self_append_conv2)
+  next
+    case (cons x xs)
+    then show ?case 
+      by (smt (verit) append_Cons chain_range.elims is_chain_unfold(3) last.simps)
+  qed
+qed
 
 section \<open>Realization of Chains\<close>
 
@@ -579,9 +598,9 @@ proof -
                     perspectivity_from_pSpec2 s) Q" using g0 g1 g2 
     by (metis f1 fold_Cons is_chain_def realization_param2_def tfacts) 
 
-    then show ?case using g3 
-    by (metis chain_cons chain_domain.simps(2) comp_apply cons.IH cons.prems(1,2,3) is_chain_def is_chain_param.simps(3) perspectivity_maps_correctly
-        realization_def tfacts)
+  then show ?case using g3  
+  by (metis chain_domain.simps(2) comp_apply cons.IH cons.prems(1,2,3) is_chain_unfold(3) perspectivity_maps_correctly realization_def
+      tfacts)
   qed
 qed
 
@@ -908,9 +927,64 @@ lemma proj_compose_respects_equiv:
   assumes "is_chain c1" "is_chain c2"
   shows "proj_compose c1 c2 = None \<and> proj_compose c1' c2' = None \<or>
          (\<exists>c c'. proj_compose c1 c2 = Some c \<and> 
-                 proj_compose c1' c2' = Some c' \<and> 
-                 c \<sim> c')" 
-  sorry
+                 proj_compose c1' c2' = Some c' \<and>
+                 c \<sim> c')"
+
+proof -
+  consider 
+    (nn) "(proj_compose c1 c2 = None)" and "(proj_compose c1' c2' = None)" |
+    (sn) "\<exists>c. proj_compose c1 c2 = Some c" and "(proj_compose c1' c2' = None)" |
+    (ns) "(proj_compose c1 c2 = None)" and "\<exists>c'. proj_compose c1' c2' = Some c'" |
+    (ss) "\<exists>c. proj_compose c1 c2 = Some c" and "\<exists>c'. proj_compose c1' c2' = Some c' " by blast
+  then show ?thesis
+  proof (cases)
+    case nn
+    then show ?thesis by auto
+  next
+    case sn
+    then show ?thesis 
+    by (metis assms(1,2) chains_equiv_unfold1 option.simps(3) proj_compose_def proj_eq_def)
+  next
+    case ns
+    then show ?thesis
+    using assms(1,2,3,4) proj_compose_def proj_domain_def proj_domain_respects_equiv proj_range_def proj_range_respects_equiv by auto
+  next
+    case ss
+    obtain c where "proj_compose c1 c2 = Some c" using ss by auto
+    obtain c' where "proj_compose c1' c2' = Some c'" using ss by auto
+
+    thm chains_equiv_param_def
+    then show ?thesis 
+    proof -
+      have q0: "is_chain_param Points Lines (\<lhd>) c" 
+        by (metis \<open>proj_compose c1 c2 = Some c\<close> chain_append is_chain_def option.distinct(1) option.inject proj_compose_def)
+      have q1: "is_chain_param Points Lines (\<lhd>) c'"
+        by (metis \<open>proj_compose c1' c2' = Some c'\<close> chain_append is_chain_def option.distinct(1) option.inject proj_compose_def)
+      have q2: "chain_domain c = chain_domain c'"
+      by (metis (no_types, lifting) \<open>proj_compose c1 c2 = Some c\<close> \<open>proj_compose c1' c2' = Some c'\<close> append_eq_Cons_conv assms(1) chain_domain.elims
+          chain_domain.simps(2) is_chain_unfold(1) option.distinct(1) option.inject proj_compose_def proj_domain_def proj_domain_respects_equiv)
+
+      have q3: "chain_range c = chain_range c'" 
+      by (metis (no_types, lifting) \<open>proj_compose c1 c2 = Some c\<close> \<open>proj_compose c1' c2' = Some c'\<close> assms(2) chain_range.elims
+          chains_equiv_param_def is_chain_def is_chain_unfold(1) last_appendR option.distinct(1) option.inject proj_compose_def proj_eq_def q0
+          q1)
+      have f0: "(c \<sim> c') = chains_equiv_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c c'" by (simp add: proj_eq_def)
+      also have f0: "... =  (is_chain_param Points Lines (\<lhd>) c \<and>
+                             is_chain_param Points Lines (\<lhd>) c' \<and>
+                             chain_domain c = chain_domain c' \<and>
+                             chain_range c = chain_range c' \<and>
+                              (\<forall>Q. Q \<in> Points \<and> Q \<lhd> (chain_domain c) \<longrightarrow>
+      realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q))" using chains_equiv_param_def by force
+      also have f1: "... =  (  (\<forall>Q. Q \<in> Points \<and> Q \<lhd> (chain_domain c) \<longrightarrow>
+      realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q))" 
+        using q0 q1 q2 q3 by simp
+      finally have f2: "(c \<sim> c') = (  (\<forall>Q. Q \<in> Points \<and> Q \<lhd> (chain_domain c) \<longrightarrow>
+      realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q))" .
+      have f3: " (\<forall>Q. Q \<in> Points \<and> Q \<lhd> (chain_domain c) \<longrightarrow>
+      realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q)" sorry
+      then show ?thesis using f2 f3
+      using \<open>proj_compose c1 c2 = Some c\<close> \<open>proj_compose c1' c2' = Some c'\<close> by blast
+  qed
 
 text \<open>Define the set of projectivities for a given line k (pLoops)\<close>
 
@@ -951,31 +1025,65 @@ proof -
     \<in> {c. is_chain c \<and> chain_domain c = k \<and> chain_range c = k} " using f0 f1 f2 f3 by auto
 qed
 
+lemma proj_identity_action: 
+  assumes "k \<in> Lines" "P \<in> Points" "\<not>(P \<lhd> k)" "is_pSpec (k, P, k)"
+  assumes "Q \<in> Points" "Q \<lhd> k"
+  shows "realization (proj_identity k P) Q = Q"
+  using assms(4,5,6) identity_perspectivity is_chain_unfold(2) is_pSpec_def perspectivity_from_pSpec_def perspectivity_from_pSpec_unfold
+    proj_identity_def realization_unfold(2) by auto
+
 text \<open>Inverse of projectivity\<close>
 
-fun reverse_chain :: "('p, 'l) chain \<Rightarrow> ('p, 'l) chain" where
-  "reverse_chain [] = []" |
-  "reverse_chain ((k, P, m) # cs) = 
-     reverse_chain cs @ [(m, P, k)]"
-
 definition proj_inverse :: "('p, 'l) projectivity \<Rightarrow> ('p, 'l) projectivity" where
-  "proj_inverse c = reverse_chain c"
+  "proj_inverse c = chain_inverse c"
 
-lemma reverse_chain_is_chain:
+lemma chain_inverse_is_chain:
   assumes "is_chain c"
-  shows "is_chain (reverse_chain c)" sorry
+  shows "is_chain (chain_inverse c)"
+proof -
+  have c0: "c \<noteq> []" using assms is_chain_def by auto
+  then show " is_chain (chain_inverse c)"
+    using assms proof (induction c  rule: list_nonempty_induct)
+    case (single x)
+    obtain k P m where xfact: "x = (k, P, m)" using prod_cases3 by blast
+    then have "is_chain [(k, P, m)]" using assms single by auto
+    then have "is_pSpec_param Points Lines (\<lhd>) (k, P, m)" 
+      by (simp add: is_chain_unfold(2) is_pSpec_def)
+    then have h0: "is_pSpec_param Points Lines (\<lhd>) (m, P, k)" by simp
+
+    have "chain_inverse [x] = map pSpec_inverse (rev [x])" using single chain_inverse_def by blast
+    also have "... = map pSpec_inverse [x]" using rev_def by auto
+    also have "... = [pSpec_inverse x]" by auto
+    finally have k1: "chain_inverse [x]= [pSpec_inverse x]" . 
+
+    then have k2: "is_chain (chain_inverse [x]) = is_chain [pSpec_inverse x]" by auto
+    also have "... = is_chain_param Points Lines (\<lhd>) [pSpec_inverse x]" using is_chain_def by auto
+    also have "... = is_pSpec_param Points Lines (\<lhd>) (pSpec_inverse x)" by auto
+    also have "... = is_pSpec_param Points Lines (\<lhd>) (m, P, k)" using  xfact by (simp add: pSpec_inverse_def)
+    also have "... = True" using assms single xfact h0 by auto
+    finally have "is_chain (chain_inverse [x]) = True" . 
+    then show ?case by auto
+  next
+    case (cons x xs)
+    thm local.cons
+    then show ?case using c0 by sledgehammer
+  qed
+  sorry
+qed
+qed
+
 
 lemma reverse_chain_domain_finish:
   assumes "is_chain c"
-  shows "chain_domain (reverse_chain c) = chain_range c \<and>
-         chain_range (reverse_chain c) = chain_domain c"
-  sorry
+  shows "chain_domain (chain_inverse c) = chain_range c \<and>
+         chain_range (chain_inverse c) = chain_domain c"
+  using ci1 ci2 by blast
 
 lemma proj_inverse_in_PJ:
   assumes "c \<in> PJ k"
   shows "proj_inverse c \<in> PJ k"
   using assms reverse_chain_domain_finish [of c]
-  unfolding proj_inverse_def PJ_def using reverse_chain_is_chain by auto
+  unfolding proj_inverse_def PJ_def using chain_inverse_is_chain by auto
 
 
 text \<open>Group\<close>
@@ -984,7 +1092,17 @@ lemma PJ_closure:
   assumes "k \<in> Lines"
   assumes "c1 \<in> PJ k" "c2 \<in> PJ k"
   shows "proj_mult k c1 c2 \<in> PJ k"
-  sorry
+proof - 
+  have f0: "chain_domain c1 = k \<and> chain_range c1 = k" using assms PJ_def by simp
+  have f1: "chain_domain c2 = k \<and> chain_range c2 = k" using assms PJ_def by simp
+  have f2: "proj_mult k c1 c2 =  (case proj_compose c1 c2 of Some c \<Rightarrow> c | None \<Rightarrow> undefined)"
+    using proj_mult_def f0 f1 assms by auto
+  thm proj_compose_def[of c1 c2]
+  have f3: "(proj_compose c1 c2 = Some (c1 @ c2))" using proj_compose_def[of c1 c2] assms f0 f1 f2 PJ_def by simp
+  then show ?thesis 
+  by (smt (verit, ccfv_threshold) append_Cons chain_append chain_domain.simps(2) chain_range.elims f0 f1 f2 is_chain_unfold(1) last_appendR
+      mem_Collect_eq option.case(2) option.distinct(1) projective_plane.PJ_def projective_plane.proj_compose_def projective_plane_axioms)
+qed
 
 lemma PJ_associative:
   assumes "k \<in> Lines"
@@ -993,12 +1111,121 @@ lemma PJ_associative:
          proj_mult k c1 (proj_mult k c2 c3)"
   sorry
 
+(*  "PJ k = {c. is_chain c \<and> chain_domain c = k \<and> chain_range c = k}" 
+"proj_mult k c1 c2 = (if c1 \<in> PJ k \<and> c2 \<in> PJ k 
+                        then (case proj_compose c1 c2 of Some c \<Rightarrow> c | None \<Rightarrow> undefined)
+                        else undefined)"
+"proj_compose c1 c2 = 
+     (if is_chain c1 \<and> is_chain c2 \<and> chain_range c1 = chain_domain c2 
+      then Some (c1 @ c2) 
+      else None)"
+
+"c1 \<sim> c2 \<longleftrightarrow> chains_equiv_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c1 c2"
+
+chains_equiv_param ?Pts ?Lns ?inc ?join_op ?meet_op ?c1.0 ?c2.0 =
+(is_chain_param ?Pts ?Lns ?inc ?c1.0 \<and>
+ is_chain_param ?Pts ?Lns ?inc ?c2.0 \<and>
+ chain_domain ?c1.0 = chain_domain ?c2.0 \<and>
+ chain_range ?c1.0 = chain_range ?c2.0 \<and>
+ (\<forall>Q. Q \<in> ?Pts \<and> ?inc Q (chain_domain ?c1.0) \<longrightarrow>
+      realization_param2 ?Pts ?Lns ?inc ?join_op ?meet_op ?c1.0 Q = realization_param2 ?Pts ?Lns ?inc ?join_op ?meet_op ?c2.0 Q))
+*)
+
 lemma PJ_identity:
   assumes "k \<in> Lines" "P \<in> Points" "\<not>(P \<lhd> k)"
   assumes "c \<in> PJ k"
   shows "proj_mult k (proj_identity k P) c \<sim> c \<and>
          proj_mult k c (proj_identity k P) \<sim> c"
-  sorry
+proof (safe)
+  have f0: "is_chain (proj_identity k P)" using PJ_def 
+    by (simp add: assms(1,2,3) is_chain_unfold(2) is_pSpec_unfold proj_identity_def)
+  have d0: "chain_range (proj_identity k P) = chain_domain c" 
+    using PJ_def assms(1,2,3,4) is_pSpec_unfold proj_identity_in_PJ by force
+  have d1: "chain_domain (proj_identity k P) = chain_range c" 
+    using PJ_def assms(1,2,3,4) is_pSpec_unfold proj_identity_in_PJ by force
+  have f1: "is_chain c" using assms PJ_def by simp
+
+  have f2: "proj_mult k (proj_identity k P) c = (case proj_compose (proj_identity k P) c of Some u \<Rightarrow> u | None \<Rightarrow> undefined)"
+    by (simp add: assms(1,2,3,4) is_pSpec_unfold proj_identity_in_PJ proj_mult_def)
+  also have "... = (k, P, k) # c" 
+    using assms(1,2,3) d0 f0 f1 is_pSpec_unfold proj_compose_def proj_identity_def by force
+  finally have f3: "proj_mult k (proj_identity k P) c = (k, P, k) # c" .
+  have "(((k, P, k) # c) \<sim> c) = (chains_equiv_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) ((k,P,k)#c) c)" 
+    by (simp add: proj_eq_def)
+
+
+
+  also have g1: "... =  (\<forall>Q. Q \<in> Points \<and>  Q \<lhd>(chain_domain ((k, P, k) # c)) \<longrightarrow>
+                        realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) ((k, P, k) # c) Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q)" 
+  by (smt (verit, ccfv_SIG) PJ_closure PJ_def assms(1,2,3,4) chains_equiv_param_def f3 is_chain_def is_pSpec_unfold mem_Collect_eq
+      proj_identity_in_PJ)
+  also have g2: "... = (\<forall>Q. Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow>
+                        fold perspectivity_from_pSpec2  ((k, P, k) # c) Q = fold perspectivity_from_pSpec2 c Q)" using realization_param2_def
+  by (smt (verit) PJ_closure assms(1,2,3,4) f3 is_chain_def is_pSpec_unfold mem_Collect_eq proj_identity_in_PJ projective_plane.PJ_def
+      projective_plane_axioms)
+  finally have g3: "(((k, P, k) # c) \<sim> c) = 
+                    (\<forall>Q. Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow>
+                        fold perspectivity_from_pSpec2  ((k, P, k) # c) Q = fold perspectivity_from_pSpec2 c Q)" .
+  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> (fold perspectivity_from_pSpec2  ((k, P, k) # c) Q = 
+       ((fold perspectivity_from_pSpec2  [(k, P, k)]) \<circ> (fold perspectivity_from_pSpec2 c)) Q)" for Q 
+  by (smt (verit, del_insts) PJ_def assms(1,2,3,4) chain_domain.simps(2) chain_extend_with_identity chain_range.simps(2) chains_equiv_unfold1 d0
+      fold_Cons inverse_persp is_chain_def is_chain_unfold(3) is_pSpec_unfold last.simps mem_Collect_eq o_apply proj_identity_def realization_def
+      realization_domain1 realization_domain2 realization_param2_def realization_unfold(2))
+  then  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> 
+    fold perspectivity_from_pSpec2  ((k, P, k) # c) Q = 
+    ((perspectivity_from_pSpec2  (k, P, k)) \<circ> (fold perspectivity_from_pSpec2 c)) Q" for Q by simp
+  then  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> 
+    fold perspectivity_from_pSpec2  ((k, P, k) # c) Q = 
+     (fold perspectivity_from_pSpec2 c) Q" for Q using proj_identity_in_PJ[of k P] 
+  by (metis (full_types) assms(1,2,3) f0 fold_simps(2) is_pSpec_unfold proj_identity_action proj_identity_def realization_unfold(2))
+  then  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> 
+    fold perspectivity_from_pSpec2  ((k, P, k) # c) Q = 
+     (fold perspectivity_from_pSpec2 c) Q" for Q by auto 
+  then show "proj_mult k (proj_identity k P) c \<sim> c" using f3 g3 by presburger 
+next
+  thm proj_identity_in_PJ[of k P]
+  thm realization_param2_def [of Points Lines "(\<lhd>)" "(\<bar>)" " (\<sqdot>)" c] 
+
+
+  have h2: "proj_mult k c (proj_identity k P) = (case proj_compose c (proj_identity k P) of Some u \<Rightarrow> u | None \<Rightarrow> undefined)"
+    by (simp add: assms(1,2,3,4) is_pSpec_unfold proj_identity_in_PJ proj_mult_def)
+  also have "... = c @ [(k, P, k)]" 
+    using assms(1,2,3, 4) is_pSpec_unfold proj_compose_def proj_identity_def proj_identity_in_PJ 
+    PJ_def projective_plane_axioms by simp
+  finally have f3: "proj_mult k c (proj_identity k P) = c @ [(k, P, k)]" .
+  have "((c @ [(k, P, k)]) \<sim> c) = (chains_equiv_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (c @ [(k,P,k)]) c)" 
+    by (simp add: proj_eq_def)
+
+also have g1: "... =  (\<forall>Q. Q \<in> Points \<and>  Q \<lhd>(chain_domain (c @ [(k, P, k)] )) \<longrightarrow>
+                        realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) (c @ [(k, P, k)]) Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q)" 
+  by (smt (verit, ccfv_SIG) PJ_closure PJ_def assms(1,2,3,4) chains_equiv_param_def f3 is_chain_def is_pSpec_unfold mem_Collect_eq
+      proj_identity_in_PJ)
+  also have g2: "... = (\<forall>Q. Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow>
+                        fold perspectivity_from_pSpec2  (c @ [(k, P, k)]) Q = fold perspectivity_from_pSpec2 c Q)" using realization_param2_def
+  by (smt (verit) PJ_closure assms(1,2,3,4) f3 is_chain_def is_pSpec_unfold mem_Collect_eq proj_identity_in_PJ projective_plane.PJ_def
+      projective_plane_axioms)
+  finally have g3: "((c @ [(k, P, k)]) \<sim> c) = 
+                    (\<forall>Q. Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow>
+                        fold perspectivity_from_pSpec2  (c @ [(k, P, k)]) Q = fold perspectivity_from_pSpec2 c Q)" .
+  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> (fold perspectivity_from_pSpec2  (c @ [(k, P, k)]) Q = 
+       ((fold perspectivity_from_pSpec2 c ) \<circ> (fold perspectivity_from_pSpec2 [(k, P, k)])) Q)" for Q 
+  by (smt (verit) PJ_def assms(1,2,3,4) chain_extend_with_identity chains_equiv_param_def comp_apply fold_append is_chain_def is_pSpec_unfold
+      mem_Collect_eq proj_identity_action proj_identity_def realization_def realization_domain1 realization_domain2 realization_param2_def)
+
+
+  then  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> 
+    fold perspectivity_from_pSpec2  (c @ [(k, P, k)]) Q = 
+    ( (fold perspectivity_from_pSpec2 c) \<circ> (perspectivity_from_pSpec2  (k, P, k))) Q" for Q by simp
+  then  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> 
+    fold perspectivity_from_pSpec2  (c @ [(k, P, k)]) Q = 
+     (fold perspectivity_from_pSpec2 c) Q" for Q using proj_identity_in_PJ[of k P]
+  using assms(1,2,3) is_chain_def is_pSpec_unfold proj_identity_action proj_identity_def realization_unfold(2) by auto
+  then  have "Q \<in> Points \<and>  Q \<lhd> k \<longrightarrow> 
+    fold perspectivity_from_pSpec2  (c @ [(k, P, k)]) Q = 
+     (fold perspectivity_from_pSpec2 c) Q" for Q by auto 
+  then show "proj_mult k c (proj_identity k P) \<sim> c" by (simp add: f3 g3)
+qed
+
 
 lemma PJ_inverse:
   assumes "k \<in> Lines"
@@ -1008,5 +1235,8 @@ lemma PJ_inverse:
   sorry
 
 end
+(*
+5 "sorry"s remaining
+*)
 
 end
