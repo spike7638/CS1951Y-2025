@@ -2,6 +2,33 @@ theory Projectivity_New4
   imports Complex_Main "Chapter4-3" "HOL-Algebra.Group"
 begin
 
+text\<open> A few notes, 2/16/2026
+
+Naming: 
+"realization" for pSpecs is "perspectivity_from_pSpec2". It should probably be renamed to get rid of the "2"
+"realization" for chains is "realization", based on realization_param2,which should also be renamed, I guess. 
+
+Cleanup to help along the long proofs and the stuff in PJ(l). 
+
+I think that proving a few things that look like these might simplify a bunch of proofs:
+
+perspectivity_from_pSpec2 p \<circ> perspectivity_from_pSpec2 (inverse p) Q = Q when p is a perspectivity and Q is in the domain of p.
+
+realization c \<circ> realization (chain_inverse c) Q = Q when c is a chain and Q is in domain c.
+
+realization c \<circ> realization  (inverse c) Q = Q when c is a valid chain and Q in domain c. Proof using properties of "fold" somehow?
+
+lemma (probably already in List.thy): 
+fold f (a # as) = (fold f [a]) \<circ> (fold f as)
+
+...and a corresponding thing for 
+fold f (as @ [a])
+
+These should let us show that in PJ k,
+
+realization (product k c1 c2) = realization c1 \<circ> (realization c2)
+
+\<close>
 
 section \<open>Perspectivity Spec\<close>
 text\<open>A perspectivity in a projective plane involves two lines and a point that's not on either one. 
@@ -182,7 +209,8 @@ definition perspectivity_from_pSpec_param ::
        then (\<lambda>Q. if Q \<in> Pts \<and> inc Q k then meet_op (join_op P Q) m else undefined)
        else undefined)"
 
-(* The following definition needs sanity-checking; I inserted the is_chain_param condition *)
+(* The following definition is the old version, somewhat modified. Now dead. *)
+(*
 fun realization_param :: (* convert projectivity spec to function from beginning to ending line *)
   "'p set \<Rightarrow> 'l set \<Rightarrow> ('p \<Rightarrow> 'l \<Rightarrow> bool) \<Rightarrow> ('p \<Rightarrow> 'p \<Rightarrow> 'l) \<Rightarrow> ('l \<Rightarrow> 'l \<Rightarrow> 'p) \<Rightarrow> 
    ('p, 'l) chain \<Rightarrow> ('p \<Rightarrow> 'p)" where
@@ -195,7 +223,7 @@ fun realization_param :: (* convert projectivity spec to function from beginning
         then (realization_param Pts Lns inc join_op meet_op ss) \<circ> 
           (perspectivity_from_pSpec_param Pts Lns inc join_op meet_op s)
         else undefined)"
-
+*)
 (*
 primrec fold :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'a list \<Rightarrow> 'b \<Rightarrow> 'b" where
 fold_Nil:  "fold f [] = id" |
@@ -271,12 +299,14 @@ qed
 abbreviation perspectivity_from_pSpec2 :: "('p, 'l) pSpec \<Rightarrow> ('p \<Rightarrow> 'p)" where
   "perspectivity_from_pSpec2 s \<equiv> perspectivity_from_pSpec_param Points Lines (\<lhd>) (\<bar>) (\<sqdot>) s"
 
+(* Old version, now dead.
 definition perspectivity_from_pSpec ::  "('p, 'l) pSpec \<Rightarrow> ('p \<Rightarrow> 'p)" where
   "perspectivity_from_pSpec  s =
      (case s of (k, P, m) \<Rightarrow>
        if is_pSpec_param Points Lines  (\<lhd>) (k, P, m)
        then (\<lambda>Q. if Q \<in> Points \<and>  Q \<lhd> k then ( P \<bar> Q) \<sqdot> m else undefined)
        else undefined)"
+*)
 
 lemma perspectivity_from_pSpec_unfold:
   "perspectivity_from_pSpec2 (k, P, m) = 
@@ -548,7 +578,7 @@ lemma q:
 lemma realization_unfold:
   "realization [] = undefined"
   "is_chain[s] \<Longrightarrow> realization [s] = perspectivity_from_pSpec2 s"
-  (*  "\<lbrakk>ss \<noteq> []\<rbrakk> \<Longrightarrow> realization (s # ss) = (realization ss) \<circ> (perspectivity_from_pSpec s)" *)
+ 
 proof -
   show "realization [] = undefined" 
     by (simp add: realization_def realization_param2_def)
@@ -795,9 +825,10 @@ text \<open>Identity perspectivity example\<close>
 lemma identity_perspectivity:
   assumes "is_pSpec (m, P, m)"
   assumes "Q \<in> Points" "Q \<lhd> m"
-  shows "perspectivity_from_pSpec (m, P, m) Q = Q"
-  using assms join_properties1 meet_properties2 unique_meet 
-  by (smt (verit, ccfv_SIG) is_pSpec_def is_pSpec_param.simps old.prod.case perspectivity_from_pSpec_def)
+  shows "perspectivity_from_pSpec2 (m, P, m) Q = Q"
+  using assms join_properties1 meet_properties2 unique_meet
+  by (smt (verit) is_pSpec_unfold perspectivity_from_pSpec_unfold)
+
 
 lemma chain_extend_with_identity:
   assumes "is_pSpec (k, P, m)"
@@ -980,8 +1011,12 @@ proof -
         using q0 q1 q2 q3 by simp
       finally have f2: "(c \<sim> c') = (  (\<forall>Q. Q \<in> Points \<and> Q \<lhd> (chain_domain c) \<longrightarrow>
       realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q))" .
+
+      thm realization_param2_def
       have f3: " (\<forall>Q. Q \<in> Points \<and> Q \<lhd> (chain_domain c) \<longrightarrow>
-      realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q)" sorry
+      realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q) =
+(\<forall>Q. Q \<in> Points \<and> Q \<lhd> (chain_domain c) \<longrightarrow>
+      realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c Q = realization_param2 Points Lines (\<lhd>) (\<bar>) (\<sqdot>) c' Q) " sorry
       then show ?thesis using f2 f3
       using \<open>proj_compose c1 c2 = Some c\<close> \<open>proj_compose c1' c2' = Some c'\<close> by blast
   qed
@@ -994,7 +1029,7 @@ definition PJ :: "'l \<Rightarrow> ('p, 'l) projectivity set" where
 lemma PJ_respects_equiv:
   assumes "c \<in> PJ k" "c \<sim> c'"
   shows "c' \<in> PJ k"
-  sorry
+  sorry (* easy? *)
 
 text \<open>Define composition as a binary operation on PJ(k)\<close>
 
@@ -1109,7 +1144,7 @@ lemma PJ_associative:
   assumes "c1 \<in> PJ k" "c2 \<in> PJ k" "c3 \<in> PJ k"
   shows "proj_mult k (proj_mult k c1 c2) c3 \<sim> 
          proj_mult k c1 (proj_mult k c2 c3)"
-  sorry
+  sorry (* easy using fold lemmas? *)
 
 (*  "PJ k = {c. is_chain c \<and> chain_domain c = k \<and> chain_range c = k}" 
 "proj_mult k c1 c2 = (if c1 \<in> PJ k \<and> c2 \<in> PJ k 
@@ -1230,9 +1265,15 @@ qed
 lemma PJ_inverse:
   assumes "k \<in> Lines"
   assumes "c \<in> PJ k"
-  shows "\<exists>c_inv \<in> PJ k. proj_mult k c c_inv \<sim> proj_identity k P \<and>
+  defines "q \<equiv> chain_inverse c"
+  shows "\<exists>c_inv \<in> PJ k . \<exists> P \<in> Points. proj_mult k c c_inv \<sim> proj_identity k P \<and>
                         proj_mult k c_inv c \<sim> proj_identity k P"
-  sorry
+proof -
+  obtain P where pfacts: "P \<in> Points \<and> \<not> (P \<lhd> k)" using assms(1)  exists_p_on_neither_l by blast
+  have a1: "proj_mult k c q \<sim> proj_identity k P" sorry
+  have a2: "proj_mult k q c \<sim> proj_identity k P" sorry
+  show ?thesis using a1 a2  using assms(2) pfacts proj_inverse_def proj_inverse_in_PJ q_def by auto
+qed
 
 end
 (*
